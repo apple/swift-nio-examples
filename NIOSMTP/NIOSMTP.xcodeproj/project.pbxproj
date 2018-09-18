@@ -1,0 +1,472 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		8F882F7E2150078600943C68 /* Configuration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F882F7D2150078600943C68 /* Configuration.swift */; };
+		8FBA255821270ADB0034D800 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FBA255721270ADB0034D800 /* AppDelegate.swift */; };
+		8FBA255A21270ADB0034D800 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FBA255921270ADB0034D800 /* ViewController.swift */; };
+		8FBA255D21270ADB0034D800 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8FBA255B21270ADB0034D800 /* Main.storyboard */; };
+		8FBA255F21270ADC0034D800 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8FBA255E21270ADC0034D800 /* Assets.xcassets */; };
+		8FBA256221270ADC0034D800 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8FBA256021270ADC0034D800 /* LaunchScreen.storyboard */; };
+		8FBA257821270EEA0034D800 /* DataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FBA257721270EEA0034D800 /* DataModel.swift */; };
+		8FBA257C212720680034D800 /* SendEmailHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FBA257B212720680034D800 /* SendEmailHandler.swift */; };
+		8FBA257E212725D50034D800 /* LineBasedFrameDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FBA257D212725D50034D800 /* LineBasedFrameDecoder.swift */; };
+		8FBA25802127269E0034D800 /* SMTPResponseDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FBA257F2127269E0034D800 /* SMTPResponseDecoder.swift */; };
+		8FBA258221274C490034D800 /* SMTPRequestEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FBA258121274C490034D800 /* SMTPRequestEncoder.swift */; };
+		8FBA25842127584C0034D800 /* PrintEverythingHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FBA25832127584C0034D800 /* PrintEverythingHandler.swift */; };
+		CA820AF2A47266ECF7808186 /* Pods_NIOSMTP.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A7299091C926EC236539337 /* Pods_NIOSMTP.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		71066EF60224B11848DC60B0 /* Pods-NIOSMTP.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-NIOSMTP.release.xcconfig"; path = "Pods/Target Support Files/Pods-NIOSMTP/Pods-NIOSMTP.release.xcconfig"; sourceTree = "<group>"; };
+		7A7299091C926EC236539337 /* Pods_NIOSMTP.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_NIOSMTP.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		8F882F7D2150078600943C68 /* Configuration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Configuration.swift; sourceTree = "<group>"; };
+		8FBA255421270ADB0034D800 /* NIOSMTP.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NIOSMTP.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8FBA255721270ADB0034D800 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		8FBA255921270ADB0034D800 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		8FBA255C21270ADB0034D800 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		8FBA255E21270ADC0034D800 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		8FBA256121270ADC0034D800 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		8FBA256321270ADC0034D800 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		8FBA257721270EEA0034D800 /* DataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataModel.swift; sourceTree = "<group>"; };
+		8FBA257B212720680034D800 /* SendEmailHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SendEmailHandler.swift; sourceTree = "<group>"; };
+		8FBA257D212725D50034D800 /* LineBasedFrameDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineBasedFrameDecoder.swift; sourceTree = "<group>"; };
+		8FBA257F2127269E0034D800 /* SMTPResponseDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SMTPResponseDecoder.swift; sourceTree = "<group>"; };
+		8FBA258121274C490034D800 /* SMTPRequestEncoder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SMTPRequestEncoder.swift; sourceTree = "<group>"; };
+		8FBA25832127584C0034D800 /* PrintEverythingHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrintEverythingHandler.swift; sourceTree = "<group>"; };
+		A650E0868BBAFAA95C5AEE76 /* Pods_NIOSMTPTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_NIOSMTPTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		AD429E2A8BFC6C2A51F3C52D /* Pods-NIOSMTP.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-NIOSMTP.debug.xcconfig"; path = "Pods/Target Support Files/Pods-NIOSMTP/Pods-NIOSMTP.debug.xcconfig"; sourceTree = "<group>"; };
+		C1624807F6FBE147A7DB831C /* Pods-NIOSMTPTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-NIOSMTPTests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-NIOSMTPTests/Pods-NIOSMTPTests.debug.xcconfig"; sourceTree = "<group>"; };
+		FA9B394C19FE0C0A149A106D /* Pods-NIOSMTPTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-NIOSMTPTests.release.xcconfig"; path = "Pods/Target Support Files/Pods-NIOSMTPTests/Pods-NIOSMTPTests.release.xcconfig"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		8FBA255121270ADB0034D800 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CA820AF2A47266ECF7808186 /* Pods_NIOSMTP.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		2787636C3B3541BFB65B7EC5 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				7A7299091C926EC236539337 /* Pods_NIOSMTP.framework */,
+				A650E0868BBAFAA95C5AEE76 /* Pods_NIOSMTPTests.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		8FBA254B21270ADB0034D800 = {
+			isa = PBXGroup;
+			children = (
+				8FBA255621270ADB0034D800 /* NIOSMTP */,
+				8FBA255521270ADB0034D800 /* Products */,
+				A49BA07016DF547CAD3B42D9 /* Pods */,
+				2787636C3B3541BFB65B7EC5 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		8FBA255521270ADB0034D800 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8FBA255421270ADB0034D800 /* NIOSMTP.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		8FBA255621270ADB0034D800 /* NIOSMTP */ = {
+			isa = PBXGroup;
+			children = (
+				8F882F7D2150078600943C68 /* Configuration.swift */,
+				8FBA257721270EEA0034D800 /* DataModel.swift */,
+				8FBA257B212720680034D800 /* SendEmailHandler.swift */,
+				8FBA258121274C490034D800 /* SMTPRequestEncoder.swift */,
+				8FBA257F2127269E0034D800 /* SMTPResponseDecoder.swift */,
+				8FBA255921270ADB0034D800 /* ViewController.swift */,
+				8FBA255B21270ADB0034D800 /* Main.storyboard */,
+				8FBA2588212759280034D800 /* boring stuff */,
+			);
+			path = NIOSMTP;
+			sourceTree = "<group>";
+		};
+		8FBA2588212759280034D800 /* boring stuff */ = {
+			isa = PBXGroup;
+			children = (
+				8FBA255721270ADB0034D800 /* AppDelegate.swift */,
+				8FBA256021270ADC0034D800 /* LaunchScreen.storyboard */,
+				8FBA256321270ADC0034D800 /* Info.plist */,
+				8FBA255E21270ADC0034D800 /* Assets.xcassets */,
+				8FBA257D212725D50034D800 /* LineBasedFrameDecoder.swift */,
+				8FBA25832127584C0034D800 /* PrintEverythingHandler.swift */,
+			);
+			name = "boring stuff";
+			sourceTree = "<group>";
+		};
+		A49BA07016DF547CAD3B42D9 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				AD429E2A8BFC6C2A51F3C52D /* Pods-NIOSMTP.debug.xcconfig */,
+				71066EF60224B11848DC60B0 /* Pods-NIOSMTP.release.xcconfig */,
+				C1624807F6FBE147A7DB831C /* Pods-NIOSMTPTests.debug.xcconfig */,
+				FA9B394C19FE0C0A149A106D /* Pods-NIOSMTPTests.release.xcconfig */,
+			);
+			name = Pods;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		8FBA255321270ADB0034D800 /* NIOSMTP */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8FBA257121270ADD0034D800 /* Build configuration list for PBXNativeTarget "NIOSMTP" */;
+			buildPhases = (
+				A5FF03AC74E9742A4CA6BA02 /* [CP] Check Pods Manifest.lock */,
+				8FBA255021270ADB0034D800 /* Sources */,
+				8FBA255121270ADB0034D800 /* Frameworks */,
+				8FBA255221270ADB0034D800 /* Resources */,
+				75B83FC619B689336880396A /* [CP] Embed Pods Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = NIOSMTP;
+			productName = NIOSMTP;
+			productReference = 8FBA255421270ADB0034D800 /* NIOSMTP.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		8FBA254C21270ADB0034D800 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				DefaultBuildSystemTypeForWorkspace = Latest;
+				LastSwiftUpdateCheck = 1000;
+				LastUpgradeCheck = 1000;
+				ORGANIZATIONNAME = NIOSMTP;
+				TargetAttributes = {
+					8FBA255321270ADB0034D800 = {
+						CreatedOnToolsVersion = 10.0;
+						LastSwiftMigration = 1000;
+					};
+				};
+			};
+			buildConfigurationList = 8FBA254F21270ADB0034D800 /* Build configuration list for PBXProject "NIOSMTP" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 8FBA254B21270ADB0034D800;
+			productRefGroup = 8FBA255521270ADB0034D800 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				8FBA255321270ADB0034D800 /* NIOSMTP */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		8FBA255221270ADB0034D800 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8FBA256221270ADC0034D800 /* LaunchScreen.storyboard in Resources */,
+				8FBA255F21270ADC0034D800 /* Assets.xcassets in Resources */,
+				8FBA255D21270ADB0034D800 /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		75B83FC619B689336880396A /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${SRCROOT}/Pods/Target Support Files/Pods-NIOSMTP/Pods-NIOSMTP-frameworks.sh",
+				"${BUILT_PRODUCTS_DIR}/CNIOAtomics/CNIOAtomics.framework",
+				"${BUILT_PRODUCTS_DIR}/CNIODarwin/CNIODarwin.framework",
+				"${BUILT_PRODUCTS_DIR}/CNIOLinux/CNIOLinux.framework",
+				"${BUILT_PRODUCTS_DIR}/CNIOSHA1/CNIOSHA1.framework",
+				"${BUILT_PRODUCTS_DIR}/SwiftNIO/NIO.framework",
+				"${BUILT_PRODUCTS_DIR}/SwiftNIOConcurrencyHelpers/NIOConcurrencyHelpers.framework",
+				"${BUILT_PRODUCTS_DIR}/SwiftNIOFoundationCompat/NIOFoundationCompat.framework",
+				"${BUILT_PRODUCTS_DIR}/SwiftNIOTLS/NIOTLS.framework",
+				"${BUILT_PRODUCTS_DIR}/SwiftNIOTransportServices/NIOTransportServices.framework",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/CNIOAtomics.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/CNIODarwin.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/CNIOLinux.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/CNIOSHA1.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/NIO.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/NIOConcurrencyHelpers.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/NIOFoundationCompat.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/NIOTLS.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/NIOTransportServices.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-NIOSMTP/Pods-NIOSMTP-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		A5FF03AC74E9742A4CA6BA02 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-NIOSMTP-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8FBA255021270ADB0034D800 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8FBA258221274C490034D800 /* SMTPRequestEncoder.swift in Sources */,
+				8FBA257E212725D50034D800 /* LineBasedFrameDecoder.swift in Sources */,
+				8FBA255A21270ADB0034D800 /* ViewController.swift in Sources */,
+				8F882F7E2150078600943C68 /* Configuration.swift in Sources */,
+				8FBA257C212720680034D800 /* SendEmailHandler.swift in Sources */,
+				8FBA255821270ADB0034D800 /* AppDelegate.swift in Sources */,
+				8FBA25802127269E0034D800 /* SMTPResponseDecoder.swift in Sources */,
+				8FBA257821270EEA0034D800 /* DataModel.swift in Sources */,
+				8FBA25842127584C0034D800 /* PrintEverythingHandler.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		8FBA255B21270ADB0034D800 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				8FBA255C21270ADB0034D800 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		8FBA256021270ADC0034D800 /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				8FBA256121270ADC0034D800 /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		8FBA256F21270ADD0034D800 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		8FBA257021270ADD0034D800 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		8FBA257221270ADD0034D800 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = AD429E2A8BFC6C2A51F3C52D /* Pods-NIOSMTP.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = NIOSMTP/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.apple.icloud.jweiss.NIOSMTP;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_VERSION = 4.2;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		8FBA257321270ADD0034D800 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 71066EF60224B11848DC60B0 /* Pods-NIOSMTP.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = NIOSMTP/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.apple.icloud.jweiss.NIOSMTP;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_VERSION = 4.2;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		8FBA254F21270ADB0034D800 /* Build configuration list for PBXProject "NIOSMTP" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8FBA256F21270ADD0034D800 /* Debug */,
+				8FBA257021270ADD0034D800 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8FBA257121270ADD0034D800 /* Build configuration list for PBXNativeTarget "NIOSMTP" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8FBA257221270ADD0034D800 /* Debug */,
+				8FBA257321270ADD0034D800 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 8FBA254C21270ADB0034D800 /* Project object */;
+}
