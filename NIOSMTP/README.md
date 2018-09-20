@@ -9,6 +9,8 @@ NIOSMTP is a demo app that is a very simple SMTP client and therefore allows you
 
 ## Caveats
 
+- if you want to try this out you'll have to put your SMTP server configuration
+  in [`Configuration.swift`](https://github.com/apple/swift-nio-examples/blob/master/NIOSMTP/NIOSMTP/Configuration.swift), there's no configuration UI at this moment
 - before trying out the app you need to configure your SMTP server in `NIOSMTP/Configuration.swift`
 - `STARTTLS` is not supported at this point so the server will need to support `SMTPS`
 - it's a very basic SMTP/MIME implementation, the email body isn't even base64 encoded neither is any other data.
