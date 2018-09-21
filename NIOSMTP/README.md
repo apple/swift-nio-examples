@@ -18,5 +18,5 @@ NIOSMTP is a demo app that is a very simple SMTP client and therefore allows you
 
 ## Screenshots
 
-<img width="455" alt="start screen" src="https://user-images.githubusercontent.com/624238/45838328-5ef0e100-bd09-11e8-82b9-15699c7ebb79.png">
-<img width="448" alt="email sent" src="https://user-images.githubusercontent.com/624238/45838331-60baa480-bd09-11e8-9740-7d39f81741f4.png">
+<img width="418" alt="main screen" src="https://user-images.githubusercontent.com/624238/45869756-2987da00-bd81-11e8-8a35-732d050eb44a.png">
+<img width="422" alt="email sent" src="https://user-images.githubusercontent.com/624238/45869764-2d1b6100-bd81-11e8-8082-d7bc43e0b05b.png">
