@@ -1,3 +1,17 @@
+//===----------------------------------------------------------------------===//
+//
+// This source file is part of the SwiftNIO open source project
+//
+// Copyright (c) 2017-2018 Apple Inc. and the SwiftNIO project authors
+// Licensed under Apache License v2.0
+//
+// See LICENSE.txt for license information
+// See CONTRIBUTORS.txt for the list of SwiftNIO project authors
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+//===----------------------------------------------------------------------===//
+
 import NIO
 import NIOHTTP1
 import NIOHTTP2
@@ -7,27 +21,36 @@ import Foundation
 /// Fires off a GET request when our stream is active and collects all response parts into a promise.
 ///
 /// - warning: This will read the whole response into memory and delivers it into a promise.
-final class SendAGETRequestHandler: ChannelInboundHandler {
+final class SendRequestHandler: ChannelInboundHandler {
     typealias InboundIn = HTTPClientResponsePart
     typealias OutboundOut = HTTPClientRequestPart
     
     private let responseReceivedPromise: EventLoopPromise<[HTTPClientResponsePart]>
     private var responsePartAccumulator: [HTTPClientResponsePart] = []
     private let host: String
-    private let uri: String
+    private let compoundRequest: HTTPRequest
     
-    init(host: String, uri: String, responseReceivedPromise: EventLoopPromise<[HTTPClientResponsePart]>) {
+    init(host: String, request: HTTPRequest, responseReceivedPromise: EventLoopPromise<[HTTPClientResponsePart]>) {
         self.responseReceivedPromise = responseReceivedPromise
         self.host = host
-        self.uri = uri
+        self.compoundRequest = request
     }
     
     func channelActive(ctx: ChannelHandlerContext) {
         assert(ctx.channel.parent!.isActive)
-        var reqHead = HTTPRequestHead(version: .init(major: 2, minor: 0), method: .GET, uri: self.uri)
-        reqHead.headers.add(name: "Host", value: self.host)
+        var headers = HTTPHeaders(self.compoundRequest.headers)
+        headers.add(name: "Host", value: self.host)
+        var reqHead = HTTPRequestHead(version: self.compoundRequest.version,
+                                      method: self.compoundRequest.method,
+                                      uri: self.compoundRequest.target)
+        reqHead.headers = headers
+        if let body = self.compoundRequest.body {
+            var buffer = ctx.channel.allocator.buffer(capacity: body.count)
+            buffer.write(bytes: body)
+            ctx.write(self.wrapOutboundOut(.body(.byteBuffer(buffer))), promise: nil)
+        }
         ctx.write(self.wrapOutboundOut(.head(reqHead)), promise: nil)
-        ctx.writeAndFlush(self.wrapOutboundOut(.end(nil)), promise: nil)
+        ctx.writeAndFlush(self.wrapOutboundOut(.end(self.compoundRequest.trailers.map(HTTPHeaders.init))), promise: nil)
     }
     
     func channelRead(ctx: ChannelHandlerContext, data: NIOAny) {
@@ -58,9 +81,14 @@ final class CreateRequestStreamHandler: ChannelInboundHandler {
     func channelActive(ctx: ChannelHandlerContext) {
         func requestStreamInitializer(channel: Channel, streamID: HTTP2StreamID) -> EventLoopFuture<Void> {
             return channel.pipeline.addHandlers([HTTP2ToHTTP1ClientCodec(streamID: streamID, httpProtocol: .https),
-                                                 SendAGETRequestHandler(host: self.host,
-                                                                        uri: self.uri,
-                                                                        responseReceivedPromise: self.responseReceivedPromise)],
+                                                 SendRequestHandler(host: self.host,
+                                                                    request: .init(method: .GET,
+                                                                                   target: self.uri,
+                                                                                   version: .init(major: 2, minor: 0),
+                                                                                   headers: [],
+                                                                                   body: nil,
+                                                                                   trailers: nil),
+                                                                    responseReceivedPromise: self.responseReceivedPromise)],
                                                 first: false)
         }
 
