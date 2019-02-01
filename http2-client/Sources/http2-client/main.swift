@@ -62,7 +62,7 @@ final class SendRequestHandler: ChannelInboundHandler {
     }
 }
 
-/// Creates a new HTTP/2 stream when our channel is active and adds the `SendAGETRequestHandler` so a request is sent.
+/// Creates a new HTTP/2 stream when our channel is active and adds the `SendRequestHandler` so a request is sent.
 final class CreateRequestStreamHandler: ChannelInboundHandler {
     typealias InboundIn = Never
     
