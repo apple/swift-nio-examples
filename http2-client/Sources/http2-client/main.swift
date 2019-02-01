@@ -62,7 +62,7 @@ final class SendRequestHandler: ChannelInboundHandler {
     }
 }
 
-/// Creates a new HTTP/2 stream when our channel is active and adds the `SendAGETRequestHandler` so a request is sent.
+/// Creates a new HTTP/2 stream when our channel is active and adds the `SendRequestHandler` so a request is sent.
 final class CreateRequestStreamHandler: ChannelInboundHandler {
     typealias InboundIn = Never
     
@@ -117,7 +117,7 @@ let sslContext = try SSLContext(configuration: TLSConfiguration.forClient(applic
 let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
 let responseReceivedPromise: EventLoopPromise<[HTTPClientResponsePart]> = group.next().newPromise()
 var verbose = false
-var args = CommandLine.arguments.dropFirst(0)
+var args = ArraySlice(CommandLine.arguments)
 
 func usage() {
     print("Usage: http2-client [-v] https://host:port/path")
@@ -155,12 +155,9 @@ let port = url.port ?? 443
 let bootstrap = ClientBootstrap(group: group)
     .channelOption(ChannelOptions.socket(IPPROTO_TCP, TCP_NODELAY), value: 1)
     .channelInitializer { channel in
-        let myEventLoop = channel.eventLoop
         let sslHandler = try! OpenSSLClientHandler(context: sslContext, serverHostname: host)
         let http2Parser = HTTP2Parser(mode: .client)
-        let http2Multiplexer = HTTP2StreamMultiplexer { (channel, streamID) -> EventLoopFuture<Void> in
-            return myEventLoop.newSucceededFuture(result: ())
-        }
+        let http2Multiplexer = HTTP2StreamMultiplexer()
         return channel.pipeline.addHandlers([sslHandler,
                                              http2Parser,
                                              http2Multiplexer,
@@ -169,9 +166,7 @@ let bootstrap = ClientBootstrap(group: group)
                                                                         multiplexer: http2Multiplexer,
                                                                         responseReceivedPromise: responseReceivedPromise),
                                              CollectErrorsAndCloseStreamHandler(responseReceivedPromise: responseReceivedPromise)],
-                                            first: false).map {
-
-    }
+                                            first: false).map { return () }
 }
 
 defer {
