@@ -155,12 +155,9 @@ let port = url.port ?? 443
 let bootstrap = ClientBootstrap(group: group)
     .channelOption(ChannelOptions.socket(IPPROTO_TCP, TCP_NODELAY), value: 1)
     .channelInitializer { channel in
-        let myEventLoop = channel.eventLoop
         let sslHandler = try! OpenSSLClientHandler(context: sslContext, serverHostname: host)
         let http2Parser = HTTP2Parser(mode: .client)
-        let http2Multiplexer = HTTP2StreamMultiplexer { (channel, streamID) -> EventLoopFuture<Void> in
-            return myEventLoop.newSucceededFuture(result: ())
-        }
+        let http2Multiplexer = HTTP2StreamMultiplexer()
         return channel.pipeline.addHandlers([sslHandler,
                                              http2Parser,
                                              http2Multiplexer,
