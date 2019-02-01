@@ -117,7 +117,7 @@ let sslContext = try SSLContext(configuration: TLSConfiguration.forClient(applic
 let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
 let responseReceivedPromise: EventLoopPromise<[HTTPClientResponsePart]> = group.next().newPromise()
 var verbose = false
-var args = CommandLine.arguments.dropFirst(0)
+var args = ArraySlice(CommandLine.arguments)
 
 func usage() {
     print("Usage: http2-client [-v] https://host:port/path")
