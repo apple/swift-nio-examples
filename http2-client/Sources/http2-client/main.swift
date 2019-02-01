@@ -166,9 +166,7 @@ let bootstrap = ClientBootstrap(group: group)
                                                                         multiplexer: http2Multiplexer,
                                                                         responseReceivedPromise: responseReceivedPromise),
                                              CollectErrorsAndCloseStreamHandler(responseReceivedPromise: responseReceivedPromise)],
-                                            first: false).map {
-
-    }
+                                            first: false).map { return () }
 }
 
 defer {
