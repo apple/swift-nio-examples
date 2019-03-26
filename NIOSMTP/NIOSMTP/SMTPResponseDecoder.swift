@@ -18,7 +18,7 @@ final class SMTPResponseDecoder: ChannelInboundHandler {
     typealias InboundIn = ByteBuffer
     typealias InboundOut = SMTPResponse
     
-    func channelRead(ctx: ChannelHandlerContext, data: NIOAny) {
+    func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         var response = self.unwrapInboundIn(data)
         
         if let firstFourBytes = response.readString(length: 4), let code = Int(firstFourBytes.dropLast()) {
@@ -31,14 +31,14 @@ final class SMTPResponseDecoder: ChannelInboundHandler {
             case ("2", " "),
                  ("3", " "):
                 let parsedMessage = SMTPResponse.ok(code, remainder)
-                ctx.fireChannelRead(self.wrapInboundOut(parsedMessage))
+                context.fireChannelRead(self.wrapInboundOut(parsedMessage))
             case (_, "-"):
                 () // intermediate message, ignore
             default:
-                ctx.fireChannelRead(self.wrapInboundOut(.error(firstFourBytes+remainder)))
+                context.fireChannelRead(self.wrapInboundOut(.error(firstFourBytes+remainder)))
             }
         } else {
-            ctx.fireErrorCaught(SMTPResponseDecoderError.malformedMessage)
+            context.fireErrorCaught(SMTPResponseDecoderError.malformedMessage)
         }
     }
 }

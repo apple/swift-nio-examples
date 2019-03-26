@@ -6,7 +6,7 @@ target 'NIOSMTP' do
   use_frameworks!
 
   # Pods for NIOSMTP
-  pod 'SwiftNIO'
-  pod 'SwiftNIOTransportServices'
+  pod 'SwiftNIO', '~> 2.0'
+  pod 'SwiftNIOTransportServices', '~> 1.0'
 
 end

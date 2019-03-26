@@ -19,42 +19,42 @@ import Foundation
 final class SMTPRequestEncoder: MessageToByteEncoder {
     typealias OutboundIn = SMTPRequest
     
-    func encode(ctx: ChannelHandlerContext, data: SMTPRequest, out: inout ByteBuffer) throws {
+    func encode(data: SMTPRequest, out: inout ByteBuffer) throws {
         switch data {
         case .sayHello(serverName: let server):
-            out.write(string: "HELO \(server)")
+            out.writeString("HELO \(server)")
         case .mailFrom(let from):
-            out.write(string: "MAIL FROM:<\(from)>")
+            out.writeString("MAIL FROM:<\(from)>")
         case .recipient(let rcpt):
-            out.write(string: "RCPT TO:<\(rcpt)>")
+            out.writeString("RCPT TO:<\(rcpt)>")
         case .data:
-            out.write(string: "DATA")
+            out.writeString("DATA")
         case .transferData(let email):
             let date = Date()
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss Z"
             let dateFormatted = dateFormatter.string(from: date)
 
-            out.write(string: "From: \(formatMIME(emailAddress: email.senderEmail, name: email.senderName))\r\n")
-            out.write(string: "To: \(formatMIME(emailAddress: email.recipientEmail, name: email.recipientName))\r\n")
-            out.write(string: "Date: \(dateFormatted)\r\n")
-            out.write(string: "Message-ID: <\(date.timeIntervalSince1970)\(email.senderEmail.drop { $0 != "@" })>\r\n")
-            out.write(string: "Subject: \(email.subject)\r\n\r\n")
-            out.write(string: email.body)
-            out.write(string: "\r\n.")
+            out.writeString("From: \(formatMIME(emailAddress: email.senderEmail, name: email.senderName))\r\n")
+            out.writeString("To: \(formatMIME(emailAddress: email.recipientEmail, name: email.recipientName))\r\n")
+            out.writeString("Date: \(dateFormatted)\r\n")
+            out.writeString("Message-ID: <\(date.timeIntervalSince1970)\(email.senderEmail.drop { $0 != "@" })>\r\n")
+            out.writeString("Subject: \(email.subject)\r\n\r\n")
+            out.writeString(email.body)
+            out.writeString("\r\n.")
         case .quit:
-            out.write(string: "QUIT")
+            out.writeString("QUIT")
         case .beginAuthentication:
-            out.write(string: "AUTH LOGIN")
+            out.writeString("AUTH LOGIN")
         case .authUser(let user):
             let userData = Data(user.utf8)
-            out.write(bytes: userData.base64EncodedData())
+            out.writeBytes(userData.base64EncodedData())
         case .authPassword(let password):
             let passwordData = Data(password.utf8)
-            out.write(bytes: passwordData.base64EncodedData())
+            out.writeBytes(passwordData.base64EncodedData())
         }
         
-        out.write(string: "\r\n")
+        out.writeString("\r\n")
     }
     
     func formatMIME(emailAddress: String, name: String?) -> String {

@@ -27,19 +27,19 @@ final class PrintEverythingHandler: ChannelDuplexHandler {
         self.handler = handler
     }
 
-    func channelRead(ctx: ChannelHandlerContext, data: NIOAny) {
+    func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         let buffer = self.unwrapInboundIn(data)
         self.handler("☁️ \(String(decoding: buffer.readableBytesView, as: UTF8.self))")
-        ctx.fireChannelRead(data)
+        context.fireChannelRead(data)
     }
     
-    func write(ctx: ChannelHandlerContext, data: NIOAny, promise: EventLoopPromise<Void>?) {
+    func write(context: ChannelHandlerContext, data: NIOAny, promise: EventLoopPromise<Void>?) {
         let buffer = self.unwrapOutboundIn(data)
         if buffer.readableBytesView.starts(with: Data(NIOTSConnectionBootstrap.config.password.utf8).base64EncodedData()) {
             self.handler("📱 <password hidden>\r\n")
         } else {
             self.handler("📱 \(String(decoding: buffer.readableBytesView, as: UTF8.self))")
         }
-        ctx.write(data, promise: promise)
+        context.write(data, promise: promise)
     }
 }

@@ -15,7 +15,7 @@
 import NIO
 import NIOHTTP1
 import NIOHTTP2
-import NIOOpenSSL
+import NIOSSL
 import Foundation
 
 /// Fires off a GET request when our stream is active and collects all response parts into a promise.
@@ -36,8 +36,8 @@ final class SendRequestHandler: ChannelInboundHandler {
         self.compoundRequest = request
     }
     
-    func channelActive(ctx: ChannelHandlerContext) {
-        assert(ctx.channel.parent!.isActive)
+    func channelActive(context: ChannelHandlerContext) {
+        assert(context.channel.parent!.isActive)
         var headers = HTTPHeaders(self.compoundRequest.headers)
         headers.add(name: "Host", value: self.host)
         var reqHead = HTTPRequestHead(version: self.compoundRequest.version,
@@ -45,54 +45,20 @@ final class SendRequestHandler: ChannelInboundHandler {
                                       uri: self.compoundRequest.target)
         reqHead.headers = headers
         if let body = self.compoundRequest.body {
-            var buffer = ctx.channel.allocator.buffer(capacity: body.count)
-            buffer.write(bytes: body)
-            ctx.write(self.wrapOutboundOut(.body(.byteBuffer(buffer))), promise: nil)
+            var buffer = context.channel.allocator.buffer(capacity: body.count)
+            buffer.writeBytes(body)
+            context.write(self.wrapOutboundOut(.body(.byteBuffer(buffer))), promise: nil)
         }
-        ctx.write(self.wrapOutboundOut(.head(reqHead)), promise: nil)
-        ctx.writeAndFlush(self.wrapOutboundOut(.end(self.compoundRequest.trailers.map(HTTPHeaders.init))), promise: nil)
+        context.write(self.wrapOutboundOut(.head(reqHead)), promise: nil)
+        context.writeAndFlush(self.wrapOutboundOut(.end(self.compoundRequest.trailers.map(HTTPHeaders.init))), promise: nil)
     }
     
-    func channelRead(ctx: ChannelHandlerContext, data: NIOAny) {
+    func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         let resPart = self.unwrapInboundIn(data)
         self.responsePartAccumulator.append(resPart)
         if case .end = resPart {
-            self.responseReceivedPromise.succeed(result: self.responsePartAccumulator)
+            self.responseReceivedPromise.succeed(self.responsePartAccumulator)
         }
-    }
-}
-
-/// Creates a new HTTP/2 stream when our channel is active and adds the `SendRequestHandler` so a request is sent.
-final class CreateRequestStreamHandler: ChannelInboundHandler {
-    typealias InboundIn = Never
-    
-    private let multiplexer: HTTP2StreamMultiplexer
-    private let responseReceivedPromise: EventLoopPromise<[HTTPClientResponsePart]>
-    private let host: String
-    private let uri: String
-    
-    init(host: String, uri: String, multiplexer: HTTP2StreamMultiplexer, responseReceivedPromise: EventLoopPromise<[HTTPClientResponsePart]>) {
-        self.multiplexer = multiplexer
-        self.responseReceivedPromise = responseReceivedPromise
-        self.host = host
-        self.uri = uri
-    }
-    
-    func channelActive(ctx: ChannelHandlerContext) {
-        func requestStreamInitializer(channel: Channel, streamID: HTTP2StreamID) -> EventLoopFuture<Void> {
-            return channel.pipeline.addHandlers([HTTP2ToHTTP1ClientCodec(streamID: streamID, httpProtocol: .https),
-                                                 SendRequestHandler(host: self.host,
-                                                                    request: .init(method: .GET,
-                                                                                   target: self.uri,
-                                                                                   version: .init(major: 2, minor: 0),
-                                                                                   headers: [],
-                                                                                   body: nil,
-                                                                                   trailers: nil),
-                                                                    responseReceivedPromise: self.responseReceivedPromise)],
-                                                first: false)
-        }
-
-        self.multiplexer.createStreamChannel(promise: nil, requestStreamInitializer)
     }
 }
 
@@ -106,16 +72,16 @@ final class CollectErrorsAndCloseStreamHandler: ChannelInboundHandler {
         self.responseReceivedPromise = responseReceivedPromise
     }
     
-    func errorCaught(ctx: ChannelHandlerContext, error: Error) {
-        self.responseReceivedPromise.fail(error: error)
-        ctx.close(promise: nil)
+    func errorCaught(context: ChannelHandlerContext, error: Error) {
+        self.responseReceivedPromise.fail(error)
+        context.close(promise: nil)
     }
 }
 
-let sslContext = try SSLContext(configuration: TLSConfiguration.forClient(applicationProtocols: ["h2"]))
+let sslContext = try NIOSSLContext(configuration: TLSConfiguration.forClient(applicationProtocols: ["h2"]))
 
 let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
-let responseReceivedPromise: EventLoopPromise<[HTTPClientResponsePart]> = group.next().newPromise()
+let responseReceivedPromise = group.next().makePromise(of: [HTTPClientResponsePart].self)
 var verbose = false
 var args = ArraySlice(CommandLine.arguments)
 
@@ -155,19 +121,31 @@ let port = url.port ?? 443
 let bootstrap = ClientBootstrap(group: group)
     .channelOption(ChannelOptions.socket(IPPROTO_TCP, TCP_NODELAY), value: 1)
     .channelInitializer { channel in
-        let sslHandler = try! OpenSSLClientHandler(context: sslContext, serverHostname: host)
-        let http2Parser = HTTP2Parser(mode: .client)
-        let http2Multiplexer = HTTP2StreamMultiplexer()
-        return channel.pipeline.addHandlers([sslHandler,
-                                             http2Parser,
-                                             http2Multiplexer,
-                                             CreateRequestStreamHandler(host: host,
-                                                                        uri: uri,
-                                                                        multiplexer: http2Multiplexer,
-                                                                        responseReceivedPromise: responseReceivedPromise),
-                                             CollectErrorsAndCloseStreamHandler(responseReceivedPromise: responseReceivedPromise)],
-                                            first: false).map { return () }
-}
+        channel.pipeline.addHandler(try! NIOSSLClientHandler(context: sslContext, serverHostname: host)).flatMap {
+            channel.configureHTTP2Pipeline(mode: .client) { (channel, id) -> EventLoopFuture<Void> in
+                print("channel \(channel) open with id \(id)")
+                return channel.eventLoop.makeSucceededFuture(())
+            }
+        }.flatMap { http2Multiplexer -> EventLoopFuture<Void> in
+            func requestStreamInitializer(channel: Channel, streamID: HTTP2StreamID) -> EventLoopFuture<Void> {
+                return channel.pipeline.addHandlers([HTTP2ToHTTP1ClientCodec(streamID: streamID, httpProtocol: .https),
+                                                     SendRequestHandler(host: host,
+                                                                        request: .init(method: .GET,
+                                                                                       target: uri,
+                                                                                       version: .init(major: 2, minor: 0),
+                                                                                       headers: [],
+                                                                                       body: nil,
+                                                                                       trailers: nil),
+                                                                        responseReceivedPromise: responseReceivedPromise)],
+                                                    position: .last)
+            }
+
+            let errorHandler = CollectErrorsAndCloseStreamHandler(responseReceivedPromise: responseReceivedPromise)
+            return  channel.pipeline.addHandler(errorHandler).map {
+                http2Multiplexer.createStreamChannel(promise: nil, requestStreamInitializer)
+            }
+        }
+    }
 
 defer {
     try! group.syncShutdownGracefully()
@@ -199,7 +177,7 @@ do {
                 }
             }
         }
-    }.mapIfError { error in
+    }.recover { error in
         print("ERROR: \(error)")
         exit(1)
     }.wait()

@@ -46,15 +46,15 @@ final class SendEmailHandler: ChannelInboundHandler {
         self.serverConfiguration = configuration
     }
     
-    func send(ctx: ChannelHandlerContext, command: SMTPRequest) {
-        ctx.writeAndFlush(self.wrapOutboundOut(command)).cascadeFailure(promise: self.allDonePromise)
+    func send(context: ChannelHandlerContext, command: SMTPRequest) {
+        context.writeAndFlush(self.wrapOutboundOut(command)).cascadeFailure(to: self.allDonePromise)
     }
     
-    func channelRead(ctx: ChannelHandlerContext, data: NIOAny) {
+    func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         let result = self.unwrapInboundIn(data)
         switch result {
         case .error(let message):
-            self.allDonePromise.fail(error: NSError(domain: "sending email", code: 1, userInfo: ["reason": message]))
+            self.allDonePromise.fail(NSError(domain: "sending email", code: 1, userInfo: ["reason": message]))
             return
         case .ok:
             () // cool
@@ -62,34 +62,34 @@ final class SendEmailHandler: ChannelInboundHandler {
 
         switch self.currentlyWaitingFor {
         case .initialMessageFromServer:
-            self.send(ctx: ctx, command: .sayHello(serverName: self.serverConfiguration.hostname))
+            self.send(context: context, command: .sayHello(serverName: self.serverConfiguration.hostname))
             self.currentlyWaitingFor = .okForOurHello
         case .okForOurHello:
-            self.send(ctx: ctx, command: .beginAuthentication)
+            self.send(context: context, command: .beginAuthentication)
             self.currentlyWaitingFor = .okForOurAuthBegin
         case .okForOurAuthBegin:
-            self.send(ctx: ctx, command: .authUser(self.serverConfiguration.username))
+            self.send(context: context, command: .authUser(self.serverConfiguration.username))
             self.currentlyWaitingFor = .okAfterUsername
         case .okAfterUsername:
-            self.send(ctx: ctx, command: .authPassword(self.serverConfiguration.password))
+            self.send(context: context, command: .authPassword(self.serverConfiguration.password))
             self.currentlyWaitingFor = .okAfterPassword
         case .okAfterPassword:
-            self.send(ctx: ctx, command: .mailFrom(self.email.senderEmail))
+            self.send(context: context, command: .mailFrom(self.email.senderEmail))
             self.currentlyWaitingFor = .okAfterMailFrom
         case .okAfterMailFrom:
-            self.send(ctx: ctx, command: .recipient(self.email.recipientEmail))
+            self.send(context: context, command: .recipient(self.email.recipientEmail))
             self.currentlyWaitingFor = .okAfterRecipient
         case .okAfterRecipient:
-            self.send(ctx: ctx, command: .data)
+            self.send(context: context, command: .data)
             self.currentlyWaitingFor = .okAfterDataCommand
         case .okAfterDataCommand:
-            self.send(ctx: ctx, command: .transferData(email))
+            self.send(context: context, command: .transferData(email))
             self.currentlyWaitingFor = .okAfterMailData
         case .okAfterMailData:
-            self.send(ctx: ctx, command: .quit)
+            self.send(context: context, command: .quit)
             self.currentlyWaitingFor = .okAfterQuit
         case .okAfterQuit:
-            ctx.close(promise: self.allDonePromise)
+            context.close(promise: self.allDonePromise)
             self.currentlyWaitingFor = .nothing
         case .nothing:
             () // ignoring more data whilst quit (it's odd though)
