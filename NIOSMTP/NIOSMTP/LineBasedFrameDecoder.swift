@@ -28,7 +28,6 @@ public enum NIOExtrasErrors {
     }
 }
 
-
 /// A decoder that splits incoming `ByteBuffer`s around line end
 /// character(s) (`'\n'` or `'\r\n'`).
 ///
@@ -46,25 +45,31 @@ public enum NIOExtrasErrors {
 ///     +-----+-----+-----+
 ///
 public class LineBasedFrameDecoder: ByteToMessageDecoder {
-    
     public typealias InboundIn = ByteBuffer
     public typealias InboundOut = ByteBuffer
     public var cumulationBuffer: ByteBuffer?
     // keep track of the last scan offset from the buffer's reader index (if we didn't find the delimiter)
     private var lastScanOffset = 0
-    private var handledLeftovers = false
     
     public init() { }
     
-    public func decode(ctx: ChannelHandlerContext, buffer: inout ByteBuffer) throws -> DecodingState {
+    public func decode(context: ChannelHandlerContext, buffer: inout ByteBuffer) throws -> DecodingState {
         if let frame = try self.findNextFrame(buffer: &buffer) {
-            ctx.fireChannelRead(wrapInboundOut(frame))
+            context.fireChannelRead(wrapInboundOut(frame))
             return .continue
         } else {
             return .needMoreData
         }
     }
     
+    public func decodeLast(context: ChannelHandlerContext, buffer: inout ByteBuffer, seenEOF: Bool) throws -> DecodingState {
+        while try self.decode(context: context, buffer: &buffer) == .continue {}
+        if buffer.readableBytes > 0 {
+            context.fireErrorCaught(NIOExtrasErrors.LeftOverBytesError(leftOverBytes: buffer))
+        }
+        return .needMoreData
+    }
+
     private func findNextFrame(buffer: inout ByteBuffer) throws -> ByteBuffer? {
         let view = buffer.readableBytesView.dropFirst(self.lastScanOffset)
         // look for the delimiter
@@ -82,27 +87,4 @@ public class LineBasedFrameDecoder: ByteToMessageDecoder {
         self.lastScanOffset = buffer.readableBytes
         return nil
     }
-    
-    public func handlerRemoved(ctx: ChannelHandlerContext) {
-        self.handleLeftOverBytes(ctx: ctx)
-    }
-    
-    public func channelInactive(ctx: ChannelHandlerContext) {
-        self.handleLeftOverBytes(ctx: ctx)
-    }
-    
-    private func handleLeftOverBytes(ctx: ChannelHandlerContext) {
-        if let buffer = self.cumulationBuffer, buffer.readableBytes > 0 && !self.handledLeftovers {
-            self.handledLeftovers = true
-            ctx.fireErrorCaught(NIOExtrasErrors.LeftOverBytesError(leftOverBytes: buffer))
-        }
-    }
 }
-
-#if !swift(>=4.2)
-private extension ByteBufferView {
-func firstIndex(of element: UInt8) -> Int? {
-return self.index(of: element)
-}
-}
-#endif

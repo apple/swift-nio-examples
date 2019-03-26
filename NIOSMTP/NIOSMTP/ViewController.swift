@@ -22,25 +22,25 @@ func sendEmail(_ email: Email,
                group: NIOTSEventLoopGroup,
                communicationHandler: @escaping (String) -> Void,
                _ handler: @escaping (Error?) -> Void) {
-    let emailSentPromise: EventLoopPromise<Void> = group.next().newPromise()
+    let emailSentPromise: EventLoopPromise<Void> = group.next().makePromise()
     let configuration = NIOTSConnectionBootstrap.config
 
     let connection = NIOTSConnectionBootstrap(group: group)
         .channelInitializer { channel in
             channel.pipeline.addHandlers([
                 PrintEverythingHandler(handler: communicationHandler),
-                LineBasedFrameDecoder(),
+                ByteToMessageHandler(LineBasedFrameDecoder()),
                 SMTPResponseDecoder(),
-                SMTPRequestEncoder(),
+                MessageToByteHandler(SMTPRequestEncoder()),
                 SendEmailHandler(configuration: configuration,
                                  email: email,
                                  allDonePromise: emailSentPromise)
-                ], first: false)
+                ], position: .last)
         }
         .tlsConfig()
         .connect(host: configuration.hostname,
                  port: configuration.port)
-    connection.cascadeFailure(promise: emailSentPromise)
+    connection.cascadeFailure(to: emailSentPromise)
     emailSentPromise.futureResult.map {
         connection.whenSuccess { $0.close(promise: nil) }
         handler(nil)
