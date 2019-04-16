@@ -8,5 +8,6 @@ target 'NIOSMTP' do
   # Pods for NIOSMTP
   pod 'SwiftNIO', '~> 2.0'
   pod 'SwiftNIOTransportServices', '~> 1.0'
+  pod 'SwiftNIOExtras', '~> 1.0'
 
 end
