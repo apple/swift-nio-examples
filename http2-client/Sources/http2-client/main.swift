@@ -15,8 +15,10 @@
 import NIO
 import NIOHTTP1
 import NIOHTTP2
+import NIOTLS
 import NIOSSL
 import Foundation
+import NIOExtras
 
 /// Fires off a GET request when our stream is active and collects all response parts into a promise.
 ///
@@ -62,6 +64,48 @@ final class SendRequestHandler: ChannelInboundHandler {
     }
 }
 
+final class HeuristicForServerTooOldToSpeakGoodProtocolsHandler: ChannelInboundHandler {
+    typealias InboundIn = ByteBuffer
+    typealias InboundOut = ByteBuffer
+
+    enum Error: Swift.Error {
+        case serverDoesNotSpeakHTTP2
+    }
+
+    var bytesSeen = 0
+
+    func channelRead(context: ChannelHandlerContext, data: NIOAny) {
+        let buffer = self.unwrapInboundIn(data)
+        bytesSeen += buffer.readableBytes
+        context.fireChannelRead(data)
+    }
+
+    func userInboundEventTriggered(context: ChannelHandlerContext, event: Any) {
+        if self.bytesSeen == 0 {
+            if case let event = event as? TLSUserEvent, event == .shutdownCompleted || event == .handshakeCompleted(negotiatedProtocol: nil) {
+                context.fireErrorCaught(Error.serverDoesNotSpeakHTTP2)
+                return
+            }
+        }
+        context.fireUserInboundEventTriggered(event)
+    }
+
+    func errorCaught(context: ChannelHandlerContext, error: Swift.Error) {
+        if self.bytesSeen == 0 {
+            switch error {
+            case NIOSSLError.uncleanShutdown,
+                 is IOError where (error as! IOError).errnoCode == ECONNRESET:
+                // this is very highly likely a server doesn't speak HTTP/2 problem
+                context.fireErrorCaught(Error.serverDoesNotSpeakHTTP2)
+                return
+            default:
+                ()
+            }
+        }
+        context.fireErrorCaught(error)
+    }
+}
+
 /// Collects any errors in the root stream, forwards them to a promise and closes the whole network connection.
 final class CollectErrorsAndCloseStreamHandler: ChannelInboundHandler {
     typealias InboundIn = Never
@@ -71,7 +115,7 @@ final class CollectErrorsAndCloseStreamHandler: ChannelInboundHandler {
     init(responseReceivedPromise: EventLoopPromise<[HTTPClientResponsePart]>) {
         self.responseReceivedPromise = responseReceivedPromise
     }
-    
+
     func errorCaught(context: ChannelHandlerContext, error: Error) {
         self.responseReceivedPromise.fail(error)
         context.close(promise: nil)
@@ -121,7 +165,8 @@ let port = url.port ?? 443
 let bootstrap = ClientBootstrap(group: group)
     .channelOption(ChannelOptions.socket(IPPROTO_TCP, TCP_NODELAY), value: 1)
     .channelInitializer { channel in
-        channel.pipeline.addHandler(try! NIOSSLClientHandler(context: sslContext, serverHostname: host)).flatMap {
+        let sslHandler = try! NIOSSLClientHandler(context: sslContext, serverHostname: host)
+        return channel.pipeline.addHandler(sslHandler).flatMap {
             channel.configureHTTP2Pipeline(mode: .client) { (channel, id) -> EventLoopFuture<Void> in
                 print("channel \(channel) open with id \(id)")
                 return channel.eventLoop.makeSucceededFuture(())
@@ -140,8 +185,11 @@ let bootstrap = ClientBootstrap(group: group)
                                                     position: .last)
             }
 
+            let heuristics = HeuristicForServerTooOldToSpeakGoodProtocolsHandler()
             let errorHandler = CollectErrorsAndCloseStreamHandler(responseReceivedPromise: responseReceivedPromise)
-            return  channel.pipeline.addHandler(errorHandler).map {
+            return channel.pipeline.addHandler(heuristics, position: .after(sslHandler)).flatMap {
+                channel.pipeline.addHandler(errorHandler)
+            }.map { () -> Void in
                 http2Multiplexer.createStreamChannel(promise: nil, requestStreamInitializer)
             }
         }
@@ -154,7 +202,7 @@ defer {
 do {
     let channel = try bootstrap.connect(host: host, port: port).wait()
     if verbose {
-        print("* Connected to \(host) (\(channel.remoteAddress!)")
+        print("* Connected to \(host) (\(channel.remoteAddress!))")
     }
     try! responseReceivedPromise.futureResult.map { responseParts in
         for part in responseParts {
