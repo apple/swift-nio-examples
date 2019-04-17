@@ -14,6 +14,7 @@
 
 import UIKit
 import NIO
+import NIOExtras
 import NIOTransportServices
 
 import Network

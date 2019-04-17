@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 51;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -15,7 +15,6 @@
 		8FBA256221270ADC0034D800 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8FBA256021270ADC0034D800 /* LaunchScreen.storyboard */; };
 		8FBA257821270EEA0034D800 /* DataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FBA257721270EEA0034D800 /* DataModel.swift */; };
 		8FBA257C212720680034D800 /* SendEmailHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FBA257B212720680034D800 /* SendEmailHandler.swift */; };
-		8FBA257E212725D50034D800 /* LineBasedFrameDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FBA257D212725D50034D800 /* LineBasedFrameDecoder.swift */; };
 		8FBA25802127269E0034D800 /* SMTPResponseDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FBA257F2127269E0034D800 /* SMTPResponseDecoder.swift */; };
 		8FBA258221274C490034D800 /* SMTPRequestEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FBA258121274C490034D800 /* SMTPRequestEncoder.swift */; };
 		8FBA25842127584C0034D800 /* PrintEverythingHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FBA25832127584C0034D800 /* PrintEverythingHandler.swift */; };
@@ -35,7 +34,6 @@
 		8FBA256321270ADC0034D800 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8FBA257721270EEA0034D800 /* DataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataModel.swift; sourceTree = "<group>"; };
 		8FBA257B212720680034D800 /* SendEmailHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SendEmailHandler.swift; sourceTree = "<group>"; };
-		8FBA257D212725D50034D800 /* LineBasedFrameDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineBasedFrameDecoder.swift; sourceTree = "<group>"; };
 		8FBA257F2127269E0034D800 /* SMTPResponseDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SMTPResponseDecoder.swift; sourceTree = "<group>"; };
 		8FBA258121274C490034D800 /* SMTPRequestEncoder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SMTPRequestEncoder.swift; sourceTree = "<group>"; };
 		8FBA25832127584C0034D800 /* PrintEverythingHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrintEverythingHandler.swift; sourceTree = "<group>"; };
@@ -106,7 +104,6 @@
 				8FBA256021270ADC0034D800 /* LaunchScreen.storyboard */,
 				8FBA256321270ADC0034D800 /* Info.plist */,
 				8FBA255E21270ADC0034D800 /* Assets.xcassets */,
-				8FBA257D212725D50034D800 /* LineBasedFrameDecoder.swift */,
 				8FBA25832127584C0034D800 /* PrintEverythingHandler.swift */,
 			);
 			name = "boring stuff";
@@ -237,7 +234,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				8FBA258221274C490034D800 /* SMTPRequestEncoder.swift in Sources */,
-				8FBA257E212725D50034D800 /* LineBasedFrameDecoder.swift in Sources */,
 				8FBA255A21270ADB0034D800 /* ViewController.swift in Sources */,
 				8F882F7E2150078600943C68 /* Configuration.swift in Sources */,
 				8FBA257C212720680034D800 /* SendEmailHandler.swift in Sources */,
