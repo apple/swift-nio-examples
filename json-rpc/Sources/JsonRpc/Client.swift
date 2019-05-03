@@ -2,11 +2,11 @@ import Foundation
 import NIO
 
 public final class TCPClient {
-    public let group: EventLoopGroup
+    public let group: MultiThreadedEventLoopGroup
     public let config: Config
     private var channel: Channel?
 
-    public init(group: EventLoopGroup, config: Config = Config()) {
+    public init(group: MultiThreadedEventLoopGroup, config: Config = Config()) {
         self.group = group
         self.config = config
         self.channel = nil
