@@ -2,12 +2,12 @@ import Foundation
 import NIO
 
 public final class TCPServer {
-    private let group: EventLoopGroup
+    private let group: MultiThreadedEventLoopGroup
     private let config: Config
     private var channel: Channel?
     private let closure: RPCClosure
 
-    public init(group: EventLoopGroup, config: Config = Config(), closure: @escaping RPCClosure) {
+    public init(group: MultiThreadedEventLoopGroup, config: Config = Config(), closure: @escaping RPCClosure) {
         self.group = group
         self.config = config
         self.closure = closure
