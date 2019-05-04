@@ -124,7 +124,7 @@ private class Handler: ChannelInboundHandler {
             print("client", remoteAddress, "error", error)
         }
         switch error {
-        case CodecError.badFraming, CodecError.badJson:
+        case CodecError.badFraming, CodecError.badJSON:
             let response = JSONResponse(id: "unknown", errorCode: .parseError, error: error)
             context.channel.writeAndFlush(self.wrapOutboundOut(response), promise: nil)
         case CodecError.requestTooLarge:

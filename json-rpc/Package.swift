@@ -4,11 +4,11 @@
 import PackageDescription
 
 var targets: [PackageDescription.Target] = [
-    .target(name: "JSONRPC", dependencies: ["NIO", "NIOFoundationCompat", "NIOExtras"]),
+    .target(name: "JSONRPC", dependencies: ["NIO", "NIOFoundationCompat", "NIOExtras"], path: "Sources/JsonRpc"),
     .target(name: "ServerExample", dependencies: ["JSONRPC"]),
     .target(name: "ClientExample", dependencies: ["JSONRPC"]),
     .target(name: "LightsdDemo", dependencies: ["JSONRPC"]),
-    .testTarget(name: "JSONRPCTests", dependencies: ["JSONRPC"]),
+    .testTarget(name: "JSONRPCTests", dependencies: ["JSONRPC"], path: "Tests/JsonRpcTests"),
 ]
 
 let package = Package(

@@ -14,7 +14,7 @@ internal extension ChannelPipeline {
     func addFramingHandlers(framing: Framing) -> EventLoopFuture<Void> {
         switch framing {
         case .jsonpos:
-            let framingHandler = JsonPosCodec()
+            let framingHandler = JSONPosCodec()
             return self.addHandlers([ByteToMessageHandler(framingHandler),
                                      MessageToByteHandler(framingHandler)])
         case .brute:
@@ -94,7 +94,7 @@ internal final class NewlineEncoder: ByteToMessageDecoder, MessageToByteEncoder 
 // 1 byte: a colon (":", 0x3a), not included in LEN
 // LEN bytes: a JSON/RPC message, no leading or trailing whitespace
 // 1 byte: a newline (0x0a), not included in LEN
-internal final class JsonPosCodec: ByteToMessageDecoder, MessageToByteEncoder {
+internal final class JSONPosCodec: ByteToMessageDecoder, MessageToByteEncoder {
     public typealias InboundIn = ByteBuffer
     public typealias InboundOut = ByteBuffer
     public typealias OutboundIn = ByteBuffer
@@ -236,7 +236,7 @@ internal final class CodableCodec<In, Out>: ChannelInboundHandler, ChannelOutbou
             // call next handler
             context.fireChannelRead(wrapInboundOut(decodable))
         } catch let error as DecodingError {
-            context.fireErrorCaught(CodecError.badJson(error))
+            context.fireErrorCaught(CodecError.badJSON(error))
         } catch {
             context.fireErrorCaught(error)
         }
@@ -252,7 +252,7 @@ internal final class CodableCodec<In, Out>: ChannelInboundHandler, ChannelOutbou
             buffer.writeBytes(data)
             context.write(wrapOutboundOut(buffer), promise: promise)
         } catch let error as EncodingError {
-            promise?.fail(CodecError.badJson(error))
+            promise?.fail(CodecError.badJSON(error))
         } catch {
             promise?.fail(error)
         }
@@ -274,6 +274,6 @@ internal final class HalfCloseOnTimeout: ChannelInboundHandler {
 
 internal enum CodecError: Error {
     case badFraming
-    case badJson(Error)
+    case badJSON(Error)
     case requestTooLarge
 }

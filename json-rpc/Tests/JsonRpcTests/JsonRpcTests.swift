@@ -2,7 +2,7 @@
 import NIO
 import XCTest
 
-final class JsonRpcTests: XCTestCase {
+final class JSONRPCTests: XCTestCase {
     func testSuccess() {
         let expectedMethod = "foo"
         let expectedParams = RPCObject(["bar", "baz"])
