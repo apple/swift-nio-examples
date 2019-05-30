@@ -183,7 +183,7 @@ private class Handler: ChannelInboundHandler, ChannelOutboundHandler {
         let requestId = item.0
         let promise = item.1
         switch error {
-        case CodecError.requestTooLarge, CodecError.badFraming, CodecError.badJson:
+        case CodecError.requestTooLarge, CodecError.badFraming, CodecError.badJSON:
             promise.succeed(JSONResponse(id: requestId, errorCode: .parseError, error: error))
         default:
             promise.fail(error)
