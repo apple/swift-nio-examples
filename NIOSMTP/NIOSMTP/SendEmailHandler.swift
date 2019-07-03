@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 import NIO
+import UIKit
 
 final class SendEmailHandler: ChannelInboundHandler {
     typealias InboundIn = SMTPResponse

@@ -4,8 +4,7 @@ NIOSMTP is a demo app that is a very simple SMTP client and therefore allows you
 
 ## Prerequisites
 
-- Xcode 10+
-- CocoaPods
+- Xcode 11+
 
 ## Caveats
 
