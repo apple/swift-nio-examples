@@ -14,6 +14,7 @@
 
 import NIO
 import NIOTransportServices
+import Foundation
 
 final class PrintEverythingHandler: ChannelDuplexHandler {
     typealias InboundIn = ByteBuffer

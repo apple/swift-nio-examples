@@ -3,10 +3,15 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 51;
+	objectVersion = 52;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0663DECD22CCDA7000B605ED /* NIOExtras in Frameworks */ = {isa = PBXBuildFile; productRef = 0663DECC22CCDA7000B605ED /* NIOExtras */; };
+		0663DED022CCDA8200B605ED /* NIOTransportServices in Frameworks */ = {isa = PBXBuildFile; productRef = 0663DECF22CCDA8200B605ED /* NIOTransportServices */; };
+		0675A13A22CCDFC200EE90B9 /* NIOFoundationCompat in Frameworks */ = {isa = PBXBuildFile; productRef = 0675A13922CCDFC200EE90B9 /* NIOFoundationCompat */; };
+		0675A13C22CCDFC200EE90B9 /* NIOTLS in Frameworks */ = {isa = PBXBuildFile; productRef = 0675A13B22CCDFC200EE90B9 /* NIOTLS */; };
+		0675A13E22CCDFC200EE90B9 /* NIO in Frameworks */ = {isa = PBXBuildFile; productRef = 0675A13D22CCDFC200EE90B9 /* NIO */; };
 		8F882F7E2150078600943C68 /* Configuration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F882F7D2150078600943C68 /* Configuration.swift */; };
 		8FBA255821270ADB0034D800 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FBA255721270ADB0034D800 /* AppDelegate.swift */; };
 		8FBA255A21270ADB0034D800 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FBA255921270ADB0034D800 /* ViewController.swift */; };
@@ -18,12 +23,9 @@
 		8FBA25802127269E0034D800 /* SMTPResponseDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FBA257F2127269E0034D800 /* SMTPResponseDecoder.swift */; };
 		8FBA258221274C490034D800 /* SMTPRequestEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FBA258121274C490034D800 /* SMTPRequestEncoder.swift */; };
 		8FBA25842127584C0034D800 /* PrintEverythingHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FBA25832127584C0034D800 /* PrintEverythingHandler.swift */; };
-		CA820AF2A47266ECF7808186 /* Pods_NIOSMTP.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A7299091C926EC236539337 /* Pods_NIOSMTP.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		71066EF60224B11848DC60B0 /* Pods-NIOSMTP.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-NIOSMTP.release.xcconfig"; path = "Pods/Target Support Files/Pods-NIOSMTP/Pods-NIOSMTP.release.xcconfig"; sourceTree = "<group>"; };
-		7A7299091C926EC236539337 /* Pods_NIOSMTP.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_NIOSMTP.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		8F882F7D2150078600943C68 /* Configuration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Configuration.swift; sourceTree = "<group>"; };
 		8FBA255421270ADB0034D800 /* NIOSMTP.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NIOSMTP.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8FBA255721270ADB0034D800 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -37,10 +39,6 @@
 		8FBA257F2127269E0034D800 /* SMTPResponseDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SMTPResponseDecoder.swift; sourceTree = "<group>"; };
 		8FBA258121274C490034D800 /* SMTPRequestEncoder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SMTPRequestEncoder.swift; sourceTree = "<group>"; };
 		8FBA25832127584C0034D800 /* PrintEverythingHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrintEverythingHandler.swift; sourceTree = "<group>"; };
-		A650E0868BBAFAA95C5AEE76 /* Pods_NIOSMTPTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_NIOSMTPTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		AD429E2A8BFC6C2A51F3C52D /* Pods-NIOSMTP.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-NIOSMTP.debug.xcconfig"; path = "Pods/Target Support Files/Pods-NIOSMTP/Pods-NIOSMTP.debug.xcconfig"; sourceTree = "<group>"; };
-		C1624807F6FBE147A7DB831C /* Pods-NIOSMTPTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-NIOSMTPTests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-NIOSMTPTests/Pods-NIOSMTPTests.debug.xcconfig"; sourceTree = "<group>"; };
-		FA9B394C19FE0C0A149A106D /* Pods-NIOSMTPTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-NIOSMTPTests.release.xcconfig"; path = "Pods/Target Support Files/Pods-NIOSMTPTests/Pods-NIOSMTPTests.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -48,29 +46,22 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CA820AF2A47266ECF7808186 /* Pods_NIOSMTP.framework in Frameworks */,
+				0663DECD22CCDA7000B605ED /* NIOExtras in Frameworks */,
+				0675A13A22CCDFC200EE90B9 /* NIOFoundationCompat in Frameworks */,
+				0663DED022CCDA8200B605ED /* NIOTransportServices in Frameworks */,
+				0675A13C22CCDFC200EE90B9 /* NIOTLS in Frameworks */,
+				0675A13E22CCDFC200EE90B9 /* NIO in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		2787636C3B3541BFB65B7EC5 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				7A7299091C926EC236539337 /* Pods_NIOSMTP.framework */,
-				A650E0868BBAFAA95C5AEE76 /* Pods_NIOSMTPTests.framework */,
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
 		8FBA254B21270ADB0034D800 = {
 			isa = PBXGroup;
 			children = (
 				8FBA255621270ADB0034D800 /* NIOSMTP */,
 				8FBA255521270ADB0034D800 /* Products */,
-				A49BA07016DF547CAD3B42D9 /* Pods */,
-				2787636C3B3541BFB65B7EC5 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -109,17 +100,6 @@
 			name = "boring stuff";
 			sourceTree = "<group>";
 		};
-		A49BA07016DF547CAD3B42D9 /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				AD429E2A8BFC6C2A51F3C52D /* Pods-NIOSMTP.debug.xcconfig */,
-				71066EF60224B11848DC60B0 /* Pods-NIOSMTP.release.xcconfig */,
-				C1624807F6FBE147A7DB831C /* Pods-NIOSMTPTests.debug.xcconfig */,
-				FA9B394C19FE0C0A149A106D /* Pods-NIOSMTPTests.release.xcconfig */,
-			);
-			name = Pods;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -127,17 +107,22 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 8FBA257121270ADD0034D800 /* Build configuration list for PBXNativeTarget "NIOSMTP" */;
 			buildPhases = (
-				A5FF03AC74E9742A4CA6BA02 /* [CP] Check Pods Manifest.lock */,
 				8FBA255021270ADB0034D800 /* Sources */,
 				8FBA255121270ADB0034D800 /* Frameworks */,
 				8FBA255221270ADB0034D800 /* Resources */,
-				75B83FC619B689336880396A /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			name = NIOSMTP;
+			packageProductDependencies = (
+				0663DECC22CCDA7000B605ED /* NIOExtras */,
+				0663DECF22CCDA8200B605ED /* NIOTransportServices */,
+				0675A13922CCDFC200EE90B9 /* NIOFoundationCompat */,
+				0675A13B22CCDFC200EE90B9 /* NIOTLS */,
+				0675A13D22CCDFC200EE90B9 /* NIO */,
+			);
 			productName = NIOSMTP;
 			productReference = 8FBA255421270ADB0034D800 /* NIOSMTP.app */;
 			productType = "com.apple.product-type.application";
@@ -168,6 +153,11 @@
 				Base,
 			);
 			mainGroup = 8FBA254B21270ADB0034D800;
+			packageReferences = (
+				0663DECB22CCDA7000B605ED /* XCRemoteSwiftPackageReference "swift-nio-extras" */,
+				0663DECE22CCDA8200B605ED /* XCRemoteSwiftPackageReference "swift-nio-transport-services" */,
+				0675A13822CCDFC200EE90B9 /* XCRemoteSwiftPackageReference "swift-nio" */,
+			);
 			productRefGroup = 8FBA255521270ADB0034D800 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -189,44 +179,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		75B83FC619B689336880396A /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-NIOSMTP/Pods-NIOSMTP-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-NIOSMTP/Pods-NIOSMTP-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-NIOSMTP/Pods-NIOSMTP-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		A5FF03AC74E9742A4CA6BA02 /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-NIOSMTP-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		8FBA255021270ADB0034D800 /* Sources */ = {
@@ -384,7 +336,6 @@
 		};
 		8FBA257221270ADD0034D800 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = AD429E2A8BFC6C2A51F3C52D /* Pods-NIOSMTP.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
@@ -405,7 +356,6 @@
 		};
 		8FBA257321270ADD0034D800 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 71066EF60224B11848DC60B0 /* Pods-NIOSMTP.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
@@ -446,6 +396,61 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		0663DECB22CCDA7000B605ED /* XCRemoteSwiftPackageReference "swift-nio-extras" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-nio-extras";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.0;
+			};
+		};
+		0663DECE22CCDA8200B605ED /* XCRemoteSwiftPackageReference "swift-nio-transport-services" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-nio-transport-services";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.3;
+			};
+		};
+		0675A13822CCDFC200EE90B9 /* XCRemoteSwiftPackageReference "swift-nio" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-nio";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.3.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		0663DECC22CCDA7000B605ED /* NIOExtras */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0663DECB22CCDA7000B605ED /* XCRemoteSwiftPackageReference "swift-nio-extras" */;
+			productName = NIOExtras;
+		};
+		0663DECF22CCDA8200B605ED /* NIOTransportServices */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0663DECE22CCDA8200B605ED /* XCRemoteSwiftPackageReference "swift-nio-transport-services" */;
+			productName = NIOTransportServices;
+		};
+		0675A13922CCDFC200EE90B9 /* NIOFoundationCompat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0675A13822CCDFC200EE90B9 /* XCRemoteSwiftPackageReference "swift-nio" */;
+			productName = NIOFoundationCompat;
+		};
+		0675A13B22CCDFC200EE90B9 /* NIOTLS */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0675A13822CCDFC200EE90B9 /* XCRemoteSwiftPackageReference "swift-nio" */;
+			productName = NIOTLS;
+		};
+		0675A13D22CCDFC200EE90B9 /* NIO */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0675A13822CCDFC200EE90B9 /* XCRemoteSwiftPackageReference "swift-nio" */;
+			productName = NIO;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 8FBA254C21270ADB0034D800 /* Project object */;
 }
