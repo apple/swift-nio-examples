@@ -14,20 +14,23 @@
 
 import NIOTransportServices
 
-extension NIOTSConnectionBootstrap {
-    static var config: ServerConfiguration {
+struct Configuration {
+    static let shared: Configuration = {
         #warning("You need to configure an SMTP server in code.")
-        // if you don't want to use your real SMTP server, do try out https://mailtrap.io they offer you an
+        // If you don't want to use your real SMTP server, do try out https://mailtrap.io they offer you an
         // SMTP server that can be used for testing for free.
-        return ServerConfiguration(hostname: "you.need.to.configure.your.providers.smtp.server",
-                                   port: 465,
-                                   username: "put your username here",
-                                   password: "and your password goes here")
-    }
+        let serverConfig = ServerConfiguration(hostname: "you.need.to.configure.your.providers.smtp.server",
+                                               port: 465,
+                                               username: "put your username here",
+                                               password: "and your password goes here")
 
-    func tlsConfig() -> NIOTSConnectionBootstrap {
-        // in case you don't want to use TLS which is a bad idea and _WILL SEND YOUR PASSWORD IN PLAIN TEXT_
-        // just `return self`.
-        return self.tlsOptions(.init())
-    }
+        // In case you don't want to use TLS which is a bad idea and _WILL SEND YOUR PASSWORD IN PLAIN TEXT_
+        // just disable this.
+        let useTLS = true
+
+        return Configuration(serverConfig: serverConfig, useTLS: useTLS)
+    }()
+
+    var serverConfig: ServerConfiguration
+    var useTLS: Bool
 }
