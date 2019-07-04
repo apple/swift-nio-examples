@@ -113,7 +113,7 @@ class ViewController: UIViewController {
 /// This protocol is intended as a layer of abstraction over `ClientBootstrap` and
 /// `NIOTSConnectionBootstrap`. We only need a `connect` method since configuration
 /// is done on the concrete type.
-public protocol ClientBootstrapProtocol {
+protocol ClientBootstrapProtocol {
     func connect(host: String, port: Int) -> EventLoopFuture<Channel>
 }
 
@@ -166,7 +166,8 @@ func configureBootstrap(group: EventLoopGroup,
         if Configuration.shared.useTLS {
             do {
                 let sslContext = try NIOSSLContext(configuration: .forClient())
-                let sslHandler = try NIOSSLClientHandler(context: sslContext, serverHostname: nil)
+                let sslHandler = try NIOSSLClientHandler(context: sslContext,
+                                                         serverHostname: Configuration.shared.serverConfig.hostname)
                 handlers.insert(sslHandler, at: 0)
             } catch {
                 return channel.eventLoop.makeFailedFuture(error)
@@ -184,15 +185,15 @@ enum NetworkImplementation {
 
     #if canImport(Network)
     @available(OSX 10.14, iOS 12.0, tvOS 12.0, watchOS 6.0, *)
-    /// Network.framework and NIOTransportServices.
-    case networkFramework
+    /// NIOTransportServices (and Network.framework).
+    case transportServices
     #endif
 
-    /// Return the best implementation available for this platform, that is Network.framework and
-    /// NIOTransportServices when it is available or POSIX and NIO otherwise.
+    /// Return the best implementation available for this platform, that is NIOTransportServices
+    /// when it is available or POSIX and NIO otherwise.
     static var best: NetworkImplementation {
         if #available(OSX 10.14, iOS 12.0, tvOS 12.0, watchOS 6.0, *) {
-            return .networkFramework
+            return .transportServices
         } else {
             return .posix
         }
@@ -207,7 +208,7 @@ enum NetworkImplementation {
 /// - Parameter implementation: The network implementation to use.
 func makeEventLoopGroup(loopCount: Int, implementation: NetworkImplementation) -> EventLoopGroup {
     switch implementation {
-    case .networkFramework:
+    case .transportServices:
         guard #available(OSX 10.14, iOS 12.0, tvOS 12.0, watchOS 6.0, *) else {
             // This is gated by the availability of `.networkFramework` so should never happen.
             fatalError(".networkFramework is being used on an unsupported platform")
