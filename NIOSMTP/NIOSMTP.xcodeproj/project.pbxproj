@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0615A38C22CD143800E230C4 /* NIOSSL in Frameworks */ = {isa = PBXBuildFile; productRef = 0615A38B22CD143800E230C4 /* NIOSSL */; };
 		0663DECD22CCDA7000B605ED /* NIOExtras in Frameworks */ = {isa = PBXBuildFile; productRef = 0663DECC22CCDA7000B605ED /* NIOExtras */; };
 		0663DED022CCDA8200B605ED /* NIOTransportServices in Frameworks */ = {isa = PBXBuildFile; productRef = 0663DECF22CCDA8200B605ED /* NIOTransportServices */; };
 		0675A13A22CCDFC200EE90B9 /* NIOFoundationCompat in Frameworks */ = {isa = PBXBuildFile; productRef = 0675A13922CCDFC200EE90B9 /* NIOFoundationCompat */; };
@@ -48,6 +49,7 @@
 			files = (
 				0663DECD22CCDA7000B605ED /* NIOExtras in Frameworks */,
 				0675A13A22CCDFC200EE90B9 /* NIOFoundationCompat in Frameworks */,
+				0615A38C22CD143800E230C4 /* NIOSSL in Frameworks */,
 				0663DED022CCDA8200B605ED /* NIOTransportServices in Frameworks */,
 				0675A13C22CCDFC200EE90B9 /* NIOTLS in Frameworks */,
 				0675A13E22CCDFC200EE90B9 /* NIO in Frameworks */,
@@ -122,6 +124,7 @@
 				0675A13922CCDFC200EE90B9 /* NIOFoundationCompat */,
 				0675A13B22CCDFC200EE90B9 /* NIOTLS */,
 				0675A13D22CCDFC200EE90B9 /* NIO */,
+				0615A38B22CD143800E230C4 /* NIOSSL */,
 			);
 			productName = NIOSMTP;
 			productReference = 8FBA255421270ADB0034D800 /* NIOSMTP.app */;
@@ -157,6 +160,7 @@
 				0663DECB22CCDA7000B605ED /* XCRemoteSwiftPackageReference "swift-nio-extras" */,
 				0663DECE22CCDA8200B605ED /* XCRemoteSwiftPackageReference "swift-nio-transport-services" */,
 				0675A13822CCDFC200EE90B9 /* XCRemoteSwiftPackageReference "swift-nio" */,
+				0615A38A22CD143800E230C4 /* XCRemoteSwiftPackageReference "swift-nio-ssl" */,
 			);
 			productRefGroup = 8FBA255521270ADB0034D800 /* Products */;
 			projectDirPath = "";
@@ -342,6 +346,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = NIOSMTP/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -362,6 +367,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = NIOSMTP/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -398,6 +404,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		0615A38A22CD143800E230C4 /* XCRemoteSwiftPackageReference "swift-nio-ssl" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-nio-ssl";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.1.1;
+			};
+		};
 		0663DECB22CCDA7000B605ED /* XCRemoteSwiftPackageReference "swift-nio-extras" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-nio-extras";
@@ -425,6 +439,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		0615A38B22CD143800E230C4 /* NIOSSL */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0615A38A22CD143800E230C4 /* XCRemoteSwiftPackageReference "swift-nio-ssl" */;
+			productName = NIOSSL;
+		};
 		0663DECC22CCDA7000B605ED /* NIOExtras */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 0663DECB22CCDA7000B605ED /* XCRemoteSwiftPackageReference "swift-nio-extras" */;
