@@ -46,12 +46,12 @@ final class SendRequestHandler: ChannelInboundHandler {
                                       method: self.compoundRequest.method,
                                       uri: self.compoundRequest.target)
         reqHead.headers = headers
+        context.write(self.wrapOutboundOut(.head(reqHead)), promise: nil)
         if let body = self.compoundRequest.body {
             var buffer = context.channel.allocator.buffer(capacity: body.count)
             buffer.writeBytes(body)
             context.write(self.wrapOutboundOut(.body(.byteBuffer(buffer))), promise: nil)
         }
-        context.write(self.wrapOutboundOut(.head(reqHead)), promise: nil)
         context.writeAndFlush(self.wrapOutboundOut(.end(self.compoundRequest.trailers.map(HTTPHeaders.init))), promise: nil)
     }
     
