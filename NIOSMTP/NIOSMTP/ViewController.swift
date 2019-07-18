@@ -124,21 +124,29 @@ extension ClientBootstrap: ClientBootstrapProtocol {}
 extension NIOTSConnectionBootstrap: ClientBootstrapProtocol {}
 #endif
 
+func makeNIOSMTPHandlers(communicationHandler: @escaping (String) -> Void, email: Email, emailSentPromise: EventLoopPromise<Void>) -> [ChannelHandler] {
+    return [
+        PrintEverythingHandler(handler: communicationHandler),
+        ByteToMessageHandler(LineBasedFrameDecoder()),
+        SMTPResponseDecoder(),
+        MessageToByteHandler(SMTPRequestEncoder()),
+        SendEmailHandler(configuration: Configuration.shared.serverConfig,
+                         email: email,
+                         allDonePromise: emailSentPromise)
+    ]
+}
+
 @available(OSX 10.14, iOS 12.0, tvOS 12.0, watchOS 6.0, *)
 func configureNIOTSBootstrap(group: NIOTSEventLoopGroup,
                              email: Email,
                              emailSentPromise: EventLoopPromise<Void>,
                              communicationHandler: @escaping (String) -> Void) -> ClientBootstrapProtocol {
+    
     let bootstrap = NIOTSConnectionBootstrap(group: group).channelInitializer { channel in
-        channel.pipeline.addHandlers([
-            PrintEverythingHandler(handler: communicationHandler),
-            ByteToMessageHandler(LineBasedFrameDecoder()),
-            SMTPResponseDecoder(),
-            MessageToByteHandler(SMTPRequestEncoder()),
-            SendEmailHandler(configuration: Configuration.shared.serverConfig,
-                             email: email,
-                             allDonePromise: emailSentPromise)
-            ], position: .last)
+        
+        let handlers: [ChannelHandler] = makeNIOSMTPHandlers(communicationHandler: communicationHandler, email: email, emailSentPromise: emailSentPromise)
+        
+        return channel.pipeline.addHandlers(handlers, position: .last)
     }
 
     if Configuration.shared.useTLS {
@@ -153,15 +161,8 @@ func configureBootstrap(group: EventLoopGroup,
                         emailSentPromise: EventLoopPromise<Void>,
                         communicationHandler: @escaping (String) -> Void) -> ClientBootstrapProtocol {
     return ClientBootstrap(group: group).channelInitializer { channel in
-        var handlers: [ChannelHandler] = [
-            PrintEverythingHandler(handler: communicationHandler),
-            ByteToMessageHandler(LineBasedFrameDecoder()),
-            SMTPResponseDecoder(),
-            MessageToByteHandler(SMTPRequestEncoder()),
-            SendEmailHandler(configuration: Configuration.shared.serverConfig,
-                             email: email,
-                             allDonePromise: emailSentPromise)
-        ]
+        
+        var handlers: [ChannelHandler] = makeNIOSMTPHandlers(communicationHandler: communicationHandler, email: email, emailSentPromise: emailSentPromise)
 
         if Configuration.shared.useTLS {
             do {
