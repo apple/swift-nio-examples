@@ -20,7 +20,7 @@ import NIOSSL
 import Foundation
 import NIOExtras
 
-/// Fires off a GET request when our stream is active and collects all response parts into a promise.
+/// Fires off one GET request when our stream is active and collects all response parts into a promise.
 ///
 /// - warning: This will read the whole response into memory and delivers it into a promise.
 final class SendRequestHandler: ChannelInboundHandler {
@@ -118,14 +118,19 @@ final class HeuristicForServerTooOldToSpeakGoodProtocolsHandler: ChannelInboundH
 final class CollectErrorsAndCloseStreamHandler: ChannelInboundHandler {
     typealias InboundIn = Never
     
-    private let responseReceivedPromise: EventLoopPromise<[(String, EventLoopPromise<[HTTPClientResponsePart]>)]>
+    private let promise: EventLoopPromise<Void>
     
-    init(responseReceivedPromise: EventLoopPromise<[(String, EventLoopPromise<[HTTPClientResponsePart]>)]>) {
-        self.responseReceivedPromise = responseReceivedPromise
+    init(promise: EventLoopPromise<Void>) {
+        self.promise = promise
+    }
+
+    func channelInactive(context: ChannelHandlerContext) {
+        self.promise.succeed(())
+        context.fireChannelInactive()
     }
 
     func errorCaught(context: ChannelHandlerContext, error: Error) {
-        self.responseReceivedPromise.fail(error)
+        self.promise.fail(error)
         context.close(promise: nil)
     }
 }
@@ -173,6 +178,15 @@ guard urls.count > 0 else {
     exit(1)
 }
 
+/// This will build a map from distinct host/port tuples to the full URLs to send to this host.
+///
+/// For example if we receive the following three URLs:
+///  - `https://foo.com/bar`
+///  - `https://foo.com/buz`
+///  - `https://example.net/example`
+///
+/// hostsToURLsMap will contain two entries: One for `foo.com` (containing two URLs) and one for `example.net`
+/// (containing one URL).
 let hostToURLsMap: [HostAndPort: [URL]] = Dictionary(grouping:
     urls.map { url -> (host: String, port: Int, url: URL) in
         guard let host = url.host else {
@@ -192,11 +206,12 @@ if verbose {
     for hostAndURL in hostToURLsMap {
         print("* - connection to https://\(hostAndURL.0.host):\(hostAndURL.0.port)")
         for url in hostAndURL.1 {
-            print("*   * stream for \(url.path)")
+            print("*   * stream for \(url.path != "" ? url.path : "/")")
         }
     }
 }
 
+// This will open a file to which we can dump the PCAPs if that's required.
 let dumpPCAPFileSink = dumpPCAP.flatMap { (path: String) -> NIOWritePCAPHandler.SynchronizedFileSink? in
     do {
         return try NIOWritePCAPHandler.SynchronizedFileSink.fileSinkWritingToFile(path: path, errorHandler: {
@@ -211,29 +226,25 @@ defer {
     try! dumpPCAPFileSink?.syncClose()
 }
 
+/// Make requests for the URIs `uri`s using a new HTTP/2 stream on `channel`.
+///
+/// - parameters:
+///   - channel: The root channel (ie. the actual TCP connection with the HTTP/2 multiplexer).
+///   - host: The host the request is for (for the `host:` header).
+///   - uris: The URIs to request from the server.
+///   - channelErrorForwarder: A future that will be failed if we detect any errors on the parent channel (such as the
+///                            server not speaking HTTP/2).
+///  - returns: A future that will be fulfilled when the requests have been sent. The future holds a list of tuples.
+///             Each tuple contains the `uri` of a request as well as the corresponding future that will hold the
+///             `HTTPClientResponsePart`s of the received server response to that request.
 func makeRequests(channel: Channel,
                   host: String,
                   uris: [String],
-                  responseReceivedPromises: EventLoopPromise<[(String, EventLoopPromise<[HTTPClientResponsePart]>)]>) -> EventLoopFuture<Void> {
-    return channel.pipeline.handler(type: NIOSSLHandler.self).flatMap { sslHandler in
-        let heuristics = HeuristicForServerTooOldToSpeakGoodProtocolsHandler()
-        let errorHandler = CollectErrorsAndCloseStreamHandler(responseReceivedPromise: responseReceivedPromises)
-        return channel.pipeline.addHandler(heuristics, position: .after(sslHandler)).flatMap { _ in
-            if let dumpPCAPFileSink = dumpPCAPFileSink {
-                return channel.pipeline.addHandler(NIOWritePCAPHandler(mode: .client,
-                                                                       fakeRemoteAddress: try! .init(ipAddress: "1.2.3.4", port: 12345),
-                                                                       fileSink: dumpPCAPFileSink.write),
-                                                   position: .after(sslHandler))
-            } else {
-                return channel.eventLoop.makeSucceededFuture(())
-            }
-        }.flatMap {
-            channel.pipeline.addHandler(errorHandler)
-        }
-    }.flatMap {
-        return channel.pipeline.handler(type: HTTP2StreamMultiplexer.self)
-    }.map { http2Multiplexer -> [(String, EventLoopPromise<[HTTPClientResponsePart]>)] in
+                  channelErrorForwarder: EventLoopFuture<Void>) -> EventLoopFuture<[(String, EventLoopPromise<[HTTPClientResponsePart]>)]> {
+    // Step 1 is to find the HTTP2StreamMultiplexer so we can create HTTP/2 streams for our requests.
+    return channel.pipeline.handler(type: HTTP2StreamMultiplexer.self).map { http2Multiplexer -> [(String, EventLoopPromise<[HTTPClientResponsePart]>)] in
         var remainingURIs = uris
+        // Helper function to initialise an HTTP/2 stream.
         func requestStreamInitializer(uri: String,
                                       responseReceivedPromise: EventLoopPromise<[HTTPClientResponsePart]>,
                                       channel: Channel,
@@ -250,11 +261,15 @@ func makeRequests(channel: Channel,
                                                 position: .last)
         }
 
+        // Step 2: Let's create an HTTP/2 stream for each request.
         var responseReceivedPromises: [(String, EventLoopPromise<[HTTPClientResponsePart]>)] = []
         for uri in uris {
             let promise = channel.eventLoop.makePromise(of: [HTTPClientResponsePart].self)
+            channelErrorForwarder.cascadeFailure(to: promise)
             responseReceivedPromises.append((uri, promise))
+            // Create the actual HTTP/2 stream using the multiplexer's `createStreamChannel` method.
             http2Multiplexer.createStreamChannel(promise: nil) { (channel: Channel, streamID: HTTP2StreamID) -> EventLoopFuture<Void> in
+                // Call the above handler to initialise the stream which will send off the actual request.
                 requestStreamInitializer(uri: uri,
                                          responseReceivedPromise: promise,
                                          channel: channel,
@@ -262,24 +277,46 @@ func makeRequests(channel: Channel,
             }
         }
         return responseReceivedPromises
-    }.map {
-        responseReceivedPromises.succeed($0)
     }
 }
 
+var numberOfErrors = 0
+// Here we just loop over all the hosts we send requests to. The hosts will be contacted sequentially but if there are
+// multiple requests for one host, those will be queried concurrently in one TCP connection.
 for hostAndURL in hostToURLsMap {
-    let responseReceivedPromises = group.next().makePromise(of: [(String, EventLoopPromise<[HTTPClientResponsePart]>)].self)
     let uris = hostAndURL.value.map { url in url.absoluteURL.path == "" ? "/" : url.absoluteURL.path }
     let host = hostAndURL.key.host
     let port = hostAndURL.key.port
     if verbose {
         print("* Querying \(host) for \(uris)")
     }
-    let bootstrap = ClientBootstrap(group: group)
+
+    let eventLoop = group.next()
+
+    // This promise will be fulfilled when the Channel closes (not very interesting) but more interestingly, it will
+    // be fulfilled with an error if the heuristic has determined that the server probably doesn't speak HTTP/2.
+    let forwardChannelErrorToStreamsPromise = eventLoop.makePromise(of: Void.self)
+
+    let bootstrap = ClientBootstrap(group: eventLoop)
         .channelOption(ChannelOptions.socket(IPPROTO_TCP, TCP_NODELAY), value: 1)
         .channelInitializer { channel in
+            let heuristics = HeuristicForServerTooOldToSpeakGoodProtocolsHandler()
+            let errorHandler = CollectErrorsAndCloseStreamHandler(promise: forwardChannelErrorToStreamsPromise)
             let sslHandler = try! NIOSSLClientHandler(context: sslContext, serverHostname: host)
             return channel.pipeline.addHandler(sslHandler).flatMap {
+                return channel.pipeline.addHandler(heuristics, position: .after(sslHandler))
+            }.flatMap { _ in
+                if let dumpPCAPFileSink = dumpPCAPFileSink {
+                    return channel.pipeline.addHandler(NIOWritePCAPHandler(mode: .client,
+                                                                           fakeRemoteAddress: try! .init(ipAddress: "1.2.3.4", port: 12345),
+                                                                           fileSink: dumpPCAPFileSink.write),
+                                                       position: .after(sslHandler))
+                } else {
+                    return channel.eventLoop.makeSucceededFuture(())
+                }
+            }.flatMap {
+                channel.pipeline.addHandler(errorHandler)
+            }.flatMap {
                 channel.configureHTTP2Pipeline(mode: .client) { (channel, id) -> EventLoopFuture<Void> in
                     if verbose {
                         print("* channel \(channel) open with id \(id)")
@@ -290,58 +327,61 @@ for hostAndURL in hostToURLsMap {
     }
 
     do {
-        let channel = try bootstrap.connect(host: host, port: port)
+        let (channel, uriResponsePairs) = try bootstrap.connect(host: host, port: port)
             .flatMap { channel in
                 makeRequests(channel: channel,
                              host: host,
                              uris: uris,
-                             responseReceivedPromises: responseReceivedPromises).map { channel }
+                             channelErrorForwarder: forwardChannelErrorToStreamsPromise.futureResult).map {
+                                (channel, $0)
+                }
             }
             .wait()
         if verbose {
             print("* Connected to \(host) (\(channel.remoteAddress!))")
         }
-        let eventLoop = responseReceivedPromises.futureResult.eventLoop
-        try! responseReceivedPromises.futureResult.flatMap { (resultPromises: [(String, EventLoopPromise<[HTTPClientResponsePart]>)]) -> EventLoopFuture<[(String, [HTTPClientResponsePart])]> in
-            let targets = resultPromises.map { $0.0 }
-            let futures = resultPromises.map { $0.1.futureResult }
-            return EventLoopFuture<[[HTTPClientResponsePart]]>.reduce([], futures, on: eventLoop, {
-                (existing: [[HTTPClientResponsePart]], new: [HTTPClientResponsePart]) -> [[HTTPClientResponsePart]] in
-                return existing + [new]
-            }).map { Array(zip(targets, $0)) }
-        }.map { responseParts in
-            for targetAndParts in responseParts {
-                if verbose {
-                    print("> GET \(targetAndParts.0)")
-                }
-                for part in targetAndParts.1 {
-                    switch part {
-                    case .head(let resHead):
-                        if verbose {
-                            print("< HTTP/\(resHead.version.major).\(resHead.version.minor) \(resHead.status.code)")
-                            for header in resHead.headers {
-                                print("< \(header.name): \(header.value)")
-                            }
+
+        // separate the already available targets (URIs) and the future received responses.
+        let targets = uriResponsePairs.map { $0.0 }
+        let responseFutures = uriResponsePairs.map { $0.1.futureResult }
+
+        // Here, we build a future that aggregates all the responses from all the different requests.
+        let allURIsAndResponses = try EventLoopFuture<[[HTTPClientResponsePart]]>.reduce([],
+                                                                                   responseFutures,
+                                                                                   on: channel.eventLoop,
+                                                                                   { $0 + [$1] })
+            // zip the URIs and responses together again
+            .map { zip(targets, $0) }
+            // and just wait until they arrive.
+            .wait()
+        for uriAndResponse in allURIsAndResponses {
+            if verbose {
+                print("> GET \(uriAndResponse.0)")
+            }
+            for responsePart in uriAndResponse.1 {
+                switch responsePart {
+                case .head(let resHead):
+                    if verbose {
+                        print("< HTTP/\(resHead.version.major).\(resHead.version.minor) \(resHead.status.code)")
+                        for header in resHead.headers {
+                            print("< \(header.name): \(header.value)")
                         }
-                    case .body(let buffer):
-                        let written = buffer.withUnsafeReadableBytes { ptr in
-                            write(STDOUT_FILENO, ptr.baseAddress, ptr.count)
-                        }
-                        precondition(written == buffer.readableBytes) // technically, write could write short ;)
-                    case .end(_):
-                        if verbose {
-                            print("* Response fully received")
-                        }
+                    }
+                case .body(let buffer):
+                    let written = buffer.withUnsafeReadableBytes { ptr in
+                        write(STDOUT_FILENO, ptr.baseAddress, ptr.count)
+                    }
+                    precondition(written == buffer.readableBytes) // technically, write could write short ;)
+                case .end(_):
+                    if verbose {
+                        print("* Response fully received")
                     }
                 }
             }
-        }.recover { error in
-            print("ERROR: \(error)")
-            exit(1)
-        }.wait()
+        }
     } catch {
         print("ERROR: \(error)")
-        exit(1)
+        numberOfErrors += 1
     }
 }
-exit(0)
+exit(numberOfErrors == 0 ? EXIT_SUCCESS : EXIT_FAILURE)
