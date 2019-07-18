@@ -31,17 +31,17 @@ final class SendRequestHandler: ChannelInboundHandler {
     private var responsePartAccumulator: [HTTPClientResponsePart] = []
     private let host: String
     private let compoundRequest: HTTPRequest
-    
+
     init(host: String, request: HTTPRequest, responseReceivedPromise: EventLoopPromise<[HTTPClientResponsePart]>) {
         self.responseReceivedPromise = responseReceivedPromise
         self.host = host
         self.compoundRequest = request
     }
-    
+
     func channelActive(context: ChannelHandlerContext) {
         assert(context.channel.parent!.isActive)
         var headers = HTTPHeaders(self.compoundRequest.headers)
-        headers.add(name: "Host", value: self.host)
+        headers.add(name: "host", value: self.host)
         var reqHead = HTTPRequestHead(version: self.compoundRequest.version,
                                       method: self.compoundRequest.method,
                                       uri: self.compoundRequest.target)
@@ -53,8 +53,16 @@ final class SendRequestHandler: ChannelInboundHandler {
             context.write(self.wrapOutboundOut(.body(.byteBuffer(buffer))), promise: nil)
         }
         context.writeAndFlush(self.wrapOutboundOut(.end(self.compoundRequest.trailers.map(HTTPHeaders.init))), promise: nil)
+
+        context.fireChannelActive()
     }
-    
+
+    func errorCaught(context: ChannelHandlerContext, error: Error) {
+        self.responseReceivedPromise.fail(error)
+        context.fireErrorCaught(error)
+        context.close(promise: nil)
+    }
+
     func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         let resPart = self.unwrapInboundIn(data)
         self.responsePartAccumulator.append(resPart)
@@ -110,9 +118,9 @@ final class HeuristicForServerTooOldToSpeakGoodProtocolsHandler: ChannelInboundH
 final class CollectErrorsAndCloseStreamHandler: ChannelInboundHandler {
     typealias InboundIn = Never
     
-    private let responseReceivedPromise: EventLoopPromise<[HTTPClientResponsePart]>
+    private let responseReceivedPromise: EventLoopPromise<[(String, EventLoopPromise<[HTTPClientResponsePart]>)]>
     
-    init(responseReceivedPromise: EventLoopPromise<[HTTPClientResponsePart]>) {
+    init(responseReceivedPromise: EventLoopPromise<[(String, EventLoopPromise<[HTTPClientResponsePart]>)]>) {
         self.responseReceivedPromise = responseReceivedPromise
     }
 
@@ -125,111 +133,215 @@ final class CollectErrorsAndCloseStreamHandler: ChannelInboundHandler {
 let sslContext = try NIOSSLContext(configuration: TLSConfiguration.forClient(applicationProtocols: ["h2"]))
 
 let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
-let responseReceivedPromise = group.next().makePromise(of: [HTTPClientResponsePart].self)
-var verbose = false
-var args = ArraySlice(CommandLine.arguments)
-
-func usage() {
-    print("Usage: http2-client [-v] https://host:port/path")
-    print()
-    print("OPTIONS:")
-    print("     -v: verbose operation (print response code, headers, etc.)")
-}
-
-if case .some(let arg) = args.dropFirst().first, arg.starts(with: "-") {
-    switch arg {
-    case "-v":
-        verbose = true
-        args = args.dropFirst()
-    default:
-        usage()
-        exit(1)
-    }
-}
-
-guard let url = args.dropFirst().first.flatMap(URL.init(string:)) else {
-    usage()
-    exit(1)
-}
-guard let host = url.host else {
-    print("ERROR: URL '\(url)' does not have a hostname which is required")
-    exit(1)
-}
-guard url.scheme == "https" else {
-    print("ERROR: URL '\(url)' is not https but that's required")
-    exit(1)
-}
-
-let uri = url.absoluteURL.path == "" ? "/" : url.absoluteURL.path
-let port = url.port ?? 443
-let bootstrap = ClientBootstrap(group: group)
-    .channelOption(ChannelOptions.socket(IPPROTO_TCP, TCP_NODELAY), value: 1)
-    .channelInitializer { channel in
-        let sslHandler = try! NIOSSLClientHandler(context: sslContext, serverHostname: host)
-        return channel.pipeline.addHandler(sslHandler).flatMap {
-            channel.configureHTTP2Pipeline(mode: .client) { (channel, id) -> EventLoopFuture<Void> in
-                print("channel \(channel) open with id \(id)")
-                return channel.eventLoop.makeSucceededFuture(())
-            }
-        }.flatMap { http2Multiplexer -> EventLoopFuture<Void> in
-            func requestStreamInitializer(channel: Channel, streamID: HTTP2StreamID) -> EventLoopFuture<Void> {
-                return channel.pipeline.addHandlers([HTTP2ToHTTP1ClientCodec(streamID: streamID, httpProtocol: .https),
-                                                     SendRequestHandler(host: host,
-                                                                        request: .init(method: .GET,
-                                                                                       target: uri,
-                                                                                       version: .init(major: 2, minor: 0),
-                                                                                       headers: [],
-                                                                                       body: nil,
-                                                                                       trailers: nil),
-                                                                        responseReceivedPromise: responseReceivedPromise)],
-                                                    position: .last)
-            }
-
-            let heuristics = HeuristicForServerTooOldToSpeakGoodProtocolsHandler()
-            let errorHandler = CollectErrorsAndCloseStreamHandler(responseReceivedPromise: responseReceivedPromise)
-            return channel.pipeline.addHandler(heuristics, position: .after(sslHandler)).flatMap {
-                channel.pipeline.addHandler(errorHandler)
-            }.map { () -> Void in
-                http2Multiplexer.createStreamChannel(promise: nil, requestStreamInitializer)
-            }
-        }
-    }
-
 defer {
     try! group.syncShutdownGracefully()
 }
 
-do {
-    let channel = try bootstrap.connect(host: host, port: port).wait()
-    if verbose {
-        print("* Connected to \(host) (\(channel.remoteAddress!))")
+var verbose = false
+var dumpPCAP: String? = nil
+var args = CommandLine.arguments.dropFirst()
+
+func usage() {
+    print("Usage: http2-client [-v] URL...")
+    print()
+    print("OPTIONS:")
+    print("     -v: verbose operation (print response code, headers, etc.)")
+    print("EXAMPLE:")
+    print("     http2-client https://nghttp2.org/")
+}
+
+loop: while !args.isEmpty {
+    switch args.first {
+    case .some("-v"):
+        verbose = true
+        args = args.dropFirst()
+    case .some("-w"):
+        args = args.dropFirst()
+        dumpPCAP = args.first
+        args = args.dropFirst()
+    case .some(let arg) where arg.starts(with: "-"):
+        usage()
+        exit(1)
+    default:
+        break loop
     }
-    try! responseReceivedPromise.futureResult.map { responseParts in
-        for part in responseParts {
-            switch part {
-            case .head(let resHead):
-                if verbose {
-                    print("< HTTP/\(resHead.version.major).\(resHead.version.minor) \(resHead.status.code)")
-                    for header in resHead.headers {
-                        print("< \(header.name): \(header.value)")
-                    }
-                }
-            case .body(let buffer):
-                let written = buffer.withUnsafeReadableBytes { ptr in
-                    write(STDOUT_FILENO, ptr.baseAddress, ptr.count)
-                }
-                precondition(written == buffer.readableBytes) // technically, write could write short ;)
-            case .end(_):
-                if verbose {
-                    print("* Response fully received")
-                }
+}
+
+let urls = args.compactMap(URL.init(string:))
+guard urls.count > 0 else {
+    usage()
+    exit(1)
+}
+
+let hostToURLsMap: [HostAndPort: [URL]] = Dictionary(grouping:
+    urls.map { url -> (host: String, port: Int, url: URL) in
+        guard let host = url.host else {
+            print("ERROR: URL '\(url)' does not have a hostname which is required")
+            exit(1)
+        }
+        guard url.scheme == "https" else {
+            print("ERROR: URL '\(url)' is not https but that's required")
+            exit(1)
+        }
+        return (host, url.port ?? 443, url)
+    }
+    , by: { HostAndPort(host: $0.host, port: $0.port) }).mapValues { $0.map { $0.url }}
+
+if verbose {
+    print("* will create the following \(hostToURLsMap.count) HTTP/2 connections")
+    for hostAndURL in hostToURLsMap {
+        print("* - connection to https://\(hostAndURL.0.host):\(hostAndURL.0.port)")
+        for url in hostAndURL.1 {
+            print("*   * stream for \(url.path)")
+        }
+    }
+}
+
+let dumpPCAPFileSink = dumpPCAP.flatMap { (path: String) -> NIOWritePCAPHandler.SynchronizedFileSink? in
+    do {
+        return try NIOWritePCAPHandler.SynchronizedFileSink.fileSinkWritingToFile(path: path, errorHandler: {
+            print("WRITE PCAP ERROR: \($0)")
+        })
+    } catch {
+        print("WRITE PCAP ERROR: \(error)")
+        return nil
+    }
+}
+defer {
+    try! dumpPCAPFileSink?.syncClose()
+}
+
+func makeRequests(channel: Channel,
+                  host: String,
+                  uris: [String],
+                  responseReceivedPromises: EventLoopPromise<[(String, EventLoopPromise<[HTTPClientResponsePart]>)]>) -> EventLoopFuture<Void> {
+    return channel.pipeline.handler(type: NIOSSLHandler.self).flatMap { sslHandler in
+        let heuristics = HeuristicForServerTooOldToSpeakGoodProtocolsHandler()
+        let errorHandler = CollectErrorsAndCloseStreamHandler(responseReceivedPromise: responseReceivedPromises)
+        return channel.pipeline.addHandler(heuristics, position: .after(sslHandler)).flatMap { _ in
+            if let dumpPCAPFileSink = dumpPCAPFileSink {
+                return channel.pipeline.addHandler(NIOWritePCAPHandler(mode: .client,
+                                                                       fakeRemoteAddress: try! .init(ipAddress: "1.2.3.4", port: 12345),
+                                                                       fileSink: dumpPCAPFileSink.write),
+                                                   position: .after(sslHandler))
+            } else {
+                return channel.eventLoop.makeSucceededFuture(())
+            }
+        }.flatMap {
+            channel.pipeline.addHandler(errorHandler)
+        }
+    }.flatMap {
+        return channel.pipeline.handler(type: HTTP2StreamMultiplexer.self)
+    }.map { http2Multiplexer -> [(String, EventLoopPromise<[HTTPClientResponsePart]>)] in
+        var remainingURIs = uris
+        func requestStreamInitializer(uri: String,
+                                      responseReceivedPromise: EventLoopPromise<[HTTPClientResponsePart]>,
+                                      channel: Channel,
+                                      streamID: HTTP2StreamID) -> EventLoopFuture<Void> {
+            let uri = remainingURIs.removeFirst()
+            channel.eventLoop.assertInEventLoop()
+            return channel.pipeline.addHandlers([HTTP2ToHTTP1ClientCodec(streamID: streamID, httpProtocol: .https),
+                                                 SendRequestHandler(host: host,
+                                                                    request: .init(target: uri,
+                                                                                   headers: [],
+                                                                                   body: nil,
+                                                                                   trailers: nil),
+                                                                    responseReceivedPromise: responseReceivedPromise)],
+                                                position: .last)
+        }
+
+        var responseReceivedPromises: [(String, EventLoopPromise<[HTTPClientResponsePart]>)] = []
+        for uri in uris {
+            let promise = channel.eventLoop.makePromise(of: [HTTPClientResponsePart].self)
+            responseReceivedPromises.append((uri, promise))
+            http2Multiplexer.createStreamChannel(promise: nil) { (channel: Channel, streamID: HTTP2StreamID) -> EventLoopFuture<Void> in
+                requestStreamInitializer(uri: uri,
+                                         responseReceivedPromise: promise,
+                                         channel: channel,
+                                         streamID: streamID)
             }
         }
-    }.recover { error in
+        return responseReceivedPromises
+    }.map {
+        responseReceivedPromises.succeed($0)
+    }
+}
+
+for hostAndURL in hostToURLsMap {
+    let responseReceivedPromises = group.next().makePromise(of: [(String, EventLoopPromise<[HTTPClientResponsePart]>)].self)
+    let uris = hostAndURL.value.map { url in url.absoluteURL.path == "" ? "/" : url.absoluteURL.path }
+    let host = hostAndURL.key.host
+    let port = hostAndURL.key.port
+    if verbose {
+        print("* Querying \(host) for \(uris)")
+    }
+    let bootstrap = ClientBootstrap(group: group)
+        .channelOption(ChannelOptions.socket(IPPROTO_TCP, TCP_NODELAY), value: 1)
+        .channelInitializer { channel in
+            let sslHandler = try! NIOSSLClientHandler(context: sslContext, serverHostname: host)
+            return channel.pipeline.addHandler(sslHandler).flatMap {
+                channel.configureHTTP2Pipeline(mode: .client) { (channel, id) -> EventLoopFuture<Void> in
+                    if verbose {
+                        print("* channel \(channel) open with id \(id)")
+                    }
+                    return channel.eventLoop.makeSucceededFuture(())
+                }.map { (_: HTTP2StreamMultiplexer) in () }
+            }
+    }
+
+    do {
+        let channel = try bootstrap.connect(host: host, port: port)
+            .flatMap { channel in
+                makeRequests(channel: channel,
+                             host: host,
+                             uris: uris,
+                             responseReceivedPromises: responseReceivedPromises).map { channel }
+            }
+            .wait()
+        if verbose {
+            print("* Connected to \(host) (\(channel.remoteAddress!))")
+        }
+        let eventLoop = responseReceivedPromises.futureResult.eventLoop
+        try! responseReceivedPromises.futureResult.flatMap { (resultPromises: [(String, EventLoopPromise<[HTTPClientResponsePart]>)]) -> EventLoopFuture<[(String, [HTTPClientResponsePart])]> in
+            let targets = resultPromises.map { $0.0 }
+            let futures = resultPromises.map { $0.1.futureResult }
+            return EventLoopFuture<[[HTTPClientResponsePart]]>.reduce([], futures, on: eventLoop, {
+                (existing: [[HTTPClientResponsePart]], new: [HTTPClientResponsePart]) -> [[HTTPClientResponsePart]] in
+                return existing + [new]
+            }).map { Array(zip(targets, $0)) }
+        }.map { responseParts in
+            for targetAndParts in responseParts {
+                if verbose {
+                    print("> GET \(targetAndParts.0)")
+                }
+                for part in targetAndParts.1 {
+                    switch part {
+                    case .head(let resHead):
+                        if verbose {
+                            print("< HTTP/\(resHead.version.major).\(resHead.version.minor) \(resHead.status.code)")
+                            for header in resHead.headers {
+                                print("< \(header.name): \(header.value)")
+                            }
+                        }
+                    case .body(let buffer):
+                        let written = buffer.withUnsafeReadableBytes { ptr in
+                            write(STDOUT_FILENO, ptr.baseAddress, ptr.count)
+                        }
+                        precondition(written == buffer.readableBytes) // technically, write could write short ;)
+                    case .end(_):
+                        if verbose {
+                            print("* Response fully received")
+                        }
+                    }
+                }
+            }
+        }.recover { error in
+            print("ERROR: \(error)")
+            exit(1)
+        }.wait()
+    } catch {
         print("ERROR: \(error)")
         exit(1)
-    }.wait()
-    exit(0)
-} catch {
-    print("ERROR: \(error)")
+    }
 }
+exit(0)

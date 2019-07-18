@@ -14,6 +14,11 @@
 
 import NIOHTTP1
 
+struct HostAndPort: Equatable, Hashable {
+    var host: String
+    var port: Int
+}
+
 public struct HTTPRequest {
     class _Storage {
         var method: HTTPMethod
