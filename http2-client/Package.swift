@@ -9,7 +9,7 @@ let package = Package(
         // Dependencies declare other packages that this package depends on.
         .package(url: "https://github.com/apple/swift-nio", from: "2.0.0"),
         .package(url: "https://github.com/apple/swift-nio-ssl", from: "2.0.0"),
-        .package(url: "https://github.com/apple/swift-nio-http2", from: "1.0.0"),
+        .package(url: "https://github.com/apple/swift-nio-http2", from: "1.5.0"),
         .package(url: "https://github.com/apple/swift-nio-extras", from: "1.0.0"),
     ],
     targets: [
