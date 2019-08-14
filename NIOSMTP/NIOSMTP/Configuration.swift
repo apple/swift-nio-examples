@@ -20,17 +20,12 @@ struct Configuration {
         // If you don't want to use your real SMTP server, do try out https://mailtrap.io they offer you an
         // SMTP server that can be used for testing for free.
         let serverConfig = ServerConfiguration(hostname: "you.need.to.configure.your.providers.smtp.server",
-                                               port: 465,
+                                               port: 25,
                                                username: "put your username here",
-                                               password: "and your password goes here")
-
-        // In case you don't want to use TLS which is a bad idea and _WILL SEND YOUR PASSWORD IN PLAIN TEXT_
-        // just disable this.
-        let useTLS = true
-
-        return Configuration(serverConfig: serverConfig, useTLS: useTLS)
+                                               password: "and your password goes here",
+                                               tlsConfiguration: .startTLS)
+        return Configuration(serverConfig: serverConfig)
     }()
 
     var serverConfig: ServerConfiguration
-    var useTLS: Bool
 }

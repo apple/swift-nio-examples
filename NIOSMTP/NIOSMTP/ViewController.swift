@@ -124,7 +124,9 @@ extension ClientBootstrap: ClientBootstrapProtocol {}
 extension NIOTSConnectionBootstrap: ClientBootstrapProtocol {}
 #endif
 
-func makeNIOSMTPHandlers(communicationHandler: @escaping (String) -> Void, email: Email, emailSentPromise: EventLoopPromise<Void>) -> [ChannelHandler] {
+func makeNIOSMTPHandlers(communicationHandler: @escaping (String) -> Void,
+                         email: Email,
+                         emailSentPromise: EventLoopPromise<Void>) -> [ChannelHandler] {
     return [
         PrintEverythingHandler(handler: communicationHandler),
         ByteToMessageHandler(LineBasedFrameDecoder()),
@@ -149,9 +151,10 @@ func configureNIOTSBootstrap(group: NIOTSEventLoopGroup,
         return channel.pipeline.addHandlers(handlers, position: .last)
     }
 
-    if Configuration.shared.useTLS {
+    switch Configuration.shared.serverConfig.tlsConfiguration {
+    case .regularTLS:
         return bootstrap.tlsOptions(.init())
-    } else {
+    case .startTLS, .unsafeNoTLS:
         return bootstrap
     }
 }
@@ -164,7 +167,8 @@ func configureBootstrap(group: EventLoopGroup,
         
         var handlers: [ChannelHandler] = makeNIOSMTPHandlers(communicationHandler: communicationHandler, email: email, emailSentPromise: emailSentPromise)
 
-        if Configuration.shared.useTLS {
+        switch Configuration.shared.serverConfig.tlsConfiguration {
+        case .regularTLS:
             do {
                 let sslContext = try NIOSSLContext(configuration: .forClient())
                 let sslHandler = try NIOSSLClientHandler(context: sslContext,
@@ -173,6 +177,8 @@ func configureBootstrap(group: EventLoopGroup,
             } catch {
                 return channel.eventLoop.makeFailedFuture(error)
             }
+        case .startTLS, .unsafeNoTLS:
+            () // no TLS added to start with
         }
 
         return channel.pipeline.addHandlers(handlers, position: .last)
@@ -184,11 +190,8 @@ enum NetworkImplementation {
     /// POSIX sockets and NIO.
     case posix
 
-    #if canImport(Network)
-    @available(OSX 10.14, iOS 12.0, tvOS 12.0, watchOS 6.0, *)
     /// NIOTransportServices (and Network.framework).
     case transportServices
-    #endif
 
     /// Return the best implementation available for this platform, that is NIOTransportServices
     /// when it is available or POSIX and NIO otherwise.

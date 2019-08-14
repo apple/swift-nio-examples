@@ -14,6 +14,7 @@
 
 enum SMTPRequest {
     case sayHello(serverName: String)
+    case startTLS
     case beginAuthentication
     case authUser(String)
     case authPassword(String)
@@ -30,10 +31,21 @@ enum SMTPResponse {
 }
 
 struct ServerConfiguration {
+    enum TLSConfiguration {
+        /// Use StartTLS, this should be the default and is secure.
+        case startTLS
+
+        /// Directly open a TLS connection. This secure however not widely supported.
+        case regularTLS
+
+        /// This should never be used. It will literally _SEND YOUR PASSWORD IN PLAINTEXT OVER THE INTERNET_.
+        case unsafeNoTLS
+    }
     var hostname: String
     var port: Int
     var username: String
     var password: String
+    var tlsConfiguration: TLSConfiguration
 }
 
 struct Email {
