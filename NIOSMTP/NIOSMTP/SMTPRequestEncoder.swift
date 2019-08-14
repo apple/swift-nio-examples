@@ -22,7 +22,9 @@ final class SMTPRequestEncoder: MessageToByteEncoder {
     func encode(data: SMTPRequest, out: inout ByteBuffer) throws {
         switch data {
         case .sayHello(serverName: let server):
-            out.writeString("HELO \(server)")
+            out.writeString("EHLO \(server)")
+        case .startTLS:
+            out.writeString("STARTTLS")
         case .mailFrom(let from):
             out.writeString("MAIL FROM:<\(from)>")
         case .recipient(let rcpt):
