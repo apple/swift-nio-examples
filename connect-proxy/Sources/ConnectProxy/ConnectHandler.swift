@@ -205,7 +205,7 @@ extension ConnectHandler {
         // Now we need to glue our channel and the peer channel together.
         let (localGlue, peerGlue) = GlueHandler.matchedPair()
         context.channel.pipeline.addHandler(localGlue).and(peerChannel.pipeline.addHandler(peerGlue)).whenComplete { result in
-            _ = context.pipeline.removeHandler(self)
+            context.pipeline.removeHandler(self, promise: nil)
         }
     }
 
@@ -223,13 +223,13 @@ extension ConnectHandler {
     private func removeDecoder(context: ChannelHandlerContext) {
         // We drop the future on the floor here as these handlers must all be in our own pipeline, and this should
         // therefore succeed fast.
-        _ = context.pipeline.context(handlerType: ByteToMessageHandler<HTTPRequestDecoder>.self).map {
+        context.pipeline.context(handlerType: ByteToMessageHandler<HTTPRequestDecoder>.self).whenSuccess {
             context.pipeline.removeHandler(context: $0, promise: nil)
         }
     }
 
     private func removeEncoder(context: ChannelHandlerContext) {
-        _ = context.pipeline.context(handlerType: HTTPResponseEncoder.self).map {
+        context.pipeline.context(handlerType: HTTPResponseEncoder.self).whenSuccess {
             context.pipeline.removeHandler(context: $0, promise: nil)
         }
     }
