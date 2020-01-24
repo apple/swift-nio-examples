@@ -1,0 +1,1185 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 52;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		742E75F622D6485900F747C1 /* SMTPRequestEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 742E75F122D6485900F747C1 /* SMTPRequestEncoder.swift */; };
+		742E75F722D6485900F747C1 /* SMTPResponseDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 742E75F222D6485900F747C1 /* SMTPResponseDecoder.swift */; };
+		742E75F822D6485900F747C1 /* DataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 742E75F322D6485900F747C1 /* DataModel.swift */; };
+		742E75F922D6485900F747C1 /* SendEmailHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 742E75F422D6485900F747C1 /* SendEmailHandler.swift */; };
+		742E75FA22D6485900F747C1 /* Configuration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 742E75F522D6485900F747C1 /* Configuration.swift */; };
+		742E75FC22D6487300F747C1 /* NIOSMTP.swift in Sources */ = {isa = PBXBuildFile; fileRef = 742E75FB22D6487300F747C1 /* NIOSMTP.swift */; };
+		742E760D22D64B2000F747C1 /* PrintEverythingHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 742E760C22D64B2000F747C1 /* PrintEverythingHandler.swift */; };
+		745E7B84230E9C4A000686F1 /* EventToggle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 745E7B83230E9C4A000686F1 /* EventToggle.swift */; };
+		74700F60230D483E00B9EDF0 /* States.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74700F5F230D483E00B9EDF0 /* States.swift */; };
+		748D45FD22EDED8B003B9778 /* ChannelHandlerSimplePortView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 748D45FC22EDED8B003B9778 /* ChannelHandlerSimplePortView.swift */; };
+		74AEA1A4231D550A00175E4A /* NIOAutomation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 74AEA19B231D550A00175E4A /* NIOAutomation.framework */; };
+		74AEA1AB231D550A00175E4A /* NIOAutomationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74AEA1AA231D550A00175E4A /* NIOAutomationTests.swift */; };
+		74AEA1AD231D550A00175E4A /* NIOAutomation.h in Headers */ = {isa = PBXBuildFile; fileRef = 74AEA19D231D550A00175E4A /* NIOAutomation.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		74AEA1B0231D550A00175E4A /* NIOAutomation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 74AEA19B231D550A00175E4A /* NIOAutomation.framework */; };
+		74AEA1B1231D550A00175E4A /* NIOAutomation.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 74AEA19B231D550A00175E4A /* NIOAutomation.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		74AEA1B9231D552200175E4A /* NIOAutomation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 74AEA19B231D550A00175E4A /* NIOAutomation.framework */; };
+		74AEA1BA231D552200175E4A /* NIOAutomation.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 74AEA19B231D550A00175E4A /* NIOAutomation.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		74AEA1BF231D553F00175E4A /* NIO in Frameworks */ = {isa = PBXBuildFile; productRef = 74AEA1BE231D553F00175E4A /* NIO */; };
+		74AEA1C1231D553F00175E4A /* NIOConcurrencyHelpers in Frameworks */ = {isa = PBXBuildFile; productRef = 74AEA1C0231D553F00175E4A /* NIOConcurrencyHelpers */; };
+		74AEA1C3231D553F00175E4A /* NIOFoundationCompat in Frameworks */ = {isa = PBXBuildFile; productRef = 74AEA1C2231D553F00175E4A /* NIOFoundationCompat */; };
+		74AEA1C7231D554000175E4A /* NIOTLS in Frameworks */ = {isa = PBXBuildFile; productRef = 74AEA1C6231D554000175E4A /* NIOTLS */; };
+		74AEA1C9231D555000175E4A /* NIOTransportServices in Frameworks */ = {isa = PBXBuildFile; productRef = 74AEA1C8231D555000175E4A /* NIOTransportServices */; };
+		74AEA1CB231D555000175E4A /* NIOSSL in Frameworks */ = {isa = PBXBuildFile; productRef = 74AEA1CA231D555000175E4A /* NIOSSL */; };
+		74AEA1CD231D556400175E4A /* NIOExtras in Frameworks */ = {isa = PBXBuildFile; productRef = 74AEA1CC231D556400175E4A /* NIOExtras */; };
+		74AEA1CE231D558100175E4A /* NIOAutomation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74AEA194231D53F400175E4A /* NIOAutomation.swift */; };
+		74E3661422D6376200D77F20 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74E3661322D6376200D77F20 /* AppDelegate.swift */; };
+		74E3661622D6376200D77F20 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74E3661522D6376200D77F20 /* ContentView.swift */; };
+		74E3661822D6376400D77F20 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 74E3661722D6376400D77F20 /* Assets.xcassets */; };
+		74E3661B22D6376400D77F20 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 74E3661A22D6376400D77F20 /* Preview Assets.xcassets */; };
+		74E3661E22D6376400D77F20 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 74E3661C22D6376400D77F20 /* Main.storyboard */; };
+		74E3664822D6386E00D77F20 /* ChannelHandlerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74E3664722D6386E00D77F20 /* ChannelHandlerView.swift */; };
+		74E3664A22D6388500D77F20 /* ChannelPipelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74E3664922D6388500D77F20 /* ChannelPipelineView.swift */; };
+		74E5615422F86F7B004A78A4 /* Main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74E5615322F86F7B004A78A4 /* Main.swift */; };
+		74E80AA92310466A00B61DBD /* IndexComputationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74E80AA82310466A00B61DBD /* IndexComputationTests.swift */; };
+		74F49956231001150005CEB7 /* NIOVisualiserLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 74F4994D231001150005CEB7 /* NIOVisualiserLibrary.framework */; };
+		74F4995D231001150005CEB7 /* NIOVisualiserLibrary.h in Headers */ = {isa = PBXBuildFile; fileRef = 74F4994F231001150005CEB7 /* NIOVisualiserLibrary.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		74F49965231001F20005CEB7 /* Collector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 742E761422D73A3F00F747C1 /* Collector.swift */; };
+		74F49966231001F20005CEB7 /* Transmission.swift in Sources */ = {isa = PBXBuildFile; fileRef = 748D45F822E9ED4D003B9778 /* Transmission.swift */; };
+		74F49967231001F20005CEB7 /* Event.swift in Sources */ = {isa = PBXBuildFile; fileRef = 742E761F22DE3A6B00F747C1 /* Event.swift */; };
+		74F49968231001F20005CEB7 /* Heuristics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 748D45F422E8A4EC003B9778 /* Heuristics.swift */; };
+		74F49969231001F20005CEB7 /* InterceptionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 742E761122D64DEA00F747C1 /* InterceptionHandler.swift */; };
+		74F4996A231001F20005CEB7 /* ChannelHandlerPort.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74E5615522F891AC004A78A4 /* ChannelHandlerPort.swift */; };
+		74F4996E231001F20005CEB7 /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7408126823017A98001DEF03 /* Message.swift */; };
+		74F4996F2310020A0005CEB7 /* FilterLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 745E7B87230EC52B000686F1 /* FilterLogicTests.swift */; };
+		74F499702310020B0005CEB7 /* CollectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 742E762522E1D8D700F747C1 /* CollectorTests.swift */; };
+		74F499712310020B0005CEB7 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 742E762722E60B6400F747C1 /* Utils.swift */; };
+		74F499722310020B0005CEB7 /* HeuristicsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 745E7B89230ED09A000686F1 /* HeuristicsTests.swift */; };
+		74F49975231002410005CEB7 /* NIOVisualiserLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 74F4994D231001150005CEB7 /* NIOVisualiserLibrary.framework */; };
+		74F4997A231002F10005CEB7 /* CollectorData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7408126A230180DC001DEF03 /* CollectorData.swift */; };
+		74F4997B231004D30005CEB7 /* FilterLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 745E7B85230EC506000686F1 /* FilterLogic.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		74AEA1A5231D550A00175E4A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 74E3660822D6376200D77F20 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 74AEA19A231D550A00175E4A;
+			remoteInfo = NIOAutomation;
+		};
+		74AEA1A7231D550A00175E4A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 74E3660822D6376200D77F20 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 74E3660F22D6376200D77F20;
+			remoteInfo = NIOVisualiser;
+		};
+		74AEA1AE231D550A00175E4A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 74E3660822D6376200D77F20 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 74AEA19A231D550A00175E4A;
+			remoteInfo = NIOAutomation;
+		};
+		74AEA1BB231D552200175E4A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 74E3660822D6376200D77F20 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 74AEA19A231D550A00175E4A;
+			remoteInfo = NIOAutomation;
+		};
+		74F49957231001150005CEB7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 74E3660822D6376200D77F20 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 74F4994C231001150005CEB7;
+			remoteInfo = NIOVisualiserLibrary;
+		};
+		74F499732310023C0005CEB7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 74E3660822D6376200D77F20 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 74F4994C231001150005CEB7;
+			remoteInfo = NIOVisualiserLibrary;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		74AEA1B5231D550A00175E4A /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				74AEA1B1231D550A00175E4A /* NIOAutomation.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		74AEA1BD231D552200175E4A /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				74AEA1BA231D552200175E4A /* NIOAutomation.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		7408126823017A98001DEF03 /* Message.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Message.swift; sourceTree = "<group>"; };
+		7408126A230180DC001DEF03 /* CollectorData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectorData.swift; sourceTree = "<group>"; };
+		742E75F122D6485900F747C1 /* SMTPRequestEncoder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SMTPRequestEncoder.swift; sourceTree = "<group>"; };
+		742E75F222D6485900F747C1 /* SMTPResponseDecoder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SMTPResponseDecoder.swift; sourceTree = "<group>"; };
+		742E75F322D6485900F747C1 /* DataModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DataModel.swift; sourceTree = "<group>"; };
+		742E75F422D6485900F747C1 /* SendEmailHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SendEmailHandler.swift; sourceTree = "<group>"; };
+		742E75F522D6485900F747C1 /* Configuration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Configuration.swift; sourceTree = "<group>"; };
+		742E75FB22D6487300F747C1 /* NIOSMTP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NIOSMTP.swift; sourceTree = "<group>"; };
+		742E760C22D64B2000F747C1 /* PrintEverythingHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PrintEverythingHandler.swift; sourceTree = "<group>"; };
+		742E761122D64DEA00F747C1 /* InterceptionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterceptionHandler.swift; sourceTree = "<group>"; };
+		742E761422D73A3F00F747C1 /* Collector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Collector.swift; sourceTree = "<group>"; };
+		742E761F22DE3A6B00F747C1 /* Event.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Event.swift; sourceTree = "<group>"; };
+		742E762522E1D8D700F747C1 /* CollectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectorTests.swift; sourceTree = "<group>"; };
+		742E762722E60B6400F747C1 /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
+		745E7B83230E9C4A000686F1 /* EventToggle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventToggle.swift; sourceTree = "<group>"; };
+		745E7B85230EC506000686F1 /* FilterLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterLogic.swift; sourceTree = "<group>"; };
+		745E7B87230EC52B000686F1 /* FilterLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterLogicTests.swift; sourceTree = "<group>"; };
+		745E7B89230ED09A000686F1 /* HeuristicsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeuristicsTests.swift; sourceTree = "<group>"; };
+		74700F5F230D483E00B9EDF0 /* States.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = States.swift; sourceTree = "<group>"; };
+		748D45F422E8A4EC003B9778 /* Heuristics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Heuristics.swift; sourceTree = "<group>"; };
+		748D45F822E9ED4D003B9778 /* Transmission.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Transmission.swift; sourceTree = "<group>"; };
+		748D45FC22EDED8B003B9778 /* ChannelHandlerSimplePortView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelHandlerSimplePortView.swift; sourceTree = "<group>"; };
+		74AEA194231D53F400175E4A /* NIOAutomation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NIOAutomation.swift; sourceTree = "<group>"; };
+		74AEA19B231D550A00175E4A /* NIOAutomation.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = NIOAutomation.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		74AEA19D231D550A00175E4A /* NIOAutomation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NIOAutomation.h; sourceTree = "<group>"; };
+		74AEA19E231D550A00175E4A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		74AEA1A3231D550A00175E4A /* NIOAutomationTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NIOAutomationTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		74AEA1AA231D550A00175E4A /* NIOAutomationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NIOAutomationTests.swift; sourceTree = "<group>"; };
+		74AEA1AC231D550A00175E4A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		74E3661022D6376200D77F20 /* NIOVisualiser.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NIOVisualiser.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		74E3661322D6376200D77F20 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		74E3661522D6376200D77F20 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		74E3661722D6376400D77F20 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		74E3661A22D6376400D77F20 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		74E3661D22D6376400D77F20 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		74E3661F22D6376400D77F20 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		74E3662022D6376400D77F20 /* NIOVisualiser.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = NIOVisualiser.entitlements; sourceTree = "<group>"; };
+		74E3664722D6386E00D77F20 /* ChannelHandlerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelHandlerView.swift; sourceTree = "<group>"; };
+		74E3664922D6388500D77F20 /* ChannelPipelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelPipelineView.swift; sourceTree = "<group>"; };
+		74E5615322F86F7B004A78A4 /* Main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Main.swift; sourceTree = "<group>"; };
+		74E5615522F891AC004A78A4 /* ChannelHandlerPort.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelHandlerPort.swift; sourceTree = "<group>"; };
+		74E80AA82310466A00B61DBD /* IndexComputationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndexComputationTests.swift; sourceTree = "<group>"; };
+		74F4994D231001150005CEB7 /* NIOVisualiserLibrary.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = NIOVisualiserLibrary.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		74F4994F231001150005CEB7 /* NIOVisualiserLibrary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NIOVisualiserLibrary.h; sourceTree = "<group>"; };
+		74F49950231001150005CEB7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		74F49955231001150005CEB7 /* NIOVisualiserLibraryTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NIOVisualiserLibraryTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		74F4995C231001150005CEB7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		74AEA198231D550A00175E4A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				74AEA1C7231D554000175E4A /* NIOTLS in Frameworks */,
+				74AEA1BF231D553F00175E4A /* NIO in Frameworks */,
+				74AEA1CB231D555000175E4A /* NIOSSL in Frameworks */,
+				74AEA1C3231D553F00175E4A /* NIOFoundationCompat in Frameworks */,
+				74AEA1CD231D556400175E4A /* NIOExtras in Frameworks */,
+				74AEA1C9231D555000175E4A /* NIOTransportServices in Frameworks */,
+				74AEA1C1231D553F00175E4A /* NIOConcurrencyHelpers in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		74AEA1A0231D550A00175E4A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				74AEA1A4231D550A00175E4A /* NIOAutomation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		74E3660D22D6376200D77F20 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				74AEA1B0231D550A00175E4A /* NIOAutomation.framework in Frameworks */,
+				74F49975231002410005CEB7 /* NIOVisualiserLibrary.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		74F4994A231001150005CEB7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				74AEA1B9231D552200175E4A /* NIOAutomation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		74F49952231001150005CEB7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				74F49956231001150005CEB7 /* NIOVisualiserLibrary.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		742E75F022D6483C00F747C1 /* NIOSMTP */ = {
+			isa = PBXGroup;
+			children = (
+				742E75F522D6485900F747C1 /* Configuration.swift */,
+				742E75F322D6485900F747C1 /* DataModel.swift */,
+				742E75F422D6485900F747C1 /* SendEmailHandler.swift */,
+				742E760C22D64B2000F747C1 /* PrintEverythingHandler.swift */,
+				742E75F122D6485900F747C1 /* SMTPRequestEncoder.swift */,
+				742E75F222D6485900F747C1 /* SMTPResponseDecoder.swift */,
+				742E75FB22D6487300F747C1 /* NIOSMTP.swift */,
+				7408126A230180DC001DEF03 /* CollectorData.swift */,
+			);
+			path = NIOSMTP;
+			sourceTree = "<group>";
+		};
+		74AEA19C231D550A00175E4A /* NIOAutomation */ = {
+			isa = PBXGroup;
+			children = (
+				74AEA19D231D550A00175E4A /* NIOAutomation.h */,
+				74AEA19E231D550A00175E4A /* Info.plist */,
+				74AEA194231D53F400175E4A /* NIOAutomation.swift */,
+			);
+			path = NIOAutomation;
+			sourceTree = "<group>";
+		};
+		74AEA1A9231D550A00175E4A /* NIOAutomationTests */ = {
+			isa = PBXGroup;
+			children = (
+				74AEA1AA231D550A00175E4A /* NIOAutomationTests.swift */,
+				74AEA1AC231D550A00175E4A /* Info.plist */,
+			);
+			path = NIOAutomationTests;
+			sourceTree = "<group>";
+		};
+		74E3660722D6376200D77F20 = {
+			isa = PBXGroup;
+			children = (
+				74E3661222D6376200D77F20 /* NIOVisualiser */,
+				74F4994E231001150005CEB7 /* NIOVisualiserLibrary */,
+				74F49959231001150005CEB7 /* NIOVisualiserLibraryTests */,
+				74AEA19C231D550A00175E4A /* NIOAutomation */,
+				74AEA1A9231D550A00175E4A /* NIOAutomationTests */,
+				74E3661122D6376200D77F20 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		74E3661122D6376200D77F20 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				74E3661022D6376200D77F20 /* NIOVisualiser.app */,
+				74F4994D231001150005CEB7 /* NIOVisualiserLibrary.framework */,
+				74F49955231001150005CEB7 /* NIOVisualiserLibraryTests.xctest */,
+				74AEA19B231D550A00175E4A /* NIOAutomation.framework */,
+				74AEA1A3231D550A00175E4A /* NIOAutomationTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		74E3661222D6376200D77F20 /* NIOVisualiser */ = {
+			isa = PBXGroup;
+			children = (
+				742E75F022D6483C00F747C1 /* NIOSMTP */,
+				74E3664422D637D800D77F20 /* Supporting Views */,
+				74E3661322D6376200D77F20 /* AppDelegate.swift */,
+				74E3661522D6376200D77F20 /* ContentView.swift */,
+				74700F5F230D483E00B9EDF0 /* States.swift */,
+				74E5615322F86F7B004A78A4 /* Main.swift */,
+				74E3661722D6376400D77F20 /* Assets.xcassets */,
+				74E3661C22D6376400D77F20 /* Main.storyboard */,
+				74E3661F22D6376400D77F20 /* Info.plist */,
+				74E3662022D6376400D77F20 /* NIOVisualiser.entitlements */,
+				74E3661922D6376400D77F20 /* Preview Content */,
+			);
+			path = NIOVisualiser;
+			sourceTree = "<group>";
+		};
+		74E3661922D6376400D77F20 /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				74E3661A22D6376400D77F20 /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		74E3664422D637D800D77F20 /* Supporting Views */ = {
+			isa = PBXGroup;
+			children = (
+				74E3664922D6388500D77F20 /* ChannelPipelineView.swift */,
+				74E3664722D6386E00D77F20 /* ChannelHandlerView.swift */,
+				748D45FC22EDED8B003B9778 /* ChannelHandlerSimplePortView.swift */,
+				745E7B83230E9C4A000686F1 /* EventToggle.swift */,
+			);
+			path = "Supporting Views";
+			sourceTree = "<group>";
+		};
+		74F4994E231001150005CEB7 /* NIOVisualiserLibrary */ = {
+			isa = PBXGroup;
+			children = (
+				745E7B85230EC506000686F1 /* FilterLogic.swift */,
+				742E761122D64DEA00F747C1 /* InterceptionHandler.swift */,
+				742E761F22DE3A6B00F747C1 /* Event.swift */,
+				742E761422D73A3F00F747C1 /* Collector.swift */,
+				748D45F422E8A4EC003B9778 /* Heuristics.swift */,
+				748D45F822E9ED4D003B9778 /* Transmission.swift */,
+				74E5615522F891AC004A78A4 /* ChannelHandlerPort.swift */,
+				7408126823017A98001DEF03 /* Message.swift */,
+				74F4994F231001150005CEB7 /* NIOVisualiserLibrary.h */,
+				74F49950231001150005CEB7 /* Info.plist */,
+			);
+			path = NIOVisualiserLibrary;
+			sourceTree = "<group>";
+		};
+		74F49959231001150005CEB7 /* NIOVisualiserLibraryTests */ = {
+			isa = PBXGroup;
+			children = (
+				742E762722E60B6400F747C1 /* Utils.swift */,
+				742E762522E1D8D700F747C1 /* CollectorTests.swift */,
+				745E7B87230EC52B000686F1 /* FilterLogicTests.swift */,
+				745E7B89230ED09A000686F1 /* HeuristicsTests.swift */,
+				74E80AA82310466A00B61DBD /* IndexComputationTests.swift */,
+				74F4995C231001150005CEB7 /* Info.plist */,
+			);
+			path = NIOVisualiserLibraryTests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		74AEA196231D550A00175E4A /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				74AEA1AD231D550A00175E4A /* NIOAutomation.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		74F49948231001150005CEB7 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				74F4995D231001150005CEB7 /* NIOVisualiserLibrary.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		74AEA19A231D550A00175E4A /* NIOAutomation */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 74AEA1B2231D550A00175E4A /* Build configuration list for PBXNativeTarget "NIOAutomation" */;
+			buildPhases = (
+				74AEA196231D550A00175E4A /* Headers */,
+				74AEA197231D550A00175E4A /* Sources */,
+				74AEA198231D550A00175E4A /* Frameworks */,
+				74AEA199231D550A00175E4A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = NIOAutomation;
+			packageProductDependencies = (
+				74AEA1BE231D553F00175E4A /* NIO */,
+				74AEA1C0231D553F00175E4A /* NIOConcurrencyHelpers */,
+				74AEA1C2231D553F00175E4A /* NIOFoundationCompat */,
+				74AEA1C6231D554000175E4A /* NIOTLS */,
+				74AEA1C8231D555000175E4A /* NIOTransportServices */,
+				74AEA1CA231D555000175E4A /* NIOSSL */,
+				74AEA1CC231D556400175E4A /* NIOExtras */,
+			);
+			productName = NIOAutomation;
+			productReference = 74AEA19B231D550A00175E4A /* NIOAutomation.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		74AEA1A2231D550A00175E4A /* NIOAutomationTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 74AEA1B6231D550A00175E4A /* Build configuration list for PBXNativeTarget "NIOAutomationTests" */;
+			buildPhases = (
+				74AEA19F231D550A00175E4A /* Sources */,
+				74AEA1A0231D550A00175E4A /* Frameworks */,
+				74AEA1A1231D550A00175E4A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				74AEA1A6231D550A00175E4A /* PBXTargetDependency */,
+				74AEA1A8231D550A00175E4A /* PBXTargetDependency */,
+			);
+			name = NIOAutomationTests;
+			productName = NIOAutomationTests;
+			productReference = 74AEA1A3231D550A00175E4A /* NIOAutomationTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		74E3660F22D6376200D77F20 /* NIOVisualiser */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 74E3663922D6376400D77F20 /* Build configuration list for PBXNativeTarget "NIOVisualiser" */;
+			buildPhases = (
+				74E3660C22D6376200D77F20 /* Sources */,
+				74E3660D22D6376200D77F20 /* Frameworks */,
+				74E3660E22D6376200D77F20 /* Resources */,
+				74AEA1B5231D550A00175E4A /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				74F499742310023C0005CEB7 /* PBXTargetDependency */,
+				74AEA1AF231D550A00175E4A /* PBXTargetDependency */,
+			);
+			name = NIOVisualiser;
+			packageProductDependencies = (
+			);
+			productName = NIOVisualiser;
+			productReference = 74E3661022D6376200D77F20 /* NIOVisualiser.app */;
+			productType = "com.apple.product-type.application";
+		};
+		74F4994C231001150005CEB7 /* NIOVisualiserLibrary */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 74F49962231001150005CEB7 /* Build configuration list for PBXNativeTarget "NIOVisualiserLibrary" */;
+			buildPhases = (
+				74F49948231001150005CEB7 /* Headers */,
+				74F49949231001150005CEB7 /* Sources */,
+				74F4994A231001150005CEB7 /* Frameworks */,
+				74F4994B231001150005CEB7 /* Resources */,
+				74AEA1BD231D552200175E4A /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				74AEA1BC231D552200175E4A /* PBXTargetDependency */,
+			);
+			name = NIOVisualiserLibrary;
+			packageProductDependencies = (
+			);
+			productName = NIOVisualiserLibrary;
+			productReference = 74F4994D231001150005CEB7 /* NIOVisualiserLibrary.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		74F49954231001150005CEB7 /* NIOVisualiserLibraryTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 74F49963231001150005CEB7 /* Build configuration list for PBXNativeTarget "NIOVisualiserLibraryTests" */;
+			buildPhases = (
+				74F49951231001150005CEB7 /* Sources */,
+				74F49952231001150005CEB7 /* Frameworks */,
+				74F49953231001150005CEB7 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				74F49958231001150005CEB7 /* PBXTargetDependency */,
+			);
+			name = NIOVisualiserLibraryTests;
+			productName = NIOVisualiserLibraryTests;
+			productReference = 74F49955231001150005CEB7 /* NIOVisualiserLibraryTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		74E3660822D6376200D77F20 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 1100;
+				LastUpgradeCheck = 1100;
+				ORGANIZATIONNAME = "Arjun Singh";
+				TargetAttributes = {
+					74AEA19A231D550A00175E4A = {
+						CreatedOnToolsVersion = 11.0;
+					};
+					74AEA1A2231D550A00175E4A = {
+						CreatedOnToolsVersion = 11.0;
+						TestTargetID = 74E3660F22D6376200D77F20;
+					};
+					74E3660F22D6376200D77F20 = {
+						CreatedOnToolsVersion = 11.0;
+					};
+					74F4994C231001150005CEB7 = {
+						CreatedOnToolsVersion = 11.0;
+					};
+					74F49954231001150005CEB7 = {
+						CreatedOnToolsVersion = 11.0;
+					};
+				};
+			};
+			buildConfigurationList = 74E3660B22D6376200D77F20 /* Build configuration list for PBXProject "NIOVisualiser" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 74E3660722D6376200D77F20;
+			packageReferences = (
+				742E75FD22D648E300F747C1 /* XCRemoteSwiftPackageReference "swift-nio" */,
+				742E760622D6490300F747C1 /* XCRemoteSwiftPackageReference "swift-nio-extras" */,
+				742E760922D6494C00F747C1 /* XCRemoteSwiftPackageReference "swift-nio-transport-services" */,
+				742E760E22D64B4C00F747C1 /* XCRemoteSwiftPackageReference "swift-nio-ssl" */,
+			);
+			productRefGroup = 74E3661122D6376200D77F20 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				74E3660F22D6376200D77F20 /* NIOVisualiser */,
+				74F4994C231001150005CEB7 /* NIOVisualiserLibrary */,
+				74F49954231001150005CEB7 /* NIOVisualiserLibraryTests */,
+				74AEA19A231D550A00175E4A /* NIOAutomation */,
+				74AEA1A2231D550A00175E4A /* NIOAutomationTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		74AEA199231D550A00175E4A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		74AEA1A1231D550A00175E4A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		74E3660E22D6376200D77F20 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				74E3661E22D6376400D77F20 /* Main.storyboard in Resources */,
+				74E3661B22D6376400D77F20 /* Preview Assets.xcassets in Resources */,
+				74E3661822D6376400D77F20 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		74F4994B231001150005CEB7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		74F49953231001150005CEB7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		74AEA197231D550A00175E4A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				74AEA1CE231D558100175E4A /* NIOAutomation.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		74AEA19F231D550A00175E4A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				74AEA1AB231D550A00175E4A /* NIOAutomationTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		74E3660C22D6376200D77F20 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				742E75F722D6485900F747C1 /* SMTPResponseDecoder.swift in Sources */,
+				74E3664822D6386E00D77F20 /* ChannelHandlerView.swift in Sources */,
+				74E5615422F86F7B004A78A4 /* Main.swift in Sources */,
+				742E760D22D64B2000F747C1 /* PrintEverythingHandler.swift in Sources */,
+				742E75F622D6485900F747C1 /* SMTPRequestEncoder.swift in Sources */,
+				74E3661622D6376200D77F20 /* ContentView.swift in Sources */,
+				74700F60230D483E00B9EDF0 /* States.swift in Sources */,
+				745E7B84230E9C4A000686F1 /* EventToggle.swift in Sources */,
+				742E75F822D6485900F747C1 /* DataModel.swift in Sources */,
+				74F4997A231002F10005CEB7 /* CollectorData.swift in Sources */,
+				742E75FA22D6485900F747C1 /* Configuration.swift in Sources */,
+				742E75F922D6485900F747C1 /* SendEmailHandler.swift in Sources */,
+				748D45FD22EDED8B003B9778 /* ChannelHandlerSimplePortView.swift in Sources */,
+				74E3664A22D6388500D77F20 /* ChannelPipelineView.swift in Sources */,
+				742E75FC22D6487300F747C1 /* NIOSMTP.swift in Sources */,
+				74E3661422D6376200D77F20 /* AppDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		74F49949231001150005CEB7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				74F49965231001F20005CEB7 /* Collector.swift in Sources */,
+				74F49967231001F20005CEB7 /* Event.swift in Sources */,
+				74F49969231001F20005CEB7 /* InterceptionHandler.swift in Sources */,
+				74F4996A231001F20005CEB7 /* ChannelHandlerPort.swift in Sources */,
+				74F49968231001F20005CEB7 /* Heuristics.swift in Sources */,
+				74F4997B231004D30005CEB7 /* FilterLogic.swift in Sources */,
+				74F4996E231001F20005CEB7 /* Message.swift in Sources */,
+				74F49966231001F20005CEB7 /* Transmission.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		74F49951231001150005CEB7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				74F4996F2310020A0005CEB7 /* FilterLogicTests.swift in Sources */,
+				74F499722310020B0005CEB7 /* HeuristicsTests.swift in Sources */,
+				74F499702310020B0005CEB7 /* CollectorTests.swift in Sources */,
+				74E80AA92310466A00B61DBD /* IndexComputationTests.swift in Sources */,
+				74F499712310020B0005CEB7 /* Utils.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		74AEA1A6231D550A00175E4A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 74AEA19A231D550A00175E4A /* NIOAutomation */;
+			targetProxy = 74AEA1A5231D550A00175E4A /* PBXContainerItemProxy */;
+		};
+		74AEA1A8231D550A00175E4A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 74E3660F22D6376200D77F20 /* NIOVisualiser */;
+			targetProxy = 74AEA1A7231D550A00175E4A /* PBXContainerItemProxy */;
+		};
+		74AEA1AF231D550A00175E4A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 74AEA19A231D550A00175E4A /* NIOAutomation */;
+			targetProxy = 74AEA1AE231D550A00175E4A /* PBXContainerItemProxy */;
+		};
+		74AEA1BC231D552200175E4A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 74AEA19A231D550A00175E4A /* NIOAutomation */;
+			targetProxy = 74AEA1BB231D552200175E4A /* PBXContainerItemProxy */;
+		};
+		74F49958231001150005CEB7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 74F4994C231001150005CEB7 /* NIOVisualiserLibrary */;
+			targetProxy = 74F49957231001150005CEB7 /* PBXContainerItemProxy */;
+		};
+		74F499742310023C0005CEB7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 74F4994C231001150005CEB7 /* NIOVisualiserLibrary */;
+			targetProxy = 74F499732310023C0005CEB7 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		74E3661C22D6376400D77F20 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				74E3661D22D6376400D77F20 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		74AEA1B3231D550A00175E4A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = PSN647KA96;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INFOPLIST_FILE = NIOAutomation/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = io.swiftnio.examples.NIOVisualiser;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Debug;
+		};
+		74AEA1B4231D550A00175E4A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = PSN647KA96;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INFOPLIST_FILE = NIOAutomation/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = io.swiftnio.examples.NIOVisualiser;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Release;
+		};
+		74AEA1B7231D550A00175E4A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = PSN647KA96;
+				INFOPLIST_FILE = NIOAutomationTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = io.swiftnio.examples.NIOAutomationTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/NIOVisualiser.app/Contents/MacOS/NIOVisualiser";
+			};
+			name = Debug;
+		};
+		74AEA1B8231D550A00175E4A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = PSN647KA96;
+				INFOPLIST_FILE = NIOAutomationTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = io.swiftnio.examples.NIOAutomationTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/NIOVisualiser.app/Contents/MacOS/NIOVisualiser";
+			};
+			name = Release;
+		};
+		74E3663722D6376400D77F20 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		74E3663822D6376400D77F20 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		74E3663A22D6376400D77F20 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = NIOVisualiser/NIOVisualiser.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_ASSET_PATHS = "NIOVisualiser/Preview\\ Content";
+				DEVELOPMENT_TEAM = PSN647KA96;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = NIOVisualiser/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = io.swiftnio.examples.NIOVisualiser;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		74E3663B22D6376400D77F20 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = NIOVisualiser/NIOVisualiser.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_ASSET_PATHS = "NIOVisualiser/Preview\\ Content";
+				DEVELOPMENT_TEAM = PSN647KA96;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = NIOVisualiser/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = io.swiftnio.examples.NIOVisualiser;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		74F4995E231001150005CEB7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = PSN647KA96;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INFOPLIST_FILE = NIOVisualiserLibrary/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = io.swiftnio.examples.NIOVisualiser;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Debug;
+		};
+		74F4995F231001150005CEB7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = PSN647KA96;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INFOPLIST_FILE = NIOVisualiserLibrary/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = io.swiftnio.examples.NIOVisualiser;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Release;
+		};
+		74F49960231001150005CEB7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = PSN647KA96;
+				INFOPLIST_FILE = NIOVisualiserLibraryTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = io.swiftnio.examples.NIOVisualiserLibraryTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		74F49961231001150005CEB7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = PSN647KA96;
+				INFOPLIST_FILE = NIOVisualiserLibraryTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = io.swiftnio.examples.NIOVisualiserLibraryTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		74AEA1B2231D550A00175E4A /* Build configuration list for PBXNativeTarget "NIOAutomation" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				74AEA1B3231D550A00175E4A /* Debug */,
+				74AEA1B4231D550A00175E4A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		74AEA1B6231D550A00175E4A /* Build configuration list for PBXNativeTarget "NIOAutomationTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				74AEA1B7231D550A00175E4A /* Debug */,
+				74AEA1B8231D550A00175E4A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		74E3660B22D6376200D77F20 /* Build configuration list for PBXProject "NIOVisualiser" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				74E3663722D6376400D77F20 /* Debug */,
+				74E3663822D6376400D77F20 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		74E3663922D6376400D77F20 /* Build configuration list for PBXNativeTarget "NIOVisualiser" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				74E3663A22D6376400D77F20 /* Debug */,
+				74E3663B22D6376400D77F20 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		74F49962231001150005CEB7 /* Build configuration list for PBXNativeTarget "NIOVisualiserLibrary" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				74F4995E231001150005CEB7 /* Debug */,
+				74F4995F231001150005CEB7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		74F49963231001150005CEB7 /* Build configuration list for PBXNativeTarget "NIOVisualiserLibraryTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				74F49960231001150005CEB7 /* Debug */,
+				74F49961231001150005CEB7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		742E75FD22D648E300F747C1 /* XCRemoteSwiftPackageReference "swift-nio" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-nio.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.3.0;
+			};
+		};
+		742E760622D6490300F747C1 /* XCRemoteSwiftPackageReference "swift-nio-extras" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-nio-extras.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.0;
+			};
+		};
+		742E760922D6494C00F747C1 /* XCRemoteSwiftPackageReference "swift-nio-transport-services" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-nio-transport-services.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.3;
+			};
+		};
+		742E760E22D64B4C00F747C1 /* XCRemoteSwiftPackageReference "swift-nio-ssl" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-nio-ssl.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.1.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		74AEA1BE231D553F00175E4A /* NIO */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 742E75FD22D648E300F747C1 /* XCRemoteSwiftPackageReference "swift-nio" */;
+			productName = NIO;
+		};
+		74AEA1C0231D553F00175E4A /* NIOConcurrencyHelpers */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 742E75FD22D648E300F747C1 /* XCRemoteSwiftPackageReference "swift-nio" */;
+			productName = NIOConcurrencyHelpers;
+		};
+		74AEA1C2231D553F00175E4A /* NIOFoundationCompat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 742E75FD22D648E300F747C1 /* XCRemoteSwiftPackageReference "swift-nio" */;
+			productName = NIOFoundationCompat;
+		};
+		74AEA1C6231D554000175E4A /* NIOTLS */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 742E75FD22D648E300F747C1 /* XCRemoteSwiftPackageReference "swift-nio" */;
+			productName = NIOTLS;
+		};
+		74AEA1C8231D555000175E4A /* NIOTransportServices */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 742E760922D6494C00F747C1 /* XCRemoteSwiftPackageReference "swift-nio-transport-services" */;
+			productName = NIOTransportServices;
+		};
+		74AEA1CA231D555000175E4A /* NIOSSL */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 742E760E22D64B4C00F747C1 /* XCRemoteSwiftPackageReference "swift-nio-ssl" */;
+			productName = NIOSSL;
+		};
+		74AEA1CC231D556400175E4A /* NIOExtras */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 742E760622D6490300F747C1 /* XCRemoteSwiftPackageReference "swift-nio-extras" */;
+			productName = NIOExtras;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 74E3660822D6376200D77F20 /* Project object */;
+}
