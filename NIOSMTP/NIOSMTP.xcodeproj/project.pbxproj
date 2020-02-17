@@ -407,7 +407,7 @@
 			repositoryURL = "https://github.com/apple/swift-nio-ssl";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 2.1.1;
+				minimumVersion = 2.7.0;
 			};
 		};
 		0663DECB22CCDA7000B605ED /* XCRemoteSwiftPackageReference "swift-nio-extras" */ = {
@@ -423,7 +423,7 @@
 			repositoryURL = "https://github.com/apple/swift-nio-transport-services";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.3;
+				minimumVersion = 1.4.0;
 			};
 		};
 		0675A13822CCDFC200EE90B9 /* XCRemoteSwiftPackageReference "swift-nio" */ = {
@@ -431,7 +431,7 @@
 			repositoryURL = "https://github.com/apple/swift-nio";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 2.3.0;
+				minimumVersion = 2.15.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

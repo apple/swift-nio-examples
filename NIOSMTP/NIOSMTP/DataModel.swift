@@ -39,7 +39,7 @@ struct ServerConfiguration {
         case regularTLS
 
         /// This should never be used. It will literally _SEND YOUR PASSWORD IN PLAINTEXT OVER THE INTERNET_.
-        case unsafeNoTLS
+        case insecureNoTLS
     }
     var hostname: String
     var port: Int

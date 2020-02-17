@@ -1,3 +1,5 @@
 .build/
 .swiftpm/
+.DS_Store
 Package.resolved
+NIOSMTP/NIOSMTP.xcodeproj/xcshareddata
