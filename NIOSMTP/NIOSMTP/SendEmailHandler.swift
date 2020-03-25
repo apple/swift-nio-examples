@@ -92,7 +92,7 @@ final class SendEmailHandler: ChannelInboundHandler {
                         "\(self.serverConfiguration.tlsConfiguration) but SSL handler \(error)")
                 }
             }
-        case .unsafeNoTLS:
+        case .insecureNoTLS:
             // sad times here, plaintext
             goAhead()
         }
