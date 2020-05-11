@@ -2,7 +2,7 @@
 
 This example shows how you can propagate backpressure from the file system into the Channel.
 
-First, let's establish what it means to propagate backpressure from the file system into the Channel: Let's assume we have a HTTP server
+First, let's establish what it means to propagate backpressure from the file system into the Channel. Let's assume we have a HTTP server
 that accepts arbitrary amounts of data and writes it to the file system. If data is received faster over the network than we can write it to the
 disk, then the server runs into trouble: It can now only either buffer the data in memory or (at least in theory) drop it on the floor. The former
 would easily be usable as a denial of service exploit, the latter means that the server isn't able to provide its core functioniality.
