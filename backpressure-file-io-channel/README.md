@@ -21,7 +21,7 @@ By default, `Channel`s in SwiftNIO have the [`autoRead`](https://apple.github.io
 `ChannelOption` enabled. When `autoRead` is enabled, SwiftNIO will automatically send a `read` (note, this is a very different event than the
 inbound `channelRead` event that is used to deliver data) event when the previous read burst has
 completed (signalled by the inbound [`channelReadComplete`](https://apple.github.io/swift-nio/docs/current/NIO/Protocols/_ChannelInboundHandler.html#/s:3NIO22_ChannelInboundHandlerP19channelReadComplete7contextyAA0bD7ContextC_tF)
-event). Therefore, you may be unaware of the existance of the `read` event despite having used SwiftNIO before.
+event). Therefore, you may be unaware of the existence of the `read` event despite having used SwiftNIO before.
 
 Suppressing the `read` event is one of the key demonstrations of this example. The fundamental idea is that to start with we let `read` flow
 through the `ChannelPipeline` until we have an HTTP request and the first bits of its request body. Once we received the first bits of the
