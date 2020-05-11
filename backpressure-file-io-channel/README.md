@@ -7,7 +7,7 @@ that accepts arbitrary amounts of data and writes it to the file system. If data
 disk, then the server runs into trouble: It can now only either buffer the data in memory or (at least in theory) drop it on the floor. The former
 would easily be usable as a denial of service exploit, the latter means that the server isn't able to provide its core functioniality.
 
-Backpressure is the mechanism to the the buffering issue above. The idea is that the server stops accepting more data from the client than
+Backpressure is the mechanism to resolve the the buffering issue above. The idea is that the server stops accepting more data from the client than
 it can write to disk. Because HTTP runs over TCP which has flow-control built in, the TCP stacks will then lower the server's receive window
 size which means that the client gets slowed down of completely stopped from sending any data. Once the server finishes writing previously
 received data to disk, it starts draining the receive buffer which then make TCP's flow control raise the window sizes which allows the client
