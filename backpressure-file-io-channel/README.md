@@ -9,7 +9,7 @@ would easily be usable as a denial of service exploit, the latter means that the
 
 Backpressure is the mechanism to resolve the the buffering issue above. The idea is that the server stops accepting more data from the client than
 it can write to disk. Because HTTP runs over TCP which has flow-control built in, the TCP stacks will then lower the server's receive window
-size which means that the client gets slowed down of completely stopped from sending any data. Once the server finishes writing previously
+size which means that the client gets slowed down or completely stopped from sending any data. Once the server finishes writing previously
 received data to disk, it starts draining the receive buffer which then make TCP's flow control raise the window sizes which allows the client
 to send further data.
 
