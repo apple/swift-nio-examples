@@ -15,7 +15,7 @@ to send further data.
 
 ## Backpressure in SwiftNIO
 
-In SwiftNIO, backpressure is propagated by stopping to call the outbound [`read`](https://apple.github.io/swift-nio/docs/current/NIO/Protocols/_ChannelOutboundHandler.html#/s:3NIO23_ChannelOutboundHandlerP4read7contextyAA0bD7ContextC_tF) event.
+In SwiftNIO, backpressure is propagated by stopping calls to the outbound [`read`](https://apple.github.io/swift-nio/docs/current/NIO/Protocols/_ChannelOutboundHandler.html#/s:3NIO23_ChannelOutboundHandlerP4read7contextyAA0bD7ContextC_tF) event.
 
 By default, `Channel`s in SwiftNIO have the [`autoRead`](https://apple.github.io/swift-nio/docs/current/NIO/Structs/ChannelOptions.html#/s:3NIO14ChannelOptionsV8autoReadAC5TypesO04AutoE6OptionVvpZ)
 `ChannelOption` enabled. When `autoRead` is enabled, SwiftNIO will automatically send a `read` (note, this is a very different event than the
