@@ -16,7 +16,7 @@ import NIO
 import NIOHTTP1
 import Logging
 
-final class SaveEverythingHTTPServer {
+public final class SaveEverythingHTTPServer {
     private var state = FileIOCoordinatorState() {
         didSet {
             self.logger.trace("new state \(self.state)")
@@ -26,7 +26,7 @@ final class SaveEverythingHTTPServer {
     private let fileIO: NonBlockingFileIO
     internal var logger: Logger
 
-    init(fileIO: NonBlockingFileIO, logger: Logger? = nil) {
+    public init(fileIO: NonBlockingFileIO, logger: Logger? = nil) {
         self.fileIO = fileIO
         if let logger = logger {
             self.logger = logger
@@ -114,21 +114,21 @@ extension SaveEverythingHTTPServer {
 
 // MARK: - ChannelHandler conformance
 extension SaveEverythingHTTPServer: ChannelDuplexHandler {
-    typealias InboundIn = HTTPServerRequestPart
-    typealias OutboundIn = Never
-    typealias OutboundOut = HTTPServerResponsePart
+    public typealias InboundIn = HTTPServerRequestPart
+    public typealias OutboundIn = Never
+    public typealias OutboundOut = HTTPServerResponsePart
 
-    func errorCaught(context: ChannelHandlerContext, error: Error) {
+    public func errorCaught(context: ChannelHandlerContext, error: Error) {
         self.logger.info("error on channel: \(error)")
         self.runAction(self.state.didError(error), context: context)
     }
 
-    func channelRead(context: ChannelHandlerContext, data: NIOAny) {
+    public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         let reqPart = self.unwrapInboundIn(data)
 
         switch reqPart {
         case .head(let request):
-            self.runAction(self.state.didStartRequest(targetPath: self.filenameForURI(request.uri)), context: context)
+            self.runAction(self.state.didReceiveRequestBegin(targetPath: self.filenameForURI(request.uri)), context: context)
         case .body(let bytes):
             self.runAction(self.state.didReceiveRequestBodyBytes(bytes), context: context)
         case .end:
@@ -136,13 +136,13 @@ extension SaveEverythingHTTPServer: ChannelDuplexHandler {
         }
     }
 
-    func read(context: ChannelHandlerContext) {
+    public func read(context: ChannelHandlerContext) {
         if self.state.shouldWeReadMoreDataFromNetwork() {
             context.read()
         }
     }
 
-    func handlerRemoved(context: ChannelHandlerContext) {
+    public func handlerRemoved(context: ChannelHandlerContext) {
         assert(self.state.inFinalState, "illegal state on handler removal: \(self.state)")
     }
 }

@@ -50,7 +50,7 @@ The full set of inputs to the state machine are
 
 - Tell the state machine that a new HTTP request started.
     ```
-    internal mutating func didStartRequest(targetPath: String) -> Action
+    internal mutating func didReceiveRequestBegin(targetPath: String) -> Action
     ```
 
 - Tell the state machine that we received more bytes of the request body.

@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 import NIO
-import NIOHTTP1
 import Logging
+import BackpressureChannelToFileIO
 
 let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
 defer {
