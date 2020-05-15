@@ -1,3 +1,17 @@
+//===----------------------------------------------------------------------===//
+//
+// This source file is part of the SwiftNIO open source project
+//
+// Copyright (c) 2020 Apple Inc. and the SwiftNIO project authors
+// Licensed under Apache License v2.0
+//
+// See LICENSE.txt for license information
+// See CONTRIBUTORS.txt for the list of SwiftNIO project authors
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+//===----------------------------------------------------------------------===//
+
 import NIO
 
 internal struct FileIOCoordinatorState {
@@ -45,10 +59,24 @@ internal struct FileIOCoordinatorState {
                 return self.bufferedWrites.removeFirst()
             }
         }
+
+        /// We're totally idle, waiting for the next request.
         case idle
+
+        /// We commanded a file to be opened, now waiting for that to happen.
         case openingFile(BufferState)
+
+        /// We commanded a write to disk to happen, now waiting for that to complete.
         case writing(NIOFileHandle, BufferState)
+
+        /// We're waiting for someone to pull the next bit of data (to then be written to disk).
         case readyToWrite(NIOFileHandle, BufferState)
+
+        /// We encountered an error during a disk write. We must sit on this for a bit until the disk write completes,
+        /// then we can discard the resources and close the file handle (which must not happen during writes).
+        case errorWhilstWriting(NIOFileHandle, Error)
+
+        /// We're in an error state, hold no resources, and will never recover. We'll stay here until we are no more.
         case error(Error)
     }
 
@@ -62,7 +90,7 @@ internal struct FileIOCoordinatorState {
 // MARK: - State machine inputs
 extension FileIOCoordinatorState {
     /// Tell the state machine that a new request started.
-    internal mutating func didStartRequest(targetPath: String) -> Action {
+    internal mutating func didReceiveRequestBegin(targetPath: String) -> Action {
         switch self.state {
         case .idle:
             self.state = .openingFile(.init(bufferedWrites: [], heldUpRead: false, seenRequestEnd: false))
@@ -84,12 +112,13 @@ extension FileIOCoordinatorState {
             self.state = .openingFile(buffers)
         case .readyToWrite(let fileHandle, var buffers):
             buffers.append(bytes)
+            // We go straight to `.writing` because we expect the driver to pull the next chunk using `pullNextChunk`.
             self.state = .writing(fileHandle, buffers)
             return Action(main: .startWritingToTargetFile, callRead: false)
         case .writing(let fileHandle, var buffers):
             buffers.append(bytes)
             self.state = .writing(fileHandle, buffers)
-        case .error:
+        case .error, .errorWhilstWriting:
             ()
         }
         return Action(main: .nothingWeAreWaiting /* for the file to open or the previous writes to complete */,
@@ -116,8 +145,12 @@ extension FileIOCoordinatorState {
                 self.state = .writing(fileHandle, buffers)
                 return Action(main: .startWritingToTargetFile, callRead: false)
             }
+        case .errorWhilstWriting(let fileHandle, let error):
+            // Okay, the write finally completed, let's discard the resources.
+            self.state = .error(error)
+            return Action(main: .processingCompletedDiscardResources(fileHandle, error), callRead: false)
         case .error:
-            return Action(main: .nothingWeAreWaiting /* for the channel to go away */, callRead: false)
+            self.illegalTransition() // if an error happened whilst writing then we should be in the above case.
         }
     }
 
@@ -135,7 +168,9 @@ extension FileIOCoordinatorState {
             buffers.seenRequestEnd = true
             if buffers.isEmpty {
                 self.state = .idle
-                return Action(main: .processingCompletedDiscardResources(fileHandle, nil), callRead: buffers.heldUpRead)
+                let heldUpRead = buffers.heldUpRead
+                buffers.heldUpRead = false // because we're delivering it now.
+                return Action(main: .processingCompletedDiscardResources(fileHandle, nil), callRead: heldUpRead)
             } else {
                 self.illegalTransition()
             }
@@ -143,7 +178,7 @@ extension FileIOCoordinatorState {
             precondition(!buffers.seenRequestEnd, "double .end received")
             buffers.seenRequestEnd = true
             self.state = .writing(fileHandle, buffers)
-        case .error:
+        case .error, .errorWhilstWriting:
             ()
         }
         return Action(main: .nothingWeAreWaiting /* for the writes to the file to complete */, callRead: false)
@@ -152,17 +187,19 @@ extension FileIOCoordinatorState {
     /// Tell the state machine we finished opening the target file.
     internal mutating func didOpenTargetFile(_ fileHandle: NIOFileHandle) -> Action {
         switch self.state {
-        case .idle, .readyToWrite, .writing:
+        case .idle, .readyToWrite, .writing, .errorWhilstWriting:
             self.illegalTransition()
-        case .openingFile(let buffers):
+        case .openingFile(var buffers):
+            let heldUpRead = buffers.heldUpRead
+            buffers.heldUpRead = false // because we're replaying it now.
             if buffers.isEmpty {
                 if buffers.seenRequestEnd {
                     // That's a zero length file
                     self.state = .idle
-                    return Action(main: .processingCompletedDiscardResources(fileHandle, nil), callRead: buffers.heldUpRead)
+                    return Action(main: .processingCompletedDiscardResources(fileHandle, nil), callRead: heldUpRead)
                 } else {
                     self.state = .readyToWrite(fileHandle, buffers)
-                    return Action(main: .nothingWeAreWaiting /* for more data or EOF */, callRead: buffers.heldUpRead)
+                    return Action(main: .nothingWeAreWaiting /* for more data or EOF */, callRead: heldUpRead)
                 }
             } else {
                 self.state = .writing(fileHandle, buffers)
@@ -178,12 +215,15 @@ extension FileIOCoordinatorState {
         let oldState = self.state
         self.state = .error(error)
         switch oldState {
-        case .idle, .error:
+        case .idle, .error, .errorWhilstWriting:
             return Action(main: .nothingWeAreWaiting /* for a new request / the channel to go away */, callRead: false)
         case .openingFile:
             return Action(main: .processingCompletedDiscardResources(nil, error), callRead: false)
-        case .readyToWrite(let fileHandle, _), .writing(let fileHandle, _):
+        case .readyToWrite(let fileHandle, _):
             return Action(main: .processingCompletedDiscardResources(fileHandle, error), callRead: false)
+        case .writing(let fileHandle, _):
+            self.state = .errorWhilstWriting(fileHandle, error)
+            return Action(main: .nothingWeAreWaiting /* for the write to complete */, callRead: false)
         }
     }
 }
@@ -216,7 +256,7 @@ extension FileIOCoordinatorState {
             buffers.heldUpRead = true
             self.state = .writing(fileHandle, buffers)
             return false
-        case .error:
+        case .error, .errorWhilstWriting:
             // No, hit an error.
             return false
         }
@@ -224,7 +264,7 @@ extension FileIOCoordinatorState {
 
     internal mutating func pullNextChunkToWrite() -> (NIOFileHandle, ByteBuffer) {
         switch self.state {
-        case .error, .idle, .openingFile, .readyToWrite:
+        case .error, .idle, .openingFile, .readyToWrite, .errorWhilstWriting:
             self.illegalTransition()
         case .writing(let fileHandle, var buffers):
             let first = buffers.removeFirst()

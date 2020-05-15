@@ -11,5 +11,10 @@ let package = Package(
         .target(
             name: "BackpressureChannelToFileIO",
             dependencies: ["NIO", "NIOHTTP1", "Logging"]),
+        .target(
+            name: "BackpressureChannelToFileIODemo",
+            dependencies: ["NIO", "BackpressureChannelToFileIO", "Logging"]),
+        .testTarget(name: "BackpressureChannelToFileIOTests",
+                    dependencies: ["NIO", "BackpressureChannelToFileIO"]),
     ]
 )
