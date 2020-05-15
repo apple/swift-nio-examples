@@ -190,9 +190,10 @@ extension FileIOCoordinatorState {
         case .idle, .readyToWrite, .writing, .errorWhilstWriting:
             self.illegalTransition()
         case .openingFile(var buffers):
-            let heldUpRead = buffers.heldUpRead
-            buffers.heldUpRead = false // because we're replaying it now.
             if buffers.isEmpty {
+                let heldUpRead = buffers.heldUpRead
+                buffers.heldUpRead = false // because we're replaying it now.
+
                 if buffers.seenRequestEnd {
                     // That's a zero length file
                     self.state = .idle

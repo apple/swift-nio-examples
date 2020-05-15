@@ -84,7 +84,6 @@ final class StateMachineTest: XCTestCase {
             .assertDoNotCallRead()
         XCTAssertFalse(self.coordinator.shouldWeReadMoreDataFromNetwork())
         XCTAssertEqual(self.byteX, self.coordinator.pullNextChunkToWrite().1)
-        XCTAssertFalse(self.coordinator.shouldWeReadMoreDataFromNetwork())
         self.coordinator.didFinishWritingOneChunkToFile()
             .assertNothing()
             .assertCallRead()
@@ -111,36 +110,30 @@ final class StateMachineTest: XCTestCase {
         self.coordinator.didReceiveRequestBodyBytes(self.byteY)
             .assertNothing()
             .assertDoNotCallRead()
-        XCTAssertFalse(self.coordinator.shouldWeReadMoreDataFromNetwork())
         self.coordinator.didReceiveRequestBodyBytes(self.byteX)
             .assertNothing()
             .assertDoNotCallRead()
 
         // Okay, and finally, let's drain one
-        XCTAssertFalse(self.coordinator.shouldWeReadMoreDataFromNetwork())
         XCTAssertEqual(self.byteX, self.coordinator.pullNextChunkToWrite().1)
         self.coordinator.didFinishWritingOneChunkToFile()
             .assertStartWriting()
             .assertDoNotCallRead()
 
         // Let's enqueue another one, again we shouldn't have to
-        XCTAssertFalse(self.coordinator.shouldWeReadMoreDataFromNetwork())
         self.coordinator.didReceiveRequestBodyBytes(self.byteY)
             .assertNothing()
             .assertDoNotCallRead()
 
         // Let's drain them all
-        XCTAssertFalse(self.coordinator.shouldWeReadMoreDataFromNetwork())
         XCTAssertEqual(self.byteY, self.coordinator.pullNextChunkToWrite().1)
         self.coordinator.didFinishWritingOneChunkToFile()
             .assertStartWriting()
             .assertDoNotCallRead()
-        XCTAssertFalse(self.coordinator.shouldWeReadMoreDataFromNetwork())
         XCTAssertEqual(self.byteX, self.coordinator.pullNextChunkToWrite().1)
         self.coordinator.didFinishWritingOneChunkToFile()
             .assertStartWriting()
             .assertDoNotCallRead()
-        XCTAssertFalse(self.coordinator.shouldWeReadMoreDataFromNetwork())
         XCTAssertEqual(self.byteY, self.coordinator.pullNextChunkToWrite().1)
         self.coordinator.didFinishWritingOneChunkToFile()
             .assertNothing()
@@ -160,7 +153,6 @@ final class StateMachineTest: XCTestCase {
         self.coordinator.didReceiveRequestBodyBytes(self.byteX)
             .assertNothing()
             .assertDoNotCallRead()
-        XCTAssertFalse(self.coordinator.shouldWeReadMoreDataFromNetwork())
         self.coordinator.didReceiveRequestBodyBytes(self.byteY)
             .assertNothing()
             .assertDoNotCallRead()
@@ -170,12 +162,10 @@ final class StateMachineTest: XCTestCase {
             .assertDoNotCallRead()
 
         // Let's drain them all
-        XCTAssertFalse(self.coordinator.shouldWeReadMoreDataFromNetwork())
         XCTAssertEqual(self.byteX, self.coordinator.pullNextChunkToWrite().1)
         self.coordinator.didFinishWritingOneChunkToFile()
             .assertStartWriting()
             .assertDoNotCallRead()
-        XCTAssertFalse(self.coordinator.shouldWeReadMoreDataFromNetwork())
         XCTAssertEqual(self.byteY, self.coordinator.pullNextChunkToWrite().1)
         self.coordinator.didFinishWritingOneChunkToFile()
             .assertNothing()
@@ -246,7 +236,6 @@ final class StateMachineTest: XCTestCase {
         self.coordinator.didReceiveRequestBodyBytes(self.byteX)
             .assertNothing()
             .assertDoNotCallRead()
-        XCTAssertFalse(self.coordinator.shouldWeReadMoreDataFromNetwork())
         self.coordinator.didReceiveRequestEnd()
             .assertNothing()
             .assertDoNotCallRead()
@@ -255,7 +244,6 @@ final class StateMachineTest: XCTestCase {
             .assertStartWriting()
             .assertDoNotCallRead()
         XCTAssertEqual(self.byteX, self.coordinator.pullNextChunkToWrite().1)
-        XCTAssertFalse(self.coordinator.shouldWeReadMoreDataFromNetwork())
         self.coordinator.didFinishWritingOneChunkToFile()
             .assertCallRead()
             .assertDiscardResources({ fileHandle, error in
@@ -275,7 +263,6 @@ final class StateMachineTest: XCTestCase {
             .assertNothing()
             .assertDoNotCallRead()
 
-        XCTAssertFalse(self.coordinator.shouldWeReadMoreDataFromNetwork())
         self.coordinator.didOpenTargetFile(self.fakeFileHandle)
             .assertCallRead()
             .assertDiscardResources({ fileHandle, error in
@@ -298,7 +285,6 @@ final class StateMachineTest: XCTestCase {
             .assertDoNotCallRead()
 
         XCTAssertEqual(self.byteX, self.coordinator.pullNextChunkToWrite().1)
-        XCTAssertFalse(self.coordinator.shouldWeReadMoreDataFromNetwork())
         self.coordinator.didFinishWritingOneChunkToFile()
             .assertDiscardResources({ fileHandle, error in
                 XCTAssertNotNil(fileHandle)
@@ -320,31 +306,26 @@ final class StateMachineTest: XCTestCase {
         self.coordinator.didReceiveRequestBodyBytes(self.byteY)
             .assertNothing()
             .assertDoNotCallRead()
-        XCTAssertFalse(self.coordinator.shouldWeReadMoreDataFromNetwork())
         self.coordinator.didReceiveRequestBodyBytes(self.byteX)
             .assertNothing()
             .assertDoNotCallRead()
 
         // And an end
-        XCTAssertFalse(self.coordinator.shouldWeReadMoreDataFromNetwork())
         self.coordinator.didReceiveRequestEnd()
             .assertNothing()
             .assertDoNotCallRead()
 
         XCTAssertEqual(self.byteX, self.coordinator.pullNextChunkToWrite().1)
-        XCTAssertFalse(self.coordinator.shouldWeReadMoreDataFromNetwork())
         self.coordinator.didFinishWritingOneChunkToFile()
             .assertStartWriting()
             .assertDoNotCallRead()
 
         XCTAssertEqual(self.byteY, self.coordinator.pullNextChunkToWrite().1)
-        XCTAssertFalse(self.coordinator.shouldWeReadMoreDataFromNetwork())
         self.coordinator.didFinishWritingOneChunkToFile()
             .assertStartWriting()
             .assertDoNotCallRead()
 
         XCTAssertEqual(self.byteX, self.coordinator.pullNextChunkToWrite().1)
-        XCTAssertFalse(self.coordinator.shouldWeReadMoreDataFromNetwork())
         self.coordinator.didFinishWritingOneChunkToFile()
             .assertDiscardResources({ fileHandle, error in
                 XCTAssertNotNil(fileHandle)
