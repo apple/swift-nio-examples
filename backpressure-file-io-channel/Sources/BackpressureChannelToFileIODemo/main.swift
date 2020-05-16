@@ -37,7 +37,9 @@ let server = try ServerBootstrap(group: group)
             var logger = logger
             logger[metadataKey: "connection"] = "\(channel.remoteAddress!)"
             return channel.pipeline.configureHTTPServerPipeline(withErrorHandling: false).flatMap {
-                channel.pipeline.addHandler(SaveEverythingHTTPServer(fileIO: fileIO, logger: logger))
+                channel.pipeline.addHandler(SaveEverythingHTTPServer(fileIO: fileIO,
+                                                                     uploadDirectory: "/tmp",
+                                                                     logger: logger))
             }
         }
         .bind(host: "localhost", port: 8080)
