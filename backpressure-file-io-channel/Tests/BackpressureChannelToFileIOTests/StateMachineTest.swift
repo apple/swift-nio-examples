@@ -207,6 +207,30 @@ final class StateMachineTest: XCTestCase {
         self.moveFromBodyStreamingToEnd(expectError: true)
     }
 
+    func testMultipleErrorsWhilstWriting() {
+        struct SecondError: Error {}
+        self.moveToBodyStreamingState()
+
+        XCTAssertTrue(self.coordinator.shouldWeReadMoreDataFromNetwork())
+        self.coordinator.didReceiveRequestBodyBytes(self.byteX)
+            .assertStartWriting()
+            .assertDoNotCallRead()
+
+        self.coordinator.didError(DummyError())
+            .assertNothing()
+            .assertDoNotCallRead()
+        self.coordinator.didError(SecondError())
+            .assertNothing()
+            .assertDoNotCallRead()
+
+        self.coordinator.didFinishWritingOneChunkToFile()
+            .assertDiscardResources({ fileHandle, error in
+                XCTAssertNotNil(fileHandle)
+                XCTAssert(error is DummyError)
+            })
+
+        self.moveFromBodyStreamingToEnd(expectError: true)
+    }
 
     func testErrorWhilstIdleButStillReceivingStuff() {
         self.coordinator.didError(DummyError())
@@ -342,6 +366,27 @@ final class StateMachineTest: XCTestCase {
         XCTAssertFalse(self.coordinator.inFinalState)
 
         self.moveFromBodyStreamingToEnd(expectError: false)
+    }
+
+    func testErrorWhilstInError() {
+        self.coordinator.didError(DummyError())
+            .assertNothing()
+            .assertDoNotCallRead()
+
+        self.coordinator.didError(DummyError())
+            .assertNothing()
+            .assertDoNotCallRead()
+    }
+
+    func testRequestBeginInError() {
+        self.coordinator.didError(DummyError())
+            .assertNothing()
+            .assertDoNotCallRead()
+
+        XCTAssertFalse(self.coordinator.shouldWeReadMoreDataFromNetwork())
+        self.coordinator.didReceiveRequestBegin(targetPath: "/f")
+            .assertNothing()
+            .assertDoNotCallRead()
     }
 }
 

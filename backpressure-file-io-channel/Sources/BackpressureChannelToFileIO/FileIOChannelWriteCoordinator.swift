@@ -213,18 +213,29 @@ extension FileIOCoordinatorState {
 
     /// Tell the state machine that we've hit an error.
     internal mutating func didError(_ error: Error) -> Action {
-        let oldState = self.state
-        self.state = .error(error)
-        switch oldState {
-        case .idle, .error, .errorWhilstWriting:
-            return Action(main: .nothingWeAreWaiting /* for a new request / the channel to go away */, callRead: false)
+        switch self.state {
+        // Straight to error in these states:
+        case .idle:
+            self.state = .error(error)
+            return Action(main: .nothingWeAreWaiting /* the channel to go away */, callRead: false)
         case .openingFile:
+            self.state = .error(error)
             return Action(main: .processingCompletedDiscardResources(nil, error), callRead: false)
         case .readyToWrite(let fileHandle, _):
+            self.state = .error(error)
             return Action(main: .processingCompletedDiscardResources(fileHandle, error), callRead: false)
+
+        // We need to go via .errorWhilstWriting
         case .writing(let fileHandle, _):
             self.state = .errorWhilstWriting(fileHandle, error)
             return Action(main: .nothingWeAreWaiting /* for the write to complete */, callRead: false)
+
+        // Error states: We stay where we are
+        case .errorWhilstWriting:
+            return Action(main: .nothingWeAreWaiting /* for the write to complete */, callRead: false)
+        case .error:
+            // We'll stay in the existing error state
+            return Action(main: .nothingWeAreWaiting /* the channel to go away */, callRead: false)
         }
     }
 }
