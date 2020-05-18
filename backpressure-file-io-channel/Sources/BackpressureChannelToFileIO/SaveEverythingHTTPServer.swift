@@ -24,16 +24,23 @@ public final class SaveEverythingHTTPServer {
     }
 
     private let fileIO: NonBlockingFileIO
+    private let uploadDirectory: String
     internal var logger: Logger
 
-    public init(fileIO: NonBlockingFileIO, logger: Logger? = nil) {
+    public init(fileIO: NonBlockingFileIO, uploadDirectory: String, logger: Logger? = nil) {
         self.fileIO = fileIO
         if let logger = logger {
             self.logger = logger
         } else {
             self.logger = Logger(label: "\(#file)")
         }
+        self.uploadDirectory = uploadDirectory
     }
+    
+    deinit {
+        assert(self.state.inFinalState, "illegal state on handler removal: \(self.state)")
+    }
+
 }
 
 // MARK: - The handler for the Actions the state machine recommends to do
@@ -91,7 +98,8 @@ extension SaveEverythingHTTPServer {
         case .success:
             context.write(self.wrapOutboundOut(HTTPServerResponsePart.head(.init(version: .init(major: 1,
                                                                                                 minor: 1),
-                                                                                 status: .ok))),
+                                                                                 status: .ok,
+                                                                                 headers: ["content-length": "0"]))),
                           promise: nil)
             context.writeAndFlush(self.wrapOutboundOut(HTTPServerResponsePart.end(nil)), promise: nil)
         case .failure(let error):
@@ -141,16 +149,12 @@ extension SaveEverythingHTTPServer: ChannelDuplexHandler {
             context.read()
         }
     }
-
-    public func handlerRemoved(context: ChannelHandlerContext) {
-        assert(self.state.inFinalState, "illegal state on handler removal: \(self.state)")
-    }
 }
 
 // MARK: - Helpers
 extension SaveEverythingHTTPServer {
     func filenameForURI(_ uri: String) -> String {
-        var result = "/tmp/uploaded_file_"
+        var result = "\(self.uploadDirectory)/uploaded_file_"
         result.append(contentsOf: uri.map { char in
             switch char {
             case "A" ... "Z", "a" ... "z", "0" ... "9":
