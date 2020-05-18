@@ -30,7 +30,7 @@ defer {
 let fileIO = NonBlockingFileIO(threadPool: threadPool)
 
 var logger = Logger(label: "BackpressureChannelToFileIO")
-logger.logLevel = .trace
+logger.logLevel = .info
 let server = try ServerBootstrap(group: group)
         .serverChannelOption(ChannelOptions.socket(.init(SOL_SOCKET), .init(SO_REUSEADDR)), value: 1)
         .childChannelInitializer { [logger] channel in
