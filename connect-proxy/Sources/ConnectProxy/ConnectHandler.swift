@@ -165,8 +165,13 @@ extension ConnectHandler {
             // Upgrade complete! Begin gluing the connection together.
             self.upgradeState = .upgradeComplete(pendingBytes: pendingBytes)
             self.glue(channel, context: context)
+            
+        case .awaitingEnd(let peerChannel):
+            // This case is a logic error, close already connected peer channel.
+            peerChannel.close(mode: .all, promise: nil)
+            context.close(promise: nil)
 
-        case .idle, .awaitingEnd, .upgradeFailed, .upgradeComplete:
+        case .idle, .upgradeFailed, .upgradeComplete:
             // These cases are logic errors, but let's be careful and just shut the connection.
             context.close(promise: nil)
         }
@@ -180,7 +185,12 @@ extension ConnectHandler {
             // We still have a somewhat active connection here in HTTP mode, and can report failure.
             self.httpErrorAndClose(context: context)
 
-        case .idle, .awaitingEnd, .upgradeFailed, .upgradeComplete:
+        case .awaitingEnd(let peerChannel):
+            // This case is a logic error, close already connected peer channel.
+            peerChannel.close(mode: .all, promise: nil)
+            context.close(promise: nil)
+
+        case .idle, .upgradeFailed, .upgradeComplete:
             // Most of these cases are logic errors, but let's be careful and just shut the connection.
             context.close(promise: nil)
         }
@@ -205,7 +215,14 @@ extension ConnectHandler {
         // Now we need to glue our channel and the peer channel together.
         let (localGlue, peerGlue) = GlueHandler.matchedPair()
         context.channel.pipeline.addHandler(localGlue).and(peerChannel.pipeline.addHandler(peerGlue)).whenComplete { result in
-            context.pipeline.removeHandler(self, promise: nil)
+            switch result {
+            case .success(_):
+                context.pipeline.removeHandler(self, promise: nil)
+            case .failure(_):
+                // Close connected peer channel before closing our channel.
+                peerChannel.close(mode: .all, promise: nil)
+                context.close(promise: nil)
+            }
         }
     }
 
