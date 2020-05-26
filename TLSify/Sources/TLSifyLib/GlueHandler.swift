@@ -79,11 +79,13 @@ extension GlueHandler: ChannelDuplexHandler {
 
     func channelReadComplete(context: ChannelHandlerContext) {
         self.partner?.partnerFlush()
+        context.fireChannelReadComplete()
     }
 
     func channelInactive(context: ChannelHandlerContext) {
         self.logger.debug("channel inactive")
         self.partner?.partnerCloseFull()
+        context.fireChannelInactive()
     }
 
     func userInboundEventTriggered(context: ChannelHandlerContext, event: Any) {
@@ -91,11 +93,11 @@ extension GlueHandler: ChannelDuplexHandler {
             // We have read EOF.
             self.partner?.partnerWriteEOF()
         }
+        context.fireUserInboundEventTriggered(event)
     }
 
     func errorCaught(context: ChannelHandlerContext, error: Error) {
-        self.logger.debug("uncaught error: \(error), closing.")
-        
+        context.fireErrorCaught(error)
         self.partner?.partnerCloseFull()
     }
 
