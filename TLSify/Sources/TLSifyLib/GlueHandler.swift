@@ -92,9 +92,8 @@ extension GlueHandler: ChannelDuplexHandler {
         if let event = event as? ChannelEvent, case .inputClosed = event {
             // We have read EOF.
             self.partner?.partnerWriteEOF()
-        } else {
-            context.fireUserInboundEventTriggered(event)
         }
+        context.fireUserInboundEventTriggered(event)
     }
 
     func errorCaught(context: ChannelHandlerContext, error: Error) {
