@@ -48,8 +48,8 @@ public final class TLSProxy {
     }
     
     func gotError(_ error: Error) {
-        self.logger.trace("error: \(#function): \(error)")
-        
+        self.logger.warning("unexpected error: \(#function): \(error)")
+
         switch self.state {
         case .connected, .connecting, .waitingToBeAdded, .closed:
             self.state = .error(error)

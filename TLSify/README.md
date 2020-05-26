@@ -9,7 +9,7 @@ that leaves your machine fully encrypted.
 
 First, get three terminal windows ready.
 
-First, run this in the first window:
+Run this in the first window:
 
 ```
 swift run -c release TLSify 8080 httpbin.org 443

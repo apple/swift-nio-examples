@@ -25,7 +25,7 @@ final class CloseOnErrorHandler: ChannelInboundHandler {
     }
     
     func errorCaught(context: ChannelHandlerContext, error: Error) {
-        self.logger.info("uncaught error \(error), closing \(context.channel)")
+        self.logger.info("unhandled error \(error), closing \(context.channel)")
         context.close(promise: nil)
     }
 }
