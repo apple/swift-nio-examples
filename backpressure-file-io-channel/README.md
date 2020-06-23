@@ -49,32 +49,32 @@ The full set of inputs to the state machine are
 
 
 - Tell the state machine that a new HTTP request started.
-    ```
+    ```swift
     internal mutating func didReceiveRequestBegin(targetPath: String) -> Action
     ```
 
 - Tell the state machine that we received more bytes of the request body.
-    ```
+    ```swift
     internal mutating func didReceiveRequestBodyBytes(_ bytes: ByteBuffer) -> Action
     ```
 
 - Tell the state machine we received the HTTP request end.
-    ```
+    ```swift
     internal mutating func didReceiveRequestEnd() -> Action
     ```
 
 - Tell the state machine that we've just finished writing one previously received chunk of the HTTP request body to disk.
-    ```
+    ```swift
     internal mutating func didFinishWritingOneChunkToFile() -> Action
     ```
     
 -  Tell the state machine we finished opening the target file.
-    ```
+    ```swift
     internal mutating func didOpenTargetFile(_ fileHandle: NIOFileHandle) -> Action
     ```
     
 - Tell the state machine that we've hit an error.
-    ```
+    ```swift
     internal mutating func didError(_ error: Error) -> Action
     ```
 
