@@ -232,7 +232,7 @@ extension ConnectHandler {
         let headers = HTTPHeaders([("Content-Length", "0"), ("Connection", "close")])
         let head = HTTPResponseHead(version: .init(major: 1, minor: 1), status: .badRequest, headers: headers)
         context.write(self.wrapOutboundOut(.head(head)), promise: nil)
-        context.write(self.wrapOutboundOut(.end(nil))).whenComplete { (_: Result<Void, Error>) in
+        context.writeAndFlush(self.wrapOutboundOut(.end(nil))).whenComplete { (_: Result<Void, Error>) in
             context.close(mode: .output, promise: nil)
         }
     }
