@@ -18,4 +18,4 @@ Example applications must go through pre-commit code review like all other code 
 
 ### NIO versions
 
-The [`master`](https://github.com/apple/swift-nio-examples) branch contains the examples for the SwiftNIO 2 family. For the examples working with NIO 1, please use the [`nio-1`](https://github.com/apple/swift-nio-examples/tree/nio-1) branch.
+The [`main`](https://github.com/apple/swift-nio-examples) branch contains the examples for the SwiftNIO 2 family. For the examples working with NIO 1, please use the [`nio-1`](https://github.com/apple/swift-nio-examples/tree/nio-1) branch.
