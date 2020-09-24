@@ -9,7 +9,7 @@ NIOSMTP is a demo app that is a very simple SMTP client and therefore allows you
 ## Caveats
 
 - if you want to try this out you'll have to put your SMTP server configuration
-  in [`Configuration.swift`](https://github.com/apple/swift-nio-examples/blob/master/NIOSMTP/NIOSMTP/Configuration.swift), there's no configuration UI at this moment
+  in [`Configuration.swift`](https://github.com/apple/swift-nio-examples/blob/main/NIOSMTP/NIOSMTP/Configuration.swift), there's no configuration UI at this moment
 - before trying out the app you need to configure your SMTP server in `NIOSMTP/Configuration.swift`
 - it's a very basic SMTP/MIME implementation, the email body isn't even base64 encoded neither is any other data.
 - The `SendEmailHandler` should accept `Email` objects through the pipeline to be more widely usable. Currently it requires the `Email` object in its initialiser which means it can only ever send one email per connection (`Channel`)
