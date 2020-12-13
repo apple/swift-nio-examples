@@ -53,11 +53,10 @@ public class ExampleHTTPLibrary {
         guard let url = URL(string: urlString),
               let hostname = url.host,
               let scheme = url.scheme?.lowercased(),
-              ["http", "https"].contains(scheme.lowercased()) else {
+              ["http", "https"].contains(scheme) else {
             throw UnsupportedURLError(url: urlString)
         }
-        let uri = url.path
-        let useTLS = url.scheme?.lowercased() == "https" ? true : false
+        let useTLS = scheme == "https"
         let connection = try groupManager.makeBootstrap(hostname: hostname, useTLS: useTLS)
                 .channelInitializer { channel in
                     channel.pipeline.addHTTPClientHandlers().flatMap {
@@ -73,7 +72,7 @@ public class ExampleHTTPLibrary {
         print("# HTTP response body")
         let reqHead = HTTPClientRequestPart.head(.init(version: .init(major: 1, minor: 1),
                                                        method: .GET,
-                                                       uri: uri,
+                                                       uri: url.path,
                                                        headers: ["host": hostname]))
         connection.write(reqHead, promise: nil)
         try connection.writeAndFlush(HTTPClientRequestPart.end(nil)).wait()
