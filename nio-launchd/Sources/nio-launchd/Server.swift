@@ -73,7 +73,7 @@ struct Server: ParsableCommand {
             .childChannelOption(ChannelOptions.recvAllocator, value: AdaptiveRecvByteBufferAllocator())
 
         // Bootstrap using the socket we got from launchd.
-        let server = try bootstrap.withBoundSocket(descriptor: fd).wait()
+        let server = try bootstrap.withBoundSocket(fd).wait()
         try server.closeFuture.wait()
     }
 }
