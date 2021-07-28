@@ -6,12 +6,11 @@ import PackageDescription
 let package = Package(
     name: "TLSify",
     products: [
-        // Products define the executables and libraries produced by a package, and make them visible to other packages.
-        .library(name: "TLSify", targets: ["TLSify"]),
+        .executable(name: "TLSify", targets: ["TLSify"])
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-nio.git", from: "2.17.0"),
-        .package(url: "https://github.com/apple/swift-nio-ssl.git", from: "2.5.0"),
+        .package(url: "https://github.com/apple/swift-nio-ssl.git", from: "2.14.0"),
         .package(url: "https://github.com/apple/swift-argument-parser.git", .exact("0.0.6")),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
     ],

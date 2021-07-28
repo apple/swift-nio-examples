@@ -22,8 +22,6 @@ import TLSifyLib
 var rootLogger = Logger(label: "TLSify")
 rootLogger.logLevel = .debug
 
-let sslContext = try NIOSSLContext(configuration: TLSConfiguration.forClient())
-
 struct TLSifyCommand: ParsableCommand {
     @Option(name: .shortAndLong, default: "localhost", help: "The host to listen to.")
     var listenHost: String
@@ -37,7 +35,20 @@ struct TLSifyCommand: ParsableCommand {
     @Argument(help: "The port to connect to.")
     var connectPort: Int
 
+    @Option(name: .long, default: "full", help: "TLS certificate verfication: full (default)/no-hostname/none.")
+    var tlsCertificateValidation: String
+
     func run() throws {
+        var tlsConfig = TLSConfiguration.makeClientConfiguration()
+        switch self.tlsCertificateValidation {
+        case "none":
+            tlsConfig.certificateVerification = .none
+        case "no-hostname":
+            tlsConfig.certificateVerification = .noHostnameVerification
+        default:
+            tlsConfig.certificateVerification = .fullVerification
+        }
+        let sslContext = try NIOSSLContext(configuration: tlsConfig)
         MultiThreadedEventLoopGroup.withCurrentThreadAsEventLoop { el in
             ServerBootstrap(group: el)
                 .serverChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
@@ -59,7 +70,6 @@ struct TLSifyCommand: ParsableCommand {
                     }
                 }
             }
-            
         }
     }
 }
