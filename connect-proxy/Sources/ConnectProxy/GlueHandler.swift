@@ -16,7 +16,7 @@ import NIO
 
 
 final class GlueHandler {
-    private var partner: GlueHandler?
+    private weak var partner: GlueHandler?
 
     private var context: ChannelHandlerContext?
 
