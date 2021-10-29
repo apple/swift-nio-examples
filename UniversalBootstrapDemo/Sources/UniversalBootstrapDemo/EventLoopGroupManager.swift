@@ -41,7 +41,7 @@ public class EventLoopGroupManager {
         case shared(EventLoopGroup)
     }
 
-    /// Initialize the `EventLoopGroupManager` with a `Provder` of `EventLoopGroup`s.
+    /// Initialize the `EventLoopGroupManager` with a `Provider` of `EventLoopGroup`s.
     ///
     /// The `Provider` lets you choose whether to use a `.shared(group)` or to `.createNew`.
     public init(provider: Provider) {
