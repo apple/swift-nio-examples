@@ -28,13 +28,13 @@ struct UniversalBootstrapDemo: ParsableCommand {
                   """)
 
     @Flag(help: "Force using NIO on Network.framework.")
-    var forceTransportServices: Bool
+    var forceTransportServices = false
 
     @Flag(help: "Force using NIO on BSD sockets.")
-    var forceBSDSockets: Bool
+    var forceBSDSockets = false
 
-    @Argument(default: "https://httpbin.org/get", help: "The URL.")
-    var url: String
+    @Argument(help: "The URL.")
+    var url: String = "https://httpbin.org/get"
 
     func run() throws {
         var group: EventLoopGroup? = nil
