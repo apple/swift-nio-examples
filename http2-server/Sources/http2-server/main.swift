@@ -111,11 +111,10 @@ let sslCertificate = try! NIOSSLCertificateSource.certificate(NIOSSLCertificate(
 // Set up the TLS configuration, it's important to set the `applicationProtocols` to
 // `NIOHTTP2SupportedALPNProtocols` which (using ALPN (https://en.wikipedia.org/wiki/Application-Layer_Protocol_Negotiation))
 // advertises the support of HTTP/2 to the client.
-let tlsConfiguration = TLSConfiguration.forServer(certificateChain: [sslCertificate],
-                                                  privateKey: sslPrivateKey,
-                                                  applicationProtocols: NIOHTTP2SupportedALPNProtocols)
+var serverConfig = TLSConfiguration.makeServerConfiguration(certificateChain: [sslCertificate], privateKey: sslPrivateKey)
+serverConfig.applicationProtocols = NIOHTTP2SupportedALPNProtocols
 // Configure the SSL context that is used by all SSL handlers.
-let sslContext = try! NIOSSLContext(configuration: tlsConfiguration)
+let sslContext = try! NIOSSLContext(configuration: serverConfig)
 
 let group = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
 let bootstrap = ServerBootstrap(group: group)
@@ -126,12 +125,12 @@ let bootstrap = ServerBootstrap(group: group)
     // Set the handlers that are applied to the accepted Channels
     .childChannelInitializer { channel in
         // First, we need an SSL handler because HTTP/2 is almost always spoken over TLS.
-        channel.pipeline.addHandler(try! NIOSSLServerHandler(context: sslContext)).flatMap {
+        channel.pipeline.addHandler(NIOSSLServerHandler(context: sslContext)).flatMap {
             // Right after the SSL handler, we can configure the HTTP/2 pipeline.
-            channel.configureHTTP2Pipeline(mode: .server) { (streamChannel, streamID) -> EventLoopFuture<Void> in
+            channel.configureHTTP2Pipeline(mode: .server) { (streamChannel) -> EventLoopFuture<Void> in
                 // For every HTTP/2 stream that the client opens, we put in the `HTTP2ToHTTP1ServerCodec` which
                 // transforms the HTTP/2 frames to the HTTP/1 messages from the `NIOHTTP1` module.
-                streamChannel.pipeline.addHandler(HTTP2ToHTTP1ServerCodec(streamID: streamID)).flatMap { () -> EventLoopFuture<Void> in
+                streamChannel.pipeline.addHandler(HTTP2FramePayloadToHTTP1ServerCodec()).flatMap { () -> EventLoopFuture<Void> in
                     // And lastly, we put in our very basic HTTP server :).
                     streamChannel.pipeline.addHandler(HTTP1TestServer())
                 }.flatMap { () -> EventLoopFuture<Void> in
@@ -170,8 +169,8 @@ print("    # In production NEVER use --insecure.")
 switch bindTarget {
 case .ip(let host, let port):
     let hostFormatted: String
-    switch channel.localAddress!.protocolFamily {
-    case AF_INET6:
+    switch channel.localAddress!.protocol {
+    case .inet6:
         hostFormatted = host.contains(":") ? "[\(host)]" : host
     default:
         hostFormatted = "\(host)"

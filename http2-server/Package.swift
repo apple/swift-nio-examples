@@ -25,8 +25,13 @@ let package = Package(
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
         // Targets can depend on other targets in this package, and on products in packages which this package depends on.
-        .target(
+        .executableTarget(
             name: "http2-server",
-            dependencies: ["NIO", "NIOHTTP1", "NIOHTTP2", "NIOSSL"]),
+            dependencies: [
+                .product(name: "NIO", package: "swift-nio"),
+                .product(name: "NIOSSL", package: "swift-nio-ssl"),
+                .product(name: "NIOHTTP1", package: "swift-nio"),
+                .product(name: "NIOHTTP2", package: "swift-nio-http2"),
+            ]),
     ]
 )

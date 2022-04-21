@@ -8,11 +8,11 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-nio.git", from: "2.14.0"),
     ],
     targets: [
-        .target(
+        .executableTarget(
             name: "nio-launchd",
             dependencies: [
-                "NIO",
-                "ArgumentParser",
+                .product(name: "NIO", package: "swift-nio"),
+                .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ]),
     ]
 )
