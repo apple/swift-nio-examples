@@ -25,6 +25,12 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
     ],
     targets: [
-        .target(name: "ConnectProxy", dependencies: ["NIO", "NIOHTTP1", "Logging"]),
+        .executableTarget(
+            name: "ConnectProxy",
+            dependencies: [
+                .product(name: "NIO", package: "swift-nio"),
+                .product(name: "NIOHTTP1", package: "swift-nio"),
+                .product(name: "Logging", package: "swift-log"),
+            ]),
     ]
 )

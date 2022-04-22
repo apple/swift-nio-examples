@@ -12,8 +12,14 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.0.1")
     ],
     targets: [
-        .target(
+        .executableTarget(
             name: "UniversalBootstrapDemo",
-            dependencies: ["NIO", "NIOSSL", "NIOTransportServices", "NIOHTTP1", "ArgumentParser"]),
+            dependencies: [
+                .product(name: "NIO", package: "swift-nio"),
+                .product(name: "NIOSSL", package: "swift-nio-ssl"),
+                .product(name: "NIOTransportServices", package: "swift-nio-transport-services"),
+                .product(name: "NIOHTTP1", package: "swift-nio"),
+                .product(name: "ArgumentParser", package: "swift-argument-parser"),
+            ]),
     ]
 )

@@ -3,14 +3,6 @@
 
 import PackageDescription
 
-var targets: [PackageDescription.Target] = [
-    .target(name: "JSONRPC", dependencies: ["NIO", "NIOFoundationCompat", "NIOExtras"], path: "Sources/JsonRpc"),
-    .target(name: "ServerExample", dependencies: ["JSONRPC"]),
-    .target(name: "ClientExample", dependencies: ["JSONRPC"]),
-    .target(name: "LightsdDemo", dependencies: ["JSONRPC"]),
-    .testTarget(name: "JSONRPCTests", dependencies: ["JSONRPC"], path: "Tests/JsonRpcTests"),
-]
-
 let package = Package(
     name: "swift-json-rpc",
     products: [
@@ -23,5 +15,35 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-nio", from: "2.0.0"),
         .package(url: "https://github.com/apple/swift-nio-extras", from: "1.0.0"),
     ],
-    targets: targets
+    targets: [
+        .target(
+            name: "JSONRPC",
+            dependencies: [
+                .product(name: "NIO", package: "swift-nio"),
+                .product(name: "NIOFoundationCompat", package: "swift-nio"),
+                .product(name: "NIOExtras", package: "swift-nio-extras"),
+            ],
+            path: "Sources/JsonRpc"),
+        .executableTarget(
+            name: "ServerExample",
+            dependencies: [
+                "JSONRPC"
+            ]),
+        .executableTarget(
+            name: "ClientExample",
+            dependencies: [
+                "JSONRPC"
+            ]),
+        .executableTarget(
+            name: "LightsdDemo",
+            dependencies: [
+                "JSONRPC"
+            ]),
+        .testTarget(
+            name: "JSONRPCTests",
+            dependencies: [
+                "JSONRPC"
+            ],
+            path: "Tests/JsonRpcTests"),
+    ]
 )

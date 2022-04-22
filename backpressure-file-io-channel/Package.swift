@@ -13,11 +13,23 @@ let package = Package(
     targets: [
         .target(
             name: "BackpressureChannelToFileIO",
-            dependencies: ["NIO", "NIOHTTP1", "Logging"]),
-        .target(
+            dependencies: [
+                .product(name: "NIO", package: "swift-nio"),
+                .product(name: "NIOHTTP1", package: "swift-nio"),
+                .product(name: "Logging", package: "swift-log"),
+            ]),
+        .executableTarget(
             name: "BackpressureChannelToFileIODemo",
-            dependencies: ["NIO", "BackpressureChannelToFileIO", "Logging"]),
-        .testTarget(name: "BackpressureChannelToFileIOTests",
-                    dependencies: ["NIO", "BackpressureChannelToFileIO"]),
+            dependencies: [
+                "BackpressureChannelToFileIO",
+                .product(name: "NIO", package: "swift-nio"),
+                .product(name: "Logging", package: "swift-log"),
+            ]),
+        .testTarget(
+            name: "BackpressureChannelToFileIOTests",
+            dependencies: [
+                "BackpressureChannelToFileIO",
+                .product(name: "NIO", package: "swift-nio"),
+            ]),
     ]
 )

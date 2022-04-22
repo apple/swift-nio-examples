@@ -135,7 +135,9 @@ final class CollectErrorsAndCloseStreamHandler: ChannelInboundHandler {
     }
 }
 
-let sslContext = try NIOSSLContext(configuration: TLSConfiguration.forClient(applicationProtocols: ["h2"]))
+var clientConfig = TLSConfiguration.makeClientConfiguration()
+clientConfig.applicationProtocols = ["h2"]
+let sslContext = try NIOSSLContext(configuration: clientConfig)
 
 let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
 defer {
@@ -247,11 +249,10 @@ func makeRequests(channel: Channel,
         // Helper function to initialise an HTTP/2 stream.
         func requestStreamInitializer(uri: String,
                                       responseReceivedPromise: EventLoopPromise<[HTTPClientResponsePart]>,
-                                      channel: Channel,
-                                      streamID: HTTP2StreamID) -> EventLoopFuture<Void> {
+                                      channel: Channel) -> EventLoopFuture<Void> {
             let uri = remainingURIs.removeFirst()
             channel.eventLoop.assertInEventLoop()
-            return channel.pipeline.addHandlers([HTTP2ToHTTP1ClientCodec(streamID: streamID, httpProtocol: .https),
+            return channel.pipeline.addHandlers([HTTP2FramePayloadToHTTP1ClientCodec(httpProtocol: .https),
                                                  SendRequestHandler(host: host,
                                                                     request: .init(target: uri,
                                                                                    headers: [],
@@ -268,12 +269,11 @@ func makeRequests(channel: Channel,
             channelErrorForwarder.cascadeFailure(to: promise)
             responseReceivedPromises.append((uri, promise))
             // Create the actual HTTP/2 stream using the multiplexer's `createStreamChannel` method.
-            http2Multiplexer.createStreamChannel(promise: nil) { (channel: Channel, streamID: HTTP2StreamID) -> EventLoopFuture<Void> in
+            http2Multiplexer.createStreamChannel(promise: nil) { (channel: Channel) -> EventLoopFuture<Void> in
                 // Call the above handler to initialise the stream which will send off the actual request.
                 requestStreamInitializer(uri: uri,
                                          responseReceivedPromise: promise,
-                                         channel: channel,
-                                         streamID: streamID)
+                                         channel: channel)
             }
         }
         return responseReceivedPromises
@@ -317,11 +317,8 @@ for hostAndURL in hostToURLsMap {
             }.flatMap {
                 channel.pipeline.addHandler(errorHandler)
             }.flatMap {
-                channel.configureHTTP2Pipeline(mode: .client) { (channel, id) -> EventLoopFuture<Void> in
-                    if verbose {
-                        print("* channel \(channel) open with id \(id)")
-                    }
-                    return channel.eventLoop.makeSucceededFuture(())
+                channel.configureHTTP2Pipeline(mode: .client) { channel in
+                    channel.eventLoop.makeSucceededVoidFuture()
                 }.map { (_: HTTP2StreamMultiplexer) in () }
             }
     }

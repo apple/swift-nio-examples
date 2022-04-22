@@ -23,8 +23,8 @@ var rootLogger = Logger(label: "TLSify")
 rootLogger.logLevel = .debug
 
 struct TLSifyCommand: ParsableCommand {
-    @Option(name: .shortAndLong, default: "localhost", help: "The host to listen to.")
-    var listenHost: String
+    @Option(name: .shortAndLong, help: "The host to listen to.")
+    var listenHost: String = "localhost"
 
     @Argument(help: "The port to listen to.")
     var listenPort: Int
@@ -35,8 +35,8 @@ struct TLSifyCommand: ParsableCommand {
     @Argument(help: "The port to connect to.")
     var connectPort: Int
 
-    @Option(name: .long, default: "full", help: "TLS certificate verfication: full (default)/no-hostname/none.")
-    var tlsCertificateValidation: String
+    @Option(name: .long, help: "TLS certificate verfication: full (default)/no-hostname/none.")
+    var tlsCertificateValidation: String = "full"
 
     func run() throws {
         var tlsConfig = TLSConfiguration.makeClientConfiguration()
