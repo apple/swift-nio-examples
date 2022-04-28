@@ -1,6 +1,7 @@
 import Foundation
 import NIO
 import NIOFoundationCompat
+import NIOConcurrencyHelpers
 
 private let maxPayload = 1_000_000 // 1MB
 
@@ -30,7 +31,7 @@ internal extension ChannelPipeline {
 }
 
 // aggregate bytes till delimiter and add delimiter at end
-internal final class NewlineEncoder: ByteToMessageDecoder, MessageToByteEncoder {
+internal final class NewlineEncoder: ByteToMessageDecoder, MessageToByteEncoder, @unchecked Sendable {
     public typealias InboundIn = ByteBuffer
     public typealias InboundOut = ByteBuffer
     public typealias OutboundIn = ByteBuffer
@@ -38,7 +39,7 @@ internal final class NewlineEncoder: ByteToMessageDecoder, MessageToByteEncoder 
 
     private let delimiter1 = UInt8(ascii: "\r")
     private let delimiter2 = UInt8(ascii: "\n")
-
+    private let lock = Lock()
     private var lastIndex = 0
 
     // inbound
@@ -51,23 +52,25 @@ internal final class NewlineEncoder: ByteToMessageDecoder, MessageToByteEncoder 
         }
 
         // try to find a payload by looking for a \r\n delimiter
-        let readableBytesView = buffer.readableBytesView.dropFirst(self.lastIndex)
-        guard let index = readableBytesView.firstIndex(of: delimiter2) else {
-            self.lastIndex = buffer.readableBytes
-            return .needMoreData
-        }
-        guard readableBytesView[index - 1] == delimiter1 else {
-            return .needMoreData
-        }
+        return self.lock.withLock {
+            let readableBytesView = buffer.readableBytesView.dropFirst(self.lastIndex)
+            guard let index = readableBytesView.firstIndex(of: delimiter2) else {
+                self.lastIndex = buffer.readableBytes
+                return .needMoreData
+            }
+            guard readableBytesView[index - 1] == delimiter1 else {
+                return .needMoreData
+            }
 
-        // slice the buffer
-        let length = index - buffer.readerIndex - 1
-        let slice = buffer.readSlice(length: length)!
-        buffer.moveReaderIndex(forwardBy: 2)
-        self.lastIndex = 0
-        // call next handler
-        context.fireChannelRead(wrapInboundOut(slice))
-        return .continue
+            // slice the buffer
+            let length = index - buffer.readerIndex - 1
+            let slice = buffer.readSlice(length: length)!
+            buffer.moveReaderIndex(forwardBy: 2)
+            self.lastIndex = 0
+            // call next handler
+            context.fireChannelRead(wrapInboundOut(slice))
+            return .continue
+        }
     }
 
     public func decodeLast(context: ChannelHandlerContext, buffer: inout ByteBuffer, seenEOF: Bool) throws -> DecodingState {
@@ -94,7 +97,7 @@ internal final class NewlineEncoder: ByteToMessageDecoder, MessageToByteEncoder 
 // 1 byte: a colon (":", 0x3a), not included in LEN
 // LEN bytes: a JSON/RPC message, no leading or trailing whitespace
 // 1 byte: a newline (0x0a), not included in LEN
-internal final class JSONPosCodec: ByteToMessageDecoder, MessageToByteEncoder {
+internal final class JSONPosCodec: ByteToMessageDecoder, MessageToByteEncoder, Sendable {
     public typealias InboundIn = ByteBuffer
     public typealias InboundOut = ByteBuffer
     public typealias OutboundIn = ByteBuffer
@@ -161,14 +164,14 @@ internal final class JSONPosCodec: ByteToMessageDecoder, MessageToByteEncoder {
 }
 
 // no delimeter is provided, brute force try to decode the json
-internal final class BruteForceCodec<T>: ByteToMessageDecoder, MessageToByteEncoder where T: Decodable {
+internal final class BruteForceCodec<T>: ByteToMessageDecoder, MessageToByteEncoder, @unchecked Sendable where T: Decodable {
     public typealias InboundIn = ByteBuffer
     public typealias InboundOut = ByteBuffer
     public typealias OutboundIn = ByteBuffer
     public typealias OutboundOut = ByteBuffer
 
     private let last = UInt8(ascii: "}")
-
+    private let lock = Lock()
     private var lastIndex = 0
 
     public func decode(context: ChannelHandlerContext, buffer: inout ByteBuffer) throws -> DecodingState {
@@ -177,28 +180,30 @@ internal final class BruteForceCodec<T>: ByteToMessageDecoder, MessageToByteEnco
         }
 
         // try to find a payload by looking for a json payload, first rough cut is looking for a trailing }
-        let readableBytesView = buffer.readableBytesView.dropFirst(self.lastIndex)
-        guard let _ = readableBytesView.firstIndex(of: last) else {
-            self.lastIndex = buffer.readableBytes
-            return .needMoreData
-        }
+        return try self.lock.withLock {
+            let readableBytesView = buffer.readableBytesView.dropFirst(self.lastIndex)
+            guard let _ = readableBytesView.firstIndex(of: last) else {
+                self.lastIndex = buffer.readableBytes
+                return .needMoreData
+            }
 
-        // try to confirm its a json payload by brute force decoding
-        let length = buffer.readableBytes
-        let data = buffer.getData(at: buffer.readerIndex, length: length)!
-        do {
-            _ = try JSONDecoder().decode(T.self, from: data)
-        } catch is DecodingError {
-            self.lastIndex = buffer.readableBytes
-            return .needMoreData
-        }
+            // try to confirm its a json payload by brute force decoding
+            let length = buffer.readableBytes
+            let data = buffer.getData(at: buffer.readerIndex, length: length)!
+            do {
+                _ = try JSONDecoder().decode(T.self, from: data)
+            } catch is DecodingError {
+                self.lastIndex = buffer.readableBytes
+                return .needMoreData
+            }
 
-        // slice the buffer
-        let slice = buffer.readSlice(length: length)!
-        self.lastIndex = 0
-        // call next handler
-        context.fireChannelRead(wrapInboundOut(slice))
-        return .continue
+            // slice the buffer
+            let slice = buffer.readSlice(length: length)!
+            self.lastIndex = 0
+            // call next handler
+            context.fireChannelRead(wrapInboundOut(slice))
+            return .continue
+        }
     }
 
     public func decodeLast(context: ChannelHandlerContext, buffer: inout ByteBuffer, seenEOF: Bool) throws -> DecodingState {
@@ -217,7 +222,7 @@ internal final class BruteForceCodec<T>: ByteToMessageDecoder, MessageToByteEnco
 }
 
 // bytes to codable and back
-internal final class CodableCodec<In, Out>: ChannelInboundHandler, ChannelOutboundHandler where In: Decodable, Out: Encodable {
+internal final class CodableCodec<In, Out>: ChannelInboundHandler, ChannelOutboundHandler, Sendable where In: Decodable, Out: Encodable {
     public typealias InboundIn = ByteBuffer
     public typealias InboundOut = In
     public typealias OutboundIn = Out
@@ -259,7 +264,7 @@ internal final class CodableCodec<In, Out>: ChannelInboundHandler, ChannelOutbou
     }
 }
 
-internal final class HalfCloseOnTimeout: ChannelInboundHandler {
+internal final class HalfCloseOnTimeout: ChannelInboundHandler, Sendable {
     typealias InboundIn = Any
 
     func userInboundEventTriggered(context: ChannelHandlerContext, event: Any) {

@@ -1,11 +1,18 @@
 import Foundation
 import NIO
+import NIOConcurrencyHelpers
 
-public final class TCPServer {
+public final class TCPServer: @unchecked Sendable {
     private let group: MultiThreadedEventLoopGroup
     private let config: Config
     private var channel: Channel?
     private let closure: RPCClosure
+    private var state = State.initializing {
+        didSet {
+            print("\(self) \(state)")
+        }
+    }
+    private let lock = Lock()
 
     public init(group: MultiThreadedEventLoopGroup, config: Config = Config(), closure: @escaping RPCClosure) {
         self.group = group
@@ -19,58 +26,48 @@ public final class TCPServer {
     }
 
     public func start(host: String, port: Int) -> EventLoopFuture<TCPServer> {
-        assert(.initializing == self.state)
+        self.lock.withLock {
+            assert(.initializing == self.state)
 
-        let bootstrap = ServerBootstrap(group: group)
-            .serverChannelOption(ChannelOptions.backlog, value: 256)
-            .serverChannelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
-            .childChannelInitializer { channel in
-                return channel.pipeline.addTimeoutHandlers(self.config.timeout)
-                    .flatMap {
-                        channel.pipeline.addFramingHandlers(framing: self.config.framing)
-                    }.flatMap {
-                        channel.pipeline.addHandlers([CodableCodec<JSONRequest, JSONResponse>(),
-                                                      Handler(self.closure)])
-                    }
+            let bootstrap = ServerBootstrap(group: group)
+                .serverChannelOption(ChannelOptions.backlog, value: 256)
+                .serverChannelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
+                .childChannelInitializer { channel in
+                    return channel.pipeline.addTimeoutHandlers(self.config.timeout)
+                        .flatMap {
+                            channel.pipeline.addFramingHandlers(framing: self.config.framing)
+                        }.flatMap {
+                            channel.pipeline.addHandlers([CodableCodec<JSONRequest, JSONResponse>(),
+                                                          Handler(self.closure)])
+                        }
+                }
+                .childChannelOption(ChannelOptions.socket(IPPROTO_TCP, TCP_NODELAY), value: 1)
+                .childChannelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
+
+            self.state = .starting("\(host):\(port)")
+            return bootstrap.bind(host: host, port: port).flatMap { channel in
+                self.lock.withLock {
+                    self.channel = channel
+                    self.state = .started
+                }
+                return channel.eventLoop.makeSucceededFuture(self)
             }
-            .childChannelOption(ChannelOptions.socket(IPPROTO_TCP, TCP_NODELAY), value: 1)
-            .childChannelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
-
-        self.state = .starting("\(host):\(port)")
-        return bootstrap.bind(host: host, port: port).flatMap { channel in
-            self.channel = channel
-            self.state = .started
-            return channel.eventLoop.makeSucceededFuture(self)
         }
     }
 
     public func stop() -> EventLoopFuture<Void> {
-        if .started != self.state {
-            return self.group.next().makeFailedFuture(ServerError.notReady)
-        }
-        guard let channel = self.channel else {
-            return self.group.next().makeFailedFuture(ServerError.notReady)
-        }
-        self.state = .stopping
-        channel.closeFuture.whenComplete { _ in
-            self.state = .stopped
-        }
-        return channel.close()
-    }
-
-    private var _state = State.initializing
-    private let lock = NSLock()
-    private var state: State {
-        get {
-            return self.lock.withLock {
-                _state
+        self.lock.withLock {
+            if .started != self.state {
+                return self.group.next().makeFailedFuture(ServerError.notReady)
             }
-        }
-        set {
-            self.lock.withLock {
-                _state = newValue
-                print("\(self) \(_state)")
+            guard let channel = self.channel else {
+                return self.group.next().makeFailedFuture(ServerError.notReady)
             }
+            self.state = .stopping
+            channel.closeFuture.whenComplete { _ in
+                self.state = .stopped
+            }
+            return channel.close()
         }
     }
 
@@ -93,7 +90,7 @@ public final class TCPServer {
     }
 }
 
-private class Handler: ChannelInboundHandler {
+private class Handler: ChannelInboundHandler, Sendable {
     public typealias InboundIn = JSONRequest
     public typealias OutboundOut = JSONResponse
 

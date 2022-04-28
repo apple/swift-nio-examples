@@ -2,7 +2,7 @@ import Dispatch
 import JSONRPC
 import NIO
 
-private class Calculator {
+private final class Calculator: Sendable  {
     func handle(method: String, params: RPCObject, callback: (RPCResult) -> Void) {
         switch method.lowercased() {
         case "add":
