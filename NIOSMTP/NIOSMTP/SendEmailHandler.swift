@@ -15,10 +15,11 @@
 import NIO
 import NIOSSL
 import UIKit
+import NIOConcurrencyHelpers
 
 private let sslContext = try! NIOSSLContext(configuration: TLSConfiguration.forClient())
 
-final class SendEmailHandler: ChannelInboundHandler {
+final class SendEmailHandler: ChannelInboundHandler, @unchecked Sendable {
     typealias InboundIn = SMTPResponse
     typealias OutboundIn = Email
     typealias OutboundOut = SMTPRequest
@@ -40,7 +41,8 @@ final class SendEmailHandler: ChannelInboundHandler {
         
         case error(Error)
     }
-    
+
+    private let lock = Lock()
     private var currentlyWaitingFor = Expect.initialMessageFromServer {
         didSet {
             if case .error(let error) = self.currentlyWaitingFor {
@@ -72,7 +74,9 @@ final class SendEmailHandler: ChannelInboundHandler {
     func sendAuthenticationStart(context: ChannelHandlerContext) {
         func goAhead() {
             self.send(context: context, command: .beginAuthentication)
-            self.currentlyWaitingFor = .okForOurAuthBegin
+            self.lock.withLock {
+                self.currentlyWaitingFor = .okForOurAuthBegin
+            }
         }
 
         switch self.serverConfiguration.tlsConfiguration {
@@ -103,7 +107,9 @@ final class SendEmailHandler: ChannelInboundHandler {
     }
 
     func errorCaught(context: ChannelHandlerContext, error: Error) {
-        self.currentlyWaitingFor = .error(error)
+        self.lock.withLock {
+            self.currentlyWaitingFor = .error(error)
+        }
         self.allDonePromise.fail(error)
         context.close(promise: nil)
     }
@@ -118,64 +124,66 @@ final class SendEmailHandler: ChannelInboundHandler {
             () // cool
         }
 
-        switch self.currentlyWaitingFor {
-        case .initialMessageFromServer:
-            self.send(context: context, command: .sayHello(serverName: self.serverConfiguration.hostname))
-            self.currentlyWaitingFor = .okForOurHello
-        case .okForOurHello:
-            if self.useStartTLS {
-                self.send(context: context, command: .startTLS)
-                self.currentlyWaitingFor = .okForStartTLS
-            } else {
-                self.sendAuthenticationStart(context: context)
-            }
-        case .okForStartTLS:
-            self.currentlyWaitingFor = .tlsHandlerToBeAdded
-            context.channel.pipeline.addHandler(try! NIOSSLClientHandler(context: sslContext,
-                                                                         serverHostname: serverConfiguration.hostname),
-                                                position: .first).whenComplete { result in
-                guard case .tlsHandlerToBeAdded = self.currentlyWaitingFor else {
-                    preconditionFailure("wrong state \(self.currentlyWaitingFor)")
-                }
-
-                switch result {
-                case .failure(let error):
-                    self.currentlyWaitingFor = .error(error)
-                case .success:
+        self.lock.withLock {
+            switch self.currentlyWaitingFor {
+            case .initialMessageFromServer:
+                self.send(context: context, command: .sayHello(serverName: self.serverConfiguration.hostname))
+                self.currentlyWaitingFor = .okForOurHello
+            case .okForOurHello:
+                if self.useStartTLS {
+                    self.send(context: context, command: .startTLS)
+                    self.currentlyWaitingFor = .okForStartTLS
+                } else {
                     self.sendAuthenticationStart(context: context)
                 }
+            case .okForStartTLS:
+                self.currentlyWaitingFor = .tlsHandlerToBeAdded
+                context.channel.pipeline.addHandler(try! NIOSSLClientHandler(context: sslContext,
+                                                                             serverHostname: serverConfiguration.hostname),
+                                                    position: .first).whenComplete { result in
+                    guard case .tlsHandlerToBeAdded = self.currentlyWaitingFor else {
+                        preconditionFailure("wrong state \(self.currentlyWaitingFor)")
+                    }
+
+                    switch result {
+                    case .failure(let error):
+                        self.currentlyWaitingFor = .error(error)
+                    case .success:
+                        self.sendAuthenticationStart(context: context)
+                    }
+                }
+            case .okForOurAuthBegin:
+                self.send(context: context, command: .authUser(self.serverConfiguration.username))
+                self.currentlyWaitingFor = .okAfterUsername
+            case .okAfterUsername:
+                self.send(context: context, command: .authPassword(self.serverConfiguration.password))
+                self.currentlyWaitingFor = .okAfterPassword
+            case .okAfterPassword:
+                self.send(context: context, command: .mailFrom(self.email.senderEmail))
+                self.currentlyWaitingFor = .okAfterMailFrom
+            case .okAfterMailFrom:
+                self.send(context: context, command: .recipient(self.email.recipientEmail))
+                self.currentlyWaitingFor = .okAfterRecipient
+            case .okAfterRecipient:
+                self.send(context: context, command: .data)
+                self.currentlyWaitingFor = .okAfterDataCommand
+            case .okAfterDataCommand:
+                self.send(context: context, command: .transferData(email))
+                self.currentlyWaitingFor = .okAfterMailData
+            case .okAfterMailData:
+                self.send(context: context, command: .quit)
+                self.currentlyWaitingFor = .okAfterQuit
+            case .okAfterQuit:
+                self.allDonePromise.succeed(())
+                context.close(promise: nil)
+                self.currentlyWaitingFor = .nothing
+            case .nothing:
+                () // ignoring more data whilst quit (it's odd though)
+            case .error:
+                fatalError("error state")
+            case .tlsHandlerToBeAdded:
+                fatalError("bug in NIOTS: we shouldn't hit this state here")
             }
-        case .okForOurAuthBegin:
-            self.send(context: context, command: .authUser(self.serverConfiguration.username))
-            self.currentlyWaitingFor = .okAfterUsername
-        case .okAfterUsername:
-            self.send(context: context, command: .authPassword(self.serverConfiguration.password))
-            self.currentlyWaitingFor = .okAfterPassword
-        case .okAfterPassword:
-            self.send(context: context, command: .mailFrom(self.email.senderEmail))
-            self.currentlyWaitingFor = .okAfterMailFrom
-        case .okAfterMailFrom:
-            self.send(context: context, command: .recipient(self.email.recipientEmail))
-            self.currentlyWaitingFor = .okAfterRecipient
-        case .okAfterRecipient:
-            self.send(context: context, command: .data)
-            self.currentlyWaitingFor = .okAfterDataCommand
-        case .okAfterDataCommand:
-            self.send(context: context, command: .transferData(email))
-            self.currentlyWaitingFor = .okAfterMailData
-        case .okAfterMailData:
-            self.send(context: context, command: .quit)
-            self.currentlyWaitingFor = .okAfterQuit
-        case .okAfterQuit:
-            self.allDonePromise.succeed(())
-            context.close(promise: nil)
-            self.currentlyWaitingFor = .nothing
-        case .nothing:
-            () // ignoring more data whilst quit (it's odd though)
-        case .error:
-            fatalError("error state")
-        case .tlsHandlerToBeAdded:
-            fatalError("bug in NIOTS: we shouldn't hit this state here")
         }
     }
 }

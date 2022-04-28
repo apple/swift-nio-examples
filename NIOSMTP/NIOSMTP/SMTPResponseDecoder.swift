@@ -47,7 +47,7 @@ import NIO
 /// time. That is usually achieved by inserting `SMTPResponseDecoder` right after a `LineBasedFrameDecoder` into the
 /// `ChannelPipeline`. That is quite nice because we separate the concerns quite nicely: `LineBasedFrameDecoder` does
 /// only the newline-based framing and `SMTPResponseDecoder` just decodes pre-framed SMTP responses.
-final class SMTPResponseDecoder: ChannelInboundHandler {
+final class SMTPResponseDecoder: ChannelInboundHandler, Sendable {
     typealias InboundIn = ByteBuffer
     typealias InboundOut = SMTPResponse
     
