@@ -19,14 +19,16 @@ import NIOTLS
 import NIOSSL
 import Foundation
 import NIOExtras
+import NIOConcurrencyHelpers
 
 /// Fires off one GET request when our stream is active and collects all response parts into a promise.
 ///
 /// - warning: This will read the whole response into memory and delivers it into a promise.
-final class SendRequestHandler: ChannelInboundHandler {
+final class SendRequestHandler: ChannelInboundHandler, @unchecked Sendable {
     typealias InboundIn = HTTPClientResponsePart
     typealias OutboundOut = HTTPClientRequestPart
-    
+
+    private let lock = Lock()
     private let responseReceivedPromise: EventLoopPromise<[HTTPClientResponsePart]>
     private var responsePartAccumulator: [HTTPClientResponsePart] = []
     private let host: String
@@ -53,7 +55,6 @@ final class SendRequestHandler: ChannelInboundHandler {
             context.write(self.wrapOutboundOut(.body(.byteBuffer(buffer))), promise: nil)
         }
         context.writeAndFlush(self.wrapOutboundOut(.end(self.compoundRequest.trailers.map(HTTPHeaders.init))), promise: nil)
-
         context.fireChannelActive()
     }
 
@@ -65,14 +66,16 @@ final class SendRequestHandler: ChannelInboundHandler {
 
     func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         let resPart = self.unwrapInboundIn(data)
-        self.responsePartAccumulator.append(resPart)
-        if case .end = resPart {
-            self.responseReceivedPromise.succeed(self.responsePartAccumulator)
+        self.lock.withLock {
+            self.responsePartAccumulator.append(resPart)
+            if case .end = resPart {
+                self.responseReceivedPromise.succeed(self.responsePartAccumulator)
+            }
         }
     }
 }
 
-final class HeuristicForServerTooOldToSpeakGoodProtocolsHandler: ChannelInboundHandler {
+final class HeuristicForServerTooOldToSpeakGoodProtocolsHandler: ChannelInboundHandler, @unchecked Sendable {
     typealias InboundIn = ByteBuffer
     typealias InboundOut = ByteBuffer
 
@@ -80,34 +83,41 @@ final class HeuristicForServerTooOldToSpeakGoodProtocolsHandler: ChannelInboundH
         case serverDoesNotSpeakHTTP2
     }
 
+    private let lock = Lock()
     var bytesSeen = 0
 
     func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         let buffer = self.unwrapInboundIn(data)
-        bytesSeen += buffer.readableBytes
+        self.lock.withLock {
+            bytesSeen += buffer.readableBytes
+        }
         context.fireChannelRead(data)
     }
 
     func userInboundEventTriggered(context: ChannelHandlerContext, event: Any) {
-        if self.bytesSeen == 0 {
-            if case let event = event as? TLSUserEvent, event == .shutdownCompleted || event == .handshakeCompleted(negotiatedProtocol: nil) {
-                context.fireErrorCaught(Error.serverDoesNotSpeakHTTP2)
-                return
+        self.lock.withLock {
+            if self.bytesSeen == 0 {
+                if case let event = event as? TLSUserEvent, event == .shutdownCompleted || event == .handshakeCompleted(negotiatedProtocol: nil) {
+                    context.fireErrorCaught(Error.serverDoesNotSpeakHTTP2)
+                    return
+                }
             }
         }
         context.fireUserInboundEventTriggered(event)
     }
 
     func errorCaught(context: ChannelHandlerContext, error: Swift.Error) {
-        if self.bytesSeen == 0 {
-            switch error {
-            case NIOSSLError.uncleanShutdown,
-                 is IOError where (error as! IOError).errnoCode == ECONNRESET:
-                // this is very highly likely a server doesn't speak HTTP/2 problem
-                context.fireErrorCaught(Error.serverDoesNotSpeakHTTP2)
-                return
-            default:
-                ()
+        self.lock.withLock {
+            if self.bytesSeen == 0 {
+                switch error {
+                case NIOSSLError.uncleanShutdown,
+                     is IOError where (error as! IOError).errnoCode == ECONNRESET:
+                    // this is very highly likely a server doesn't speak HTTP/2 problem
+                    context.fireErrorCaught(Error.serverDoesNotSpeakHTTP2)
+                    return
+                default:
+                    ()
+                }
             }
         }
         context.fireErrorCaught(error)
@@ -115,9 +125,9 @@ final class HeuristicForServerTooOldToSpeakGoodProtocolsHandler: ChannelInboundH
 }
 
 /// Collects any errors in the root stream, forwards them to a promise and closes the whole network connection.
-final class CollectErrorsAndCloseStreamHandler: ChannelInboundHandler {
+final class CollectErrorsAndCloseStreamHandler: ChannelInboundHandler, Sendable {
     typealias InboundIn = Never
-    
+
     private let promise: EventLoopPromise<Void>
     
     init(promise: EventLoopPromise<Void>) {
