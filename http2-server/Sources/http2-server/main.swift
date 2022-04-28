@@ -17,7 +17,7 @@ import NIOSSL
 import NIOHTTP1
 import NIOHTTP2
 
-final class HTTP1TestServer: ChannelInboundHandler {
+final class HTTP1TestServer: ChannelInboundHandler, Sendable {
     public typealias InboundIn = HTTPServerRequestPart
     public typealias OutboundOut = HTTPServerResponsePart
 
@@ -47,7 +47,7 @@ final class HTTP1TestServer: ChannelInboundHandler {
 }
 
 
-final class ErrorHandler: ChannelInboundHandler {
+final class ErrorHandler: ChannelInboundHandler, Sendable {
     typealias InboundIn = Never
 
     func errorCaught(context: ChannelHandlerContext, error: Error) {
