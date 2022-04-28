@@ -15,7 +15,7 @@
 import NIO
 import Logging
 
-final class CloseOnErrorHandler: ChannelInboundHandler {
+final class CloseOnErrorHandler: ChannelInboundHandler, Sendable {
     typealias InboundIn = Never
     
     private let logger: Logger
