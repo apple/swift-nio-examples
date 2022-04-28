@@ -17,7 +17,7 @@ import NIOSSL
 import Logging
 import NIOConcurrencyHelpers
 
-public final class TLSProxy: @unchecked Sendable {
+public final class TLSProxy {
     enum State {
         case waitingToBeAdded
         case connecting(ByteBuffer)
@@ -30,7 +30,7 @@ public final class TLSProxy: @unchecked Sendable {
             self.logger.trace("SM new state: \(self.state)")
         }
     }
-    private let lock = Lock()
+
     private let host: String
     private let port: Int
     private var logger: Logger
@@ -50,89 +50,81 @@ public final class TLSProxy: @unchecked Sendable {
     }
     
     func gotError(_ error: Error) {
-        self.lock.withLock {
-            self.logger.warning("unexpected error: \(#function): \(error)")
+        self.logger.warning("unexpected error: \(#function): \(error)")
 
-            switch self.state {
-            case .connected, .connecting, .waitingToBeAdded, .closed:
-                self.state = .error(error)
-            case .error:
-                ()
-            }
+        switch self.state {
+        case .connected, .connecting, .waitingToBeAdded, .closed:
+            self.state = .error(error)
+        case .error:
+            ()
         }
     }
     
     func connected(partnerChannel: Channel,
                    myChannel: Channel,
                    contextForInitialData: ChannelHandlerContext) {
-        self.lock.withLock {
-            self.logger.debug("connected to \(partnerChannel)")
+        self.logger.debug("connected to \(partnerChannel)")
 
-            let bytes: ByteBuffer
-            switch self.state {
-            case .waitingToBeAdded, .connected:
-                self.illegalTransition()
-            case .error(let error):
-                partnerChannel.pipeline.fireErrorCaught(error)
-                myChannel.pipeline.fireErrorCaught(error)
-                partnerChannel.close(promise: nil)
-                return
-            case .closed:
-                self.logger.warning("discarding \(partnerChannel) because we're already closed.")
-                partnerChannel.close(promise: nil)
-                return
-            case .connecting(let buffer):
-                bytes = buffer
-                self.state = .connected
-                // fall through
-            }
-
-            var partnerLogger = self.logger
-            partnerLogger[metadataKey: "side"] = "Proxy <--[TLS]--> Target"
-            let myGlue = GlueHandler(logger: self.logger)
-            let partnerGlue = GlueHandler(logger: partnerLogger)
-            myGlue.partner = partnerGlue
-            partnerGlue.partner = myGlue
-
-            assert(partnerChannel.eventLoop === myChannel.eventLoop)
-            myChannel.pipeline.addHandler(myGlue, position: .after(contextForInitialData.handler)).flatMap {
-                partnerChannel.pipeline.handler(type: CloseOnErrorHandler.self)
-            }.flatMap { errorHandler in
-                partnerChannel.pipeline.addHandler(partnerGlue)
-            }.whenFailure { error in
-                self.gotError(error)
-
-                partnerChannel.pipeline.fireErrorCaught(error)
-                contextForInitialData.fireErrorCaught(error)
-            }
-            guard case .connected = self.state else {
-                return
-            }
-            assert(myGlue.context != nil)
-            assert(partnerGlue.context != nil)
-
-            if bytes.readableBytes > 0 {
-                contextForInitialData.fireChannelRead(self.wrapInboundOut(bytes))
-                contextForInitialData.fireChannelReadComplete()
-            }
-            contextForInitialData.read()
+        let bytes: ByteBuffer
+        switch self.state {
+        case .waitingToBeAdded, .connected:
+            self.illegalTransition()
+        case .error(let error):
+            partnerChannel.pipeline.fireErrorCaught(error)
+            myChannel.pipeline.fireErrorCaught(error)
+            partnerChannel.close(promise: nil)
+            return
+        case .closed:
+            self.logger.warning("discarding \(partnerChannel) because we're already closed.")
+            partnerChannel.close(promise: nil)
+            return
+        case .connecting(let buffer):
+            bytes = buffer
+            self.state = .connected
+            // fall through
         }
+
+        var partnerLogger = self.logger
+        partnerLogger[metadataKey: "side"] = "Proxy <--[TLS]--> Target"
+        let myGlue = GlueHandler(logger: self.logger)
+        let partnerGlue = GlueHandler(logger: partnerLogger)
+        myGlue.partner = partnerGlue
+        partnerGlue.partner = myGlue
+
+        assert(partnerChannel.eventLoop === myChannel.eventLoop)
+        myChannel.pipeline.addHandler(myGlue, position: .after(contextForInitialData.handler)).flatMap {
+            partnerChannel.pipeline.handler(type: CloseOnErrorHandler.self)
+        }.flatMap { errorHandler in
+            partnerChannel.pipeline.addHandler(partnerGlue)
+        }.whenFailure { error in
+            self.gotError(error)
+
+            partnerChannel.pipeline.fireErrorCaught(error)
+            contextForInitialData.fireErrorCaught(error)
+        }
+        guard case .connected = self.state else {
+            return
+        }
+        assert(myGlue.context != nil)
+        assert(partnerGlue.context != nil)
+
+        if bytes.readableBytes > 0 {
+            contextForInitialData.fireChannelRead(self.wrapInboundOut(bytes))
+            contextForInitialData.fireChannelReadComplete()
+        }
+        contextForInitialData.read()
     }
     
     func connectPartner(eventLoop: EventLoop) -> EventLoopFuture<Channel> {
-        self.lock.withLock {
-            self.logger.debug("connecting to \(self.host):\(self.port)")
+        self.logger.debug("connecting to \(self.host):\(self.port)")
 
-            return ClientBootstrap(group: eventLoop)
-                .channelInitializer { channel in
-                    self.lock.withLock {
-                        channel.pipeline.addHandlers(try! NIOSSLClientHandler(context: self.sslContext,
-                                                                              serverHostname: self.host),
-                                                     CloseOnErrorHandler(logger: self.logger))
-                    }
-            }
-            .connect(host: self.host, port: self.port)
+        return ClientBootstrap(group: eventLoop)
+            .channelInitializer { channel in
+                channel.pipeline.addHandlers(try! NIOSSLClientHandler(context: self.sslContext,
+                                                                      serverHostname: self.host),
+                                             CloseOnErrorHandler(logger: self.logger))
         }
+        .connect(host: self.host, port: self.port)
     }
 }
 

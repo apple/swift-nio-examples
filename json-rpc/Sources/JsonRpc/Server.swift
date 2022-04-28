@@ -7,11 +7,7 @@ public final class TCPServer: @unchecked Sendable {
     private let config: Config
     private var channel: Channel?
     private let closure: RPCClosure
-    private var state = State.initializing {
-        didSet {
-            print("\(self) \(state)")
-        }
-    }
+    private var state = State.initializing
     private let lock = Lock()
 
     public init(group: MultiThreadedEventLoopGroup, config: Config = Config(), closure: @escaping RPCClosure) {
@@ -90,7 +86,7 @@ public final class TCPServer: @unchecked Sendable {
     }
 }
 
-private class Handler: ChannelInboundHandler, Sendable {
+private class Handler: ChannelInboundHandler {
     public typealias InboundIn = JSONRequest
     public typealias OutboundOut = JSONResponse
 

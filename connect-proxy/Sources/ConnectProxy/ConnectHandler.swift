@@ -15,14 +15,11 @@
 import NIO
 import NIOHTTP1
 import Logging
-import NIOConcurrencyHelpers
 
 final class ConnectHandler {
     private var upgradeState: State
 
     private var logger: Logger
-
-    private let lock = Lock()
 
     init(logger: Logger) {
         self.upgradeState = .idle
@@ -48,52 +45,47 @@ extension ConnectHandler: ChannelInboundHandler {
     typealias OutboundOut = HTTPServerResponsePart
 
     func channelRead(context: ChannelHandlerContext, data: NIOAny) {
-        self.lock.withLock {
-            switch self.upgradeState {
-            case .idle:
-                self.handleInitialMessage(context: context, data: self.unwrapInboundIn(data))
+        switch self.upgradeState {
+        case .idle:
+            self.handleInitialMessage(context: context, data: self.unwrapInboundIn(data))
 
-            case .beganConnecting:
-                // We got .end, we're still waiting on the connection
-                if case .end = self.unwrapInboundIn(data) {
-                    self.upgradeState = .awaitingConnection(pendingBytes: [])
-                    self.removeDecoder(context: context)
-                }
-
-            case .awaitingEnd(let peerChannel):
-                if case .end = self.unwrapInboundIn(data) {
-                    // Upgrade has completed!
-                    self.upgradeState = .upgradeComplete(pendingBytes: [])
-                    self.removeDecoder(context: context)
-                    self.glue(peerChannel, context: context)
-                }
-
-            case .awaitingConnection(var pendingBytes):
-                // We've seen end, this must not be HTTP anymore. Danger, Will Robinson! Do not unwrap.
+        case .beganConnecting:
+            // We got .end, we're still waiting on the connection
+            if case .end = self.unwrapInboundIn(data) {
                 self.upgradeState = .awaitingConnection(pendingBytes: [])
-                pendingBytes.append(data)
-                self.upgradeState = .awaitingConnection(pendingBytes: pendingBytes)
-
-            case .upgradeComplete(pendingBytes: var pendingBytes):
-                // We're currently delivering data, keep doing so.
-                self.upgradeState = .upgradeComplete(pendingBytes: [])
-                pendingBytes.append(data)
-                self.upgradeState = .upgradeComplete(pendingBytes: pendingBytes)
-
-            case .upgradeFailed:
-                break
+                self.removeDecoder(context: context)
             }
+
+        case .awaitingEnd(let peerChannel):
+            if case .end = self.unwrapInboundIn(data) {
+                // Upgrade has completed!
+                self.upgradeState = .upgradeComplete(pendingBytes: [])
+                self.removeDecoder(context: context)
+                self.glue(peerChannel, context: context)
+            }
+
+        case .awaitingConnection(var pendingBytes):
+            // We've seen end, this must not be HTTP anymore. Danger, Will Robinson! Do not unwrap.
+            self.upgradeState = .awaitingConnection(pendingBytes: [])
+            pendingBytes.append(data)
+            self.upgradeState = .awaitingConnection(pendingBytes: pendingBytes)
+
+        case .upgradeComplete(pendingBytes: var pendingBytes):
+            // We're currently delivering data, keep doing so.
+            self.upgradeState = .upgradeComplete(pendingBytes: [])
+            pendingBytes.append(data)
+            self.upgradeState = .upgradeComplete(pendingBytes: pendingBytes)
+
+        case .upgradeFailed:
+            break
         }
     }
 
     func handlerAdded(context: ChannelHandlerContext) {
-        // feels weird to have to lock to use a logger, but sure
-        self.lock.withLock {
-            // Add logger metadata.
-            self.logger[metadataKey: "localAddress"] = "\(String(describing: context.channel.localAddress))"
-            self.logger[metadataKey: "remoteAddress"] = "\(String(describing: context.channel.remoteAddress))"
-            self.logger[metadataKey: "channel"] = "\(ObjectIdentifier(context.channel))"
-        }
+        // Add logger metadata.
+        self.logger[metadataKey: "localAddress"] = "\(String(describing: context.channel.localAddress))"
+        self.logger[metadataKey: "remoteAddress"] = "\(String(describing: context.channel.remoteAddress))"
+        self.logger[metadataKey: "channel"] = "\(ObjectIdentifier(context.channel))"
     }
 }
 
@@ -102,60 +94,52 @@ extension ConnectHandler: RemovableChannelHandler {
     func removeHandler(context: ChannelHandlerContext, removalToken: ChannelHandlerContext.RemovalToken) {
         var didRead = false
 
-        self.lock.withLock {
-            // We are being removed, and need to deliver any pending bytes we may have if we're upgrading.
-            while case .upgradeComplete(var pendingBytes) = self.upgradeState, pendingBytes.count > 0 {
-                // Avoid a CoW while we pull some data out.
-                self.upgradeState = .upgradeComplete(pendingBytes: [])
-                let nextRead = pendingBytes.removeFirst()
-                self.upgradeState = .upgradeComplete(pendingBytes: pendingBytes)
+        // We are being removed, and need to deliver any pending bytes we may have if we're upgrading.
+        while case .upgradeComplete(var pendingBytes) = self.upgradeState, pendingBytes.count > 0 {
+            // Avoid a CoW while we pull some data out.
+            self.upgradeState = .upgradeComplete(pendingBytes: [])
+            let nextRead = pendingBytes.removeFirst()
+            self.upgradeState = .upgradeComplete(pendingBytes: pendingBytes)
 
-                context.fireChannelRead(nextRead)
-                didRead = true
-            }
+            context.fireChannelRead(nextRead)
+            didRead = true
         }
 
         if didRead {
             context.fireChannelReadComplete()
         }
 
-        self.lock.withLock {
-            self.logger.debug("Removing \(self) from pipeline")
-        }
+        self.logger.debug("Removing \(self) from pipeline")
         context.leavePipeline(removalToken: removalToken)
     }
 }
 
 extension ConnectHandler {
     private func handleInitialMessage(context: ChannelHandlerContext, data: InboundIn) {
-        self.lock.withLock {
-            guard case .head(let head) = data else {
-                self.logger.error("Invalid HTTP message type \(data)")
-                self.httpErrorAndClose(context: context)
-                return
-            }
-
-            self.logger.info("\(head.method) \(head.uri) \(head.version)")
-
-            guard head.method == .CONNECT else {
-                self.logger.error("Invalid HTTP method: \(head.method)")
-                self.httpErrorAndClose(context: context)
-                return
-            }
-
-            let components = head.uri.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: false)
-            let host = components.first!  // There will always be a first.
-            let port = components.last.flatMap { Int($0, radix: 10) } ?? 80  // Port 80 if not specified
-
-            self.upgradeState = .beganConnecting
-            self.connectTo(host: String(host), port: port, context: context)
+        guard case .head(let head) = data else {
+            self.logger.error("Invalid HTTP message type \(data)")
+            self.httpErrorAndClose(context: context)
+            return
         }
+
+        self.logger.info("\(head.method) \(head.uri) \(head.version)")
+
+        guard head.method == .CONNECT else {
+            self.logger.error("Invalid HTTP method: \(head.method)")
+            self.httpErrorAndClose(context: context)
+            return
+        }
+
+        let components = head.uri.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: false)
+        let host = components.first!  // There will always be a first.
+        let port = components.last.flatMap { Int($0, radix: 10) } ?? 80  // Port 80 if not specified
+
+        self.upgradeState = .beganConnecting
+        self.connectTo(host: String(host), port: port, context: context)
     }
 
     private func connectTo(host: String, port: Int, context: ChannelHandlerContext) {
-        self.lock.withLock {
-            self.logger.info("Connecting to \(host):\(port)")
-        }
+        self.logger.info("Connecting to \(host):\(port)")
 
         let channelFuture = ClientBootstrap(group: context.eventLoop)
             .connect(host: String(host), port: port)
@@ -169,58 +153,52 @@ extension ConnectHandler {
     }
 
     private func connectSucceeded(channel: Channel, context: ChannelHandlerContext) {
-        self.lock.withLock {
-            self.logger.info("Connected to \(String(describing: channel.remoteAddress))")
+        self.logger.info("Connected to \(String(describing: channel.remoteAddress))")
 
-            switch self.upgradeState {
-            case .beganConnecting:
-                // Ok, we have a channel, let's wait for end.
-                self.upgradeState = .awaitingEnd(connectResult: channel)
+        switch self.upgradeState {
+        case .beganConnecting:
+            // Ok, we have a channel, let's wait for end.
+            self.upgradeState = .awaitingEnd(connectResult: channel)
 
-            case .awaitingConnection(pendingBytes: let pendingBytes):
-                // Upgrade complete! Begin gluing the connection together.
-                self.upgradeState = .upgradeComplete(pendingBytes: pendingBytes)
-                self.glue(channel, context: context)
+        case .awaitingConnection(pendingBytes: let pendingBytes):
+            // Upgrade complete! Begin gluing the connection together.
+            self.upgradeState = .upgradeComplete(pendingBytes: pendingBytes)
+            self.glue(channel, context: context)
 
-            case .awaitingEnd(let peerChannel):
-                // This case is a logic error, close already connected peer channel.
-                peerChannel.close(mode: .all, promise: nil)
-                context.close(promise: nil)
+        case .awaitingEnd(let peerChannel):
+            // This case is a logic error, close already connected peer channel.
+            peerChannel.close(mode: .all, promise: nil)
+            context.close(promise: nil)
 
-            case .idle, .upgradeFailed, .upgradeComplete:
-                // These cases are logic errors, but let's be careful and just shut the connection.
-                context.close(promise: nil)
-            }
+        case .idle, .upgradeFailed, .upgradeComplete:
+            // These cases are logic errors, but let's be careful and just shut the connection.
+            context.close(promise: nil)
         }
     }
 
     private func connectFailed(error: Error, context: ChannelHandlerContext) {
-        self.lock.withLock {
-            self.logger.error("Connect failed: \(error)")
+        self.logger.error("Connect failed: \(error)")
 
-            switch self.upgradeState {
-            case .beganConnecting, .awaitingConnection:
-                // We still have a somewhat active connection here in HTTP mode, and can report failure.
-                self.httpErrorAndClose(context: context)
+        switch self.upgradeState {
+        case .beganConnecting, .awaitingConnection:
+            // We still have a somewhat active connection here in HTTP mode, and can report failure.
+            self.httpErrorAndClose(context: context)
 
-            case .awaitingEnd(let peerChannel):
-                // This case is a logic error, close already connected peer channel.
-                peerChannel.close(mode: .all, promise: nil)
-                context.close(promise: nil)
+        case .awaitingEnd(let peerChannel):
+            // This case is a logic error, close already connected peer channel.
+            peerChannel.close(mode: .all, promise: nil)
+            context.close(promise: nil)
 
-            case .idle, .upgradeFailed, .upgradeComplete:
-                // Most of these cases are logic errors, but let's be careful and just shut the connection.
-                context.close(promise: nil)
-            }
+        case .idle, .upgradeFailed, .upgradeComplete:
+            // Most of these cases are logic errors, but let's be careful and just shut the connection.
+            context.close(promise: nil)
         }
 
         context.fireErrorCaught(error)
     }
 
     private func glue(_ peerChannel: Channel, context: ChannelHandlerContext) {
-        self.lock.withLock {
-            self.logger.debug("Gluing together \(ObjectIdentifier(context.channel)) and \(ObjectIdentifier(peerChannel))")
-        }
+        self.logger.debug("Gluing together \(ObjectIdentifier(context.channel)) and \(ObjectIdentifier(peerChannel))")
 
         // Ok, upgrade has completed! We now need to begin the upgrade process.
         // First, send the 200 message.
@@ -248,9 +226,7 @@ extension ConnectHandler {
     }
 
     private func httpErrorAndClose(context: ChannelHandlerContext) {
-        self.lock.withLock {
-            self.upgradeState = .upgradeFailed
-        }
+        self.upgradeState = .upgradeFailed
 
         let headers = HTTPHeaders([("Content-Length", "0"), ("Connection", "close")])
         let head = HTTPResponseHead(version: .init(major: 1, minor: 1), status: .badRequest, headers: headers)

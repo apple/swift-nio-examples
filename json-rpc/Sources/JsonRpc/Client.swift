@@ -4,11 +4,7 @@ import NIOConcurrencyHelpers
 
 public final class TCPClient: @unchecked Sendable {
     private let lock = Lock()
-    private var state = State.initializing {
-        didSet {
-            print("\(self) \(state)")
-        }
-    }
+    private var state = State.initializing
     public let group: MultiThreadedEventLoopGroup
     public let config: Config
     private var channel: Channel?
@@ -149,56 +145,49 @@ public final class TCPClient: @unchecked Sendable {
     }
 }
 
-private class Handler: ChannelInboundHandler, ChannelOutboundHandler, @unchecked Sendable {
+private class Handler: ChannelInboundHandler, ChannelOutboundHandler {
     public typealias InboundIn = JSONResponse
     public typealias OutboundIn = JSONRequestWrapper
     public typealias OutboundOut = JSONRequest
 
-    private let lock = Lock()
     private var queue = CircularBuffer<(String, EventLoopPromise<JSONResponse>)>()
 
     // outbound
     public func write(context: ChannelHandlerContext, data: NIOAny, promise: EventLoopPromise<Void>?) {
         let requestWrapper = self.unwrapOutboundIn(data)
-        self.lock.withLock {
-            queue.append((requestWrapper.request.id, requestWrapper.promise))
-        }
+        queue.append((requestWrapper.request.id, requestWrapper.promise))
         context.write(wrapOutboundOut(requestWrapper.request), promise: promise)
     }
 
     // inbound
     public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
-        self.lock.withLock {
-            if self.queue.isEmpty {
-                context.fireChannelRead(data) // already complete
-                return
-            }
-            let promise = queue.removeFirst().1
-            let response = unwrapInboundIn(data)
-            promise.succeed(response)
+        if self.queue.isEmpty {
+            context.fireChannelRead(data) // already complete
+            return
         }
+        let promise = queue.removeFirst().1
+        let response = unwrapInboundIn(data)
+        promise.succeed(response)
     }
 
     public func errorCaught(context: ChannelHandlerContext, error: Error) {
         if let remoteAddress = context.remoteAddress {
             print("server", remoteAddress, "error", error)
         }
-        self.lock.withLock {
-            if self.queue.isEmpty {
-                context.fireErrorCaught(error) // already complete
-                return
-            }
-            let item = queue.removeFirst()
-            let requestId = item.0
-            let promise = item.1
-            switch error {
-            case CodecError.requestTooLarge, CodecError.badFraming, CodecError.badJSON:
-                promise.succeed(JSONResponse(id: requestId, errorCode: .parseError, error: error))
-            default:
-                promise.fail(error)
-                // close the connection
-                context.close(promise: nil)
-            }
+        if self.queue.isEmpty {
+            context.fireErrorCaught(error) // already complete
+            return
+        }
+        let item = queue.removeFirst()
+        let requestId = item.0
+        let promise = item.1
+        switch error {
+        case CodecError.requestTooLarge, CodecError.badFraming, CodecError.badJSON:
+            promise.succeed(JSONResponse(id: requestId, errorCode: .parseError, error: error))
+        default:
+            promise.fail(error)
+            // close the connection
+            context.close(promise: nil)
         }
     }
 
@@ -212,10 +201,8 @@ private class Handler: ChannelInboundHandler, ChannelOutboundHandler, @unchecked
         if let remoteAddress = context.remoteAddress {
             print("server ", remoteAddress, "disconnected")
         }
-        self.lock.withLock {
-            if !self.queue.isEmpty {
-                self.errorCaught(context: context, error: ClientError.connectionResetByPeer)
-            }
+        if !self.queue.isEmpty {
+            self.errorCaught(context: context, error: ClientError.connectionResetByPeer)
         }
     }
 

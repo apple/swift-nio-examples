@@ -17,7 +17,7 @@ import NIOSSL
 import NIOHTTP1
 import NIOHTTP2
 
-final class HTTP1TestServer: ChannelInboundHandler, Sendable {
+final class HTTP1TestServer: ChannelInboundHandler {
     public typealias InboundIn = HTTPServerRequestPart
     public typealias OutboundOut = HTTPServerResponsePart
 

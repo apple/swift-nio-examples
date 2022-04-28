@@ -79,7 +79,7 @@ struct Server: ParsableCommand {
     }
 }
 
-private final class EchoHandler: ChannelInboundHandler, Sendable {
+private final class EchoHandler: ChannelInboundHandler {
     public typealias InboundIn = ByteBuffer
     public typealias OutboundOut = ByteBuffer
 

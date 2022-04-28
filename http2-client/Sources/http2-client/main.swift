@@ -24,11 +24,10 @@ import NIOConcurrencyHelpers
 /// Fires off one GET request when our stream is active and collects all response parts into a promise.
 ///
 /// - warning: This will read the whole response into memory and delivers it into a promise.
-final class SendRequestHandler: ChannelInboundHandler, @unchecked Sendable {
+final class SendRequestHandler: ChannelInboundHandler {
     typealias InboundIn = HTTPClientResponsePart
     typealias OutboundOut = HTTPClientRequestPart
 
-    private let lock = Lock()
     private let responseReceivedPromise: EventLoopPromise<[HTTPClientResponsePart]>
     private var responsePartAccumulator: [HTTPClientResponsePart] = []
     private let host: String
@@ -66,16 +65,14 @@ final class SendRequestHandler: ChannelInboundHandler, @unchecked Sendable {
 
     func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         let resPart = self.unwrapInboundIn(data)
-        self.lock.withLock {
-            self.responsePartAccumulator.append(resPart)
-            if case .end = resPart {
-                self.responseReceivedPromise.succeed(self.responsePartAccumulator)
-            }
+        self.responsePartAccumulator.append(resPart)
+        if case .end = resPart {
+            self.responseReceivedPromise.succeed(self.responsePartAccumulator)
         }
     }
 }
 
-final class HeuristicForServerTooOldToSpeakGoodProtocolsHandler: ChannelInboundHandler, @unchecked Sendable {
+final class HeuristicForServerTooOldToSpeakGoodProtocolsHandler: ChannelInboundHandler {
     typealias InboundIn = ByteBuffer
     typealias InboundOut = ByteBuffer
 
@@ -83,41 +80,34 @@ final class HeuristicForServerTooOldToSpeakGoodProtocolsHandler: ChannelInboundH
         case serverDoesNotSpeakHTTP2
     }
 
-    private let lock = Lock()
     var bytesSeen = 0
 
     func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         let buffer = self.unwrapInboundIn(data)
-        self.lock.withLock {
-            bytesSeen += buffer.readableBytes
-        }
+        bytesSeen += buffer.readableBytes
         context.fireChannelRead(data)
     }
 
     func userInboundEventTriggered(context: ChannelHandlerContext, event: Any) {
-        self.lock.withLock {
-            if self.bytesSeen == 0 {
-                if case let event = event as? TLSUserEvent, event == .shutdownCompleted || event == .handshakeCompleted(negotiatedProtocol: nil) {
-                    context.fireErrorCaught(Error.serverDoesNotSpeakHTTP2)
-                    return
-                }
+        if self.bytesSeen == 0 {
+            if case let event = event as? TLSUserEvent, event == .shutdownCompleted || event == .handshakeCompleted(negotiatedProtocol: nil) {
+                context.fireErrorCaught(Error.serverDoesNotSpeakHTTP2)
+                return
             }
         }
         context.fireUserInboundEventTriggered(event)
     }
 
     func errorCaught(context: ChannelHandlerContext, error: Swift.Error) {
-        self.lock.withLock {
-            if self.bytesSeen == 0 {
-                switch error {
-                case NIOSSLError.uncleanShutdown,
-                     is IOError where (error as! IOError).errnoCode == ECONNRESET:
-                    // this is very highly likely a server doesn't speak HTTP/2 problem
-                    context.fireErrorCaught(Error.serverDoesNotSpeakHTTP2)
-                    return
-                default:
-                    ()
-                }
+        if self.bytesSeen == 0 {
+            switch error {
+            case NIOSSLError.uncleanShutdown,
+                 is IOError where (error as! IOError).errnoCode == ECONNRESET:
+                // this is very highly likely a server doesn't speak HTTP/2 problem
+                context.fireErrorCaught(Error.serverDoesNotSpeakHTTP2)
+                return
+            default:
+                ()
             }
         }
         context.fireErrorCaught(error)

@@ -17,14 +17,13 @@ import NIOHTTP1
 import Logging
 import NIOConcurrencyHelpers
 
-public final class SaveEverythingHTTPServer: @unchecked Sendable {
+public final class SaveEverythingHTTPServer {
     private var state = FileIOCoordinatorState() {
         didSet {
             self.logger.trace("new state \(self.state)")
         }
     }
 
-    let lock = Lock()
     private let fileIO: NonBlockingFileIO
     private let uploadDirectory: String
     private let logger: Logger
@@ -65,29 +64,25 @@ extension SaveEverythingHTTPServer {
                                                    size: 0,
                                                    eventLoop: context.eventLoop).map { fileHandle }
             }.whenComplete { result in
-                self.lock.withLock {
-                    switch result {
-                    case .success(let fileHandle):
-                        self.runAction(self.state.didOpenTargetFile(fileHandle),
-                                       context: context)
-                    case .failure(let error):
-                        self.runAction(self.state.didError(error),
-                                       context: context)
-                    }
+                switch result {
+                case .success(let fileHandle):
+                    self.runAction(self.state.didOpenTargetFile(fileHandle),
+                                   context: context)
+                case .failure(let error):
+                    self.runAction(self.state.didError(error),
+                                   context: context)
                 }
             }
         case .nothingWeAreWaiting:
             ()
         case .startWritingToTargetFile:
-            self.lock.withLock {
-                let (fileHandle, bytes) = self.state.pullNextChunkToWrite()
-                self.fileIO.write(fileHandle: fileHandle, buffer: bytes, eventLoop: context.eventLoop).whenComplete { result in
-                    switch result {
-                    case .success(()):
-                        self.runAction(self.state.didFinishWritingOneChunkToFile(), context: context)
-                    case .failure(let error):
-                        self.runAction(self.state.didError(error), context: context)
-                    }
+            let (fileHandle, bytes) = self.state.pullNextChunkToWrite()
+            self.fileIO.write(fileHandle: fileHandle, buffer: bytes, eventLoop: context.eventLoop).whenComplete { result in
+                switch result {
+                case .success(()):
+                    self.runAction(self.state.didFinishWritingOneChunkToFile(), context: context)
+                case .failure(let error):
+                    self.runAction(self.state.didError(error), context: context)
                 }
             }
         }
@@ -133,32 +128,26 @@ extension SaveEverythingHTTPServer: ChannelDuplexHandler {
     public typealias OutboundOut = HTTPServerResponsePart
 
     public func errorCaught(context: ChannelHandlerContext, error: Error) {
-        self.lock.withLock {
-            self.logger.info("error on channel: \(error)")
-            self.runAction(self.state.didError(error), context: context)
-        }
+        self.logger.info("error on channel: \(error)")
+        self.runAction(self.state.didError(error), context: context)
     }
 
     public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         let reqPart = self.unwrapInboundIn(data)
 
-        self.lock.withLock {
-            switch reqPart {
-            case .head(let request):
-                self.runAction(self.state.didReceiveRequestBegin(targetPath: self.filenameForURI(request.uri)), context: context)
-            case .body(let bytes):
-                self.runAction(self.state.didReceiveRequestBodyBytes(bytes), context: context)
-            case .end:
-                self.runAction(self.state.didReceiveRequestEnd(), context: context)
-            }
+        switch reqPart {
+        case .head(let request):
+            self.runAction(self.state.didReceiveRequestBegin(targetPath: self.filenameForURI(request.uri)), context: context)
+        case .body(let bytes):
+            self.runAction(self.state.didReceiveRequestBodyBytes(bytes), context: context)
+        case .end:
+            self.runAction(self.state.didReceiveRequestEnd(), context: context)
         }
     }
 
     public func read(context: ChannelHandlerContext) {
-        self.lock.withLock {
-            if self.state.shouldWeReadMoreDataFromNetwork() {
-                context.read()
-            }
+        if self.state.shouldWeReadMoreDataFromNetwork() {
+            context.read()
         }
     }
 }

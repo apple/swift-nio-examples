@@ -13,11 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 import NIO
-import NIOConcurrencyHelpers
 
-final class GlueHandler: @unchecked Sendable {
-
-    private let lock = Lock()
+final class GlueHandler {
 
     private var partner: GlueHandler?
 
@@ -60,18 +57,14 @@ extension GlueHandler {
     }
 
     private func partnerBecameWritable() {
-        self.lock.withLock {
-            if self.pendingRead {
-                self.pendingRead = false
-                self.context?.read()
-            }
+        if self.pendingRead {
+            self.pendingRead = false
+            self.context?.read()
         }
     }
 
     private var partnerWritable: Bool {
-        self.lock.withLock {
-            self.context?.channel.isWritable ?? false
-        }
+        self.context?.channel.isWritable ?? false
     }
 }
 
@@ -87,59 +80,43 @@ extension GlueHandler: ChannelDuplexHandler {
 
     func handlerRemoved(context: ChannelHandlerContext) {
         self.context = nil
-        self.lock.withLock {
-            self.partner = nil
-        }
+        self.partner = nil
     }
 
     func channelRead(context: ChannelHandlerContext, data: NIOAny) {
-        self.lock.withLock {
-            self.partner?.partnerWrite(data)
-        }
+        self.partner?.partnerWrite(data)
     }
 
     func channelReadComplete(context: ChannelHandlerContext) {
-        self.lock.withLock {
-            self.partner?.partnerFlush()
-        }
+        self.partner?.partnerFlush()
     }
 
     func channelInactive(context: ChannelHandlerContext) {
-        self.lock.withLock {
-            self.partner?.partnerCloseFull()
-        }
+        self.partner?.partnerCloseFull()
     }
 
     func userInboundEventTriggered(context: ChannelHandlerContext, event: Any) {
         if let event = event as? ChannelEvent, case .inputClosed = event {
             // We have read EOF.
-            self.lock.withLock {
-                self.partner?.partnerWriteEOF()
-            }
+            self.partner?.partnerWriteEOF()
         }
     }
 
     func errorCaught(context: ChannelHandlerContext, error: Error) {
-        self.lock.withLock {
-            self.partner?.partnerCloseFull()
-        }
+        self.partner?.partnerCloseFull()
     }
 
     func channelWritabilityChanged(context: ChannelHandlerContext) {
         if context.channel.isWritable {
-            self.lock.withLock {
-                self.partner?.partnerBecameWritable()
-            }
+            self.partner?.partnerBecameWritable()
         }
     }
 
     func read(context: ChannelHandlerContext) {
-        self.lock.withLock {
-            if let partner = self.partner, partner.partnerWritable {
-                context.read()
-            } else {
-                self.pendingRead = true
-            }
+        if let partner = self.partner, partner.partnerWritable {
+            context.read()
+        } else {
+            self.pendingRead = true
         }
     }
 }
