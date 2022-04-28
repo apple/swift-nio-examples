@@ -14,6 +14,7 @@
 
 import NIO
 import ArgumentParser
+import NIOConcurrencyHelpers
 
 struct Client: ParsableCommand {
 
@@ -32,9 +33,10 @@ struct Client: ParsableCommand {
     }
 }
 
-private final class EchoHandler: ChannelInboundHandler {
+private final class EchoHandler: ChannelInboundHandler, @unchecked Sendable {
     public typealias InboundIn = ByteBuffer
     public typealias OutboundOut = ByteBuffer
+    private let lock = Lock()
     private var numBytes = 0
 
     public func channelActive(context: ChannelHandlerContext) {
@@ -42,18 +44,22 @@ private final class EchoHandler: ChannelInboundHandler {
 
         // We are connected. It's time to send the message to the server to initialize the ping-pong sequence.
         let buffer = context.channel.allocator.buffer(string: "hello")
-        self.numBytes = buffer.readableBytes
+        self.lock.withLock {
+            self.numBytes = buffer.readableBytes
+        }
         context.writeAndFlush(self.wrapOutboundOut(buffer), promise: nil)
     }
 
     public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         let byteBuffer = self.unwrapInboundIn(data)
-        self.numBytes -= byteBuffer.readableBytes
+        self.lock.withLock {
+            self.numBytes -= byteBuffer.readableBytes
 
-        if self.numBytes == 0 {
-            let string = String(buffer: byteBuffer)
-            print("Received: '\(string)' back from the server, closing channel.")
-            context.close(promise: nil)
+            if self.numBytes == 0 {
+                let string = String(buffer: byteBuffer)
+                print("Received: '\(string)' back from the server, closing channel.")
+                context.close(promise: nil)
+            }
         }
     }
 

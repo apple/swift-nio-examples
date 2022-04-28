@@ -15,6 +15,7 @@
 import NIO
 import ArgumentParser
 import launch
+import NIOConcurrencyHelpers
 
 struct Server: ParsableCommand {
 
@@ -78,7 +79,7 @@ struct Server: ParsableCommand {
     }
 }
 
-private final class EchoHandler: ChannelInboundHandler {
+private final class EchoHandler: ChannelInboundHandler, Sendable {
     public typealias InboundIn = ByteBuffer
     public typealias OutboundOut = ByteBuffer
 
