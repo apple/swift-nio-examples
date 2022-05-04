@@ -20,7 +20,7 @@ public struct UnsupportedURLError: Error {
     var url: String
 }
 
-public class ExampleHTTPLibrary {
+public class ExampleHTTPLibrary: Sendable {
     let groupManager: EventLoopGroupManager
 
     public init(groupProvider provider: EventLoopGroupManager.Provider) {

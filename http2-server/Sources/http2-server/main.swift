@@ -47,7 +47,7 @@ final class HTTP1TestServer: ChannelInboundHandler {
 }
 
 
-final class ErrorHandler: ChannelInboundHandler {
+final class ErrorHandler: ChannelInboundHandler, Sendable {
     typealias InboundIn = Never
 
     func errorCaught(context: ChannelHandlerContext, error: Error) {

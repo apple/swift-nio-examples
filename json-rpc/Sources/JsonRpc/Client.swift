@@ -1,7 +1,10 @@
 import Foundation
 import NIO
+import NIOConcurrencyHelpers
 
-public final class TCPClient {
+public final class TCPClient: @unchecked Sendable {
+    private let lock = Lock()
+    private var state = State.initializing
     public let group: MultiThreadedEventLoopGroup
     public let config: Config
     private var channel: Channel?
@@ -18,74 +21,68 @@ public final class TCPClient {
     }
 
     public func connect(host: String, port: Int) -> EventLoopFuture<TCPClient> {
-        assert(.initializing == self.state)
+        self.lock.withLock {
+            assert(.initializing == self.state)
 
-        let bootstrap = ClientBootstrap(group: self.group)
-            .channelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
-            .channelInitializer { channel in
-                return channel.pipeline.addTimeoutHandlers(self.config.timeout)
-                    .flatMap {
-                        channel.pipeline.addFramingHandlers(framing: self.config.framing)
-                    }.flatMap {
-                        channel.pipeline.addHandlers([
-                            CodableCodec<JSONResponse, JSONRequest>(),
-                            Handler(),
-                        ])
-                    }
+            let bootstrap = ClientBootstrap(group: self.group)
+                .channelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
+                .channelInitializer { channel in
+                    return channel.pipeline.addTimeoutHandlers(self.config.timeout)
+                        .flatMap {
+                            channel.pipeline.addFramingHandlers(framing: self.config.framing)
+                        }.flatMap {
+                            channel.pipeline.addHandlers([
+                                CodableCodec<JSONResponse, JSONRequest>(),
+                                Handler(),
+                            ])
+                        }
+                }
+
+            self.state = .connecting("\(host):\(port)")
+            return bootstrap.connect(host: host, port: port).flatMap { channel in
+                self.lock.withLock {
+                    self.channel = channel
+                    self.state = .connected
+                }
+                return channel.eventLoop.makeSucceededFuture(self)
             }
-
-        self.state = .connecting("\(host):\(port)")
-        return bootstrap.connect(host: host, port: port).flatMap { channel in
-            self.channel = channel
-            self.state = .connected
-            return channel.eventLoop.makeSucceededFuture(self)
         }
     }
 
     public func disconnect() -> EventLoopFuture<Void> {
-        if .connected != self.state {
-            return self.group.next().makeFailedFuture(ClientError.notReady)
+        self.lock.withLock {
+            if .connected != self.state {
+                return self.group.next().makeFailedFuture(ClientError.notReady)
+            }
+            guard let channel = self.channel else {
+                return self.group.next().makeFailedFuture(ClientError.notReady)
+            }
+            self.state = .disconnecting
+            channel.closeFuture.whenComplete { _ in
+                self.lock.withLock {
+                    self.state = .disconnected
+                }
+            }
+            channel.close(promise: nil)
+            return channel.closeFuture
         }
-        guard let channel = self.channel else {
-            return self.group.next().makeFailedFuture(ClientError.notReady)
-        }
-        self.state = .disconnecting
-        channel.closeFuture.whenComplete { _ in
-            self.state = .disconnected
-        }
-        channel.close(promise: nil)
-        return channel.closeFuture
     }
 
     public func call(method: String, params: RPCObject) -> EventLoopFuture<Result> {
-        if .connected != self.state {
-            return self.group.next().makeFailedFuture(ClientError.notReady)
-        }
-        guard let channel = self.channel else {
-            return self.group.next().makeFailedFuture(ClientError.notReady)
-        }
-        let promise: EventLoopPromise<JSONResponse> = channel.eventLoop.makePromise()
-        let request = JSONRequest(id: NSUUID().uuidString, method: method, params: JSONObject(params))
-        let requestWrapper = JSONRequestWrapper(request: request, promise: promise)
-        let future = channel.writeAndFlush(requestWrapper)
-        future.cascadeFailure(to: promise) // if write fails
-        return future.flatMap {
-            promise.futureResult.map { Result($0) }
-        }
-    }
-
-    private var _state = State.initializing
-    private let lock = NSLock()
-    private var state: State {
-        get {
-            return self.lock.withLock {
-                _state
+        self.lock.withLock {
+            if .connected != self.state {
+                return self.group.next().makeFailedFuture(ClientError.notReady)
             }
-        }
-        set {
-            self.lock.withLock {
-                _state = newValue
-                print("\(self) \(_state)")
+            guard let channel = self.channel else {
+                return self.group.next().makeFailedFuture(ClientError.notReady)
+            }
+            let promise: EventLoopPromise<JSONResponse> = channel.eventLoop.makePromise()
+            let request = JSONRequest(id: NSUUID().uuidString, method: method, params: JSONObject(params))
+            let requestWrapper = JSONRequestWrapper(request: request, promise: promise)
+            let future = channel.writeAndFlush(requestWrapper)
+            future.cascadeFailure(to: promise) // if write fails
+            return future.flatMap {
+                promise.futureResult.map { Result($0) }
             }
         }
     }
@@ -165,7 +162,8 @@ private class Handler: ChannelInboundHandler, ChannelOutboundHandler {
     // inbound
     public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         if self.queue.isEmpty {
-            return context.fireChannelRead(data) // already complete
+            context.fireChannelRead(data) // already complete
+            return
         }
         let promise = queue.removeFirst().1
         let response = unwrapInboundIn(data)
@@ -177,7 +175,8 @@ private class Handler: ChannelInboundHandler, ChannelOutboundHandler {
             print("server", remoteAddress, "error", error)
         }
         if self.queue.isEmpty {
-            return context.fireErrorCaught(error) // already complete
+            context.fireErrorCaught(error) // already complete
+            return
         }
         let item = queue.removeFirst()
         let requestId = item.0

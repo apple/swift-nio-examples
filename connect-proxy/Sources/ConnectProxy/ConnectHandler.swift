@@ -16,7 +16,6 @@ import NIO
 import NIOHTTP1
 import Logging
 
-
 final class ConnectHandler {
     private var upgradeState: State
 
@@ -165,7 +164,7 @@ extension ConnectHandler {
             // Upgrade complete! Begin gluing the connection together.
             self.upgradeState = .upgradeComplete(pendingBytes: pendingBytes)
             self.glue(channel, context: context)
-            
+
         case .awaitingEnd(let peerChannel):
             // This case is a logic error, close already connected peer channel.
             peerChannel.close(mode: .all, promise: nil)

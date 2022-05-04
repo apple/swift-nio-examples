@@ -29,6 +29,7 @@ public final class TLSProxy {
             self.logger.trace("SM new state: \(self.state)")
         }
     }
+
     private let host: String
     private let port: Int
     private var logger: Logger
@@ -62,7 +63,7 @@ public final class TLSProxy {
                    myChannel: Channel,
                    contextForInitialData: ChannelHandlerContext) {
         self.logger.debug("connected to \(partnerChannel)")
-        
+
         let bytes: ByteBuffer
         switch self.state {
         case .waitingToBeAdded, .connected:
@@ -81,14 +82,14 @@ public final class TLSProxy {
             self.state = .connected
             // fall through
         }
-        
+
         var partnerLogger = self.logger
         partnerLogger[metadataKey: "side"] = "Proxy <--[TLS]--> Target"
         let myGlue = GlueHandler(logger: self.logger)
         let partnerGlue = GlueHandler(logger: partnerLogger)
         myGlue.partner = partnerGlue
         partnerGlue.partner = myGlue
-        
+
         assert(partnerChannel.eventLoop === myChannel.eventLoop)
         myChannel.pipeline.addHandler(myGlue, position: .after(contextForInitialData.handler)).flatMap {
             partnerChannel.pipeline.handler(type: CloseOnErrorHandler.self)
@@ -105,7 +106,7 @@ public final class TLSProxy {
         }
         assert(myGlue.context != nil)
         assert(partnerGlue.context != nil)
-        
+
         if bytes.readableBytes > 0 {
             contextForInitialData.fireChannelRead(self.wrapInboundOut(bytes))
             contextForInitialData.fireChannelReadComplete()

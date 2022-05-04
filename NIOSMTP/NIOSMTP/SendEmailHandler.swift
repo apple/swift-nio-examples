@@ -40,7 +40,7 @@ final class SendEmailHandler: ChannelInboundHandler {
         
         case error(Error)
     }
-    
+
     private var currentlyWaitingFor = Expect.initialMessageFromServer {
         didSet {
             if case .error(let error) = self.currentlyWaitingFor {

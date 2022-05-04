@@ -16,6 +16,7 @@ import NIO
 import Logging
 
 final class GlueHandler {
+
     var logger: Logger
     var context: Optional<ChannelHandlerContext> = nil
     var partner: Optional<GlueHandler> = nil
@@ -51,7 +52,7 @@ extension GlueHandler {
     }
 
     private var partnerWritable: Bool {
-        return self.context?.channel.isWritable ?? false
+        self.context?.channel.isWritable ?? false
     }
 }
 
@@ -64,7 +65,6 @@ extension GlueHandler: ChannelDuplexHandler {
     
     func handlerAdded(context: ChannelHandlerContext) {
         self.logger[metadataKey: "channel"] = "\(context.channel)"
-        
         self.context = context
     }
     

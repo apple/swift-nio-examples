@@ -38,7 +38,6 @@ internal final class NewlineEncoder: ByteToMessageDecoder, MessageToByteEncoder 
 
     private let delimiter1 = UInt8(ascii: "\r")
     private let delimiter2 = UInt8(ascii: "\n")
-
     private var lastIndex = 0
 
     // inbound
@@ -168,7 +167,6 @@ internal final class BruteForceCodec<T>: ByteToMessageDecoder, MessageToByteEnco
     public typealias OutboundOut = ByteBuffer
 
     private let last = UInt8(ascii: "}")
-
     private var lastIndex = 0
 
     public func decode(context: ChannelHandlerContext, buffer: inout ByteBuffer) throws -> DecodingState {

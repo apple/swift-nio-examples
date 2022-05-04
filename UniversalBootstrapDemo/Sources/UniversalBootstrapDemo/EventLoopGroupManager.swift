@@ -15,6 +15,7 @@
 import NIO
 import NIOTransportServices
 import NIOSSL
+import NIOConcurrencyHelpers
 
 /// `EventLoopGroupManager` can be used to manage an `EventLoopGroup`, either by creating or by sharing an existing one.
 ///
@@ -31,7 +32,8 @@ import NIOSSL
 /// components. That raises the question of how to choose a bootstrap and a matching TLS implementation without even
 /// knowing the concrete `EventLoopGroup` type (it may be `SelectableEventLoop` which is an internal `NIO` types).
 /// `EventLoopGroupManager` should support all those use cases with a simple API.
-public class EventLoopGroupManager {
+public class EventLoopGroupManager: @unchecked Sendable {
+    private let lock = Lock()
     private var group: Optional<EventLoopGroup>
     private let provider: Provider
     private var sslContext = try! NIOSSLContext(configuration: .makeClientConfiguration())
@@ -67,18 +69,19 @@ extension EventLoopGroupManager {
     ///     - hostname: The hostname to connect to (for SNI).
     ///     - useTLS: Whether to use TLS or not.
     public func makeBootstrap(hostname: String, useTLS: Bool = true) throws -> NIOClientTCPBootstrap {
-        let bootstrap: NIOClientTCPBootstrap
+        try self.lock.withLock {
+            let bootstrap: NIOClientTCPBootstrap
+            if let group = self.group {
+                bootstrap = try self.makeUniversalBootstrapWithExistingGroup(group, serverHostname: hostname)
+            } else {
+                bootstrap = try self.makeUniversalBootstrapWithSystemDefaults(serverHostname: hostname)
+            }
 
-        if let group = self.group {
-            bootstrap = try self.makeUniversalBootstrapWithExistingGroup(group, serverHostname: hostname)
-        } else {
-            bootstrap = try self.makeUniversalBootstrapWithSystemDefaults(serverHostname: hostname)
-        }
-
-        if useTLS {
-            return bootstrap.enableTLS()
-        } else {
-            return bootstrap
+            if useTLS {
+                return bootstrap.enableTLS()
+            } else {
+                return bootstrap
+            }
         }
     }
 
@@ -89,13 +92,15 @@ extension EventLoopGroupManager {
     ///
     /// This method _must_ be called when you're done with this `EventLoopGroupManager`.
     public func syncShutdown() throws {
-        switch self.provider {
-        case .createNew:
-            try self.group?.syncShutdownGracefully()
-        case .shared:
-            () // nothing to do.
+        try self.lock.withLock {
+            switch self.provider {
+            case .createNew:
+                try self.group?.syncShutdownGracefully()
+            case .shared:
+                () // nothing to do.
+            }
+            self.group = nil
         }
-        self.group = nil
     }
 }
 

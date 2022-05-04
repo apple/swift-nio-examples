@@ -26,7 +26,7 @@ import NIOExtras
 final class SendRequestHandler: ChannelInboundHandler {
     typealias InboundIn = HTTPClientResponsePart
     typealias OutboundOut = HTTPClientRequestPart
-    
+
     private let responseReceivedPromise: EventLoopPromise<[HTTPClientResponsePart]>
     private var responsePartAccumulator: [HTTPClientResponsePart] = []
     private let host: String
@@ -53,7 +53,6 @@ final class SendRequestHandler: ChannelInboundHandler {
             context.write(self.wrapOutboundOut(.body(.byteBuffer(buffer))), promise: nil)
         }
         context.writeAndFlush(self.wrapOutboundOut(.end(self.compoundRequest.trailers.map(HTTPHeaders.init))), promise: nil)
-
         context.fireChannelActive()
     }
 
@@ -115,9 +114,9 @@ final class HeuristicForServerTooOldToSpeakGoodProtocolsHandler: ChannelInboundH
 }
 
 /// Collects any errors in the root stream, forwards them to a promise and closes the whole network connection.
-final class CollectErrorsAndCloseStreamHandler: ChannelInboundHandler {
+final class CollectErrorsAndCloseStreamHandler: ChannelInboundHandler, Sendable {
     typealias InboundIn = Never
-    
+
     private let promise: EventLoopPromise<Void>
     
     init(promise: EventLoopPromise<Void>) {

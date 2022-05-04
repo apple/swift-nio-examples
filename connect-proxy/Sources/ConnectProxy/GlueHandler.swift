@@ -14,8 +14,8 @@
 
 import NIO
 
-
 final class GlueHandler {
+
     private var partner: GlueHandler?
 
     private var context: ChannelHandlerContext?
@@ -64,7 +64,7 @@ extension GlueHandler {
     }
 
     private var partnerWritable: Bool {
-        return self.context?.channel.isWritable ?? false
+        self.context?.channel.isWritable ?? false
     }
 }
 

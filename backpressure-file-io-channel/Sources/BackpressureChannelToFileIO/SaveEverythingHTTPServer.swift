@@ -25,7 +25,7 @@ public final class SaveEverythingHTTPServer {
 
     private let fileIO: NonBlockingFileIO
     private let uploadDirectory: String
-    internal var logger: Logger
+    private let logger: Logger
 
     public init(fileIO: NonBlockingFileIO, uploadDirectory: String, logger: Logger? = nil) {
         self.fileIO = fileIO

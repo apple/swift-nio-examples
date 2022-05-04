@@ -16,7 +16,7 @@ import NIO
 import NIOFoundationCompat
 import Foundation
 
-final class SMTPRequestEncoder: MessageToByteEncoder {
+final class SMTPRequestEncoder: MessageToByteEncoder, Sendable {
     typealias OutboundIn = SMTPRequest
     
     func encode(data: SMTPRequest, out: inout ByteBuffer) throws {
