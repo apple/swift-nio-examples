@@ -15,7 +15,6 @@
 import NIO
 import NIOSSL
 import Logging
-import NIOConcurrencyHelpers
 
 public final class TLSProxy {
     enum State {

@@ -14,7 +14,6 @@
 
 import NIO
 import Logging
-import NIOConcurrencyHelpers
 
 final class GlueHandler {
 

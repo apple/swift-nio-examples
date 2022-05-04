@@ -1,7 +1,6 @@
 import Foundation
 import NIO
 import NIOFoundationCompat
-import NIOConcurrencyHelpers
 
 private let maxPayload = 1_000_000 // 1MB
 

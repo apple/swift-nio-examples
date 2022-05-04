@@ -19,7 +19,6 @@ import NIOTLS
 import NIOSSL
 import Foundation
 import NIOExtras
-import NIOConcurrencyHelpers
 
 /// Fires off one GET request when our stream is active and collects all response parts into a promise.
 ///
