@@ -26,9 +26,9 @@ swift run http2-client https://google.com > "$tmp/compiling" 2>&1 || { cat "$tmp
 echo OK
 
 while read site; do
-    url="https://www.$site"
+    url="https://$site"
     is_http2=true
-    printf "testing %30s: " "$url"
+    echo "testing $url"
     if curl --connect-timeout 10 --http2-prior-knowledge -Iv "$url" > "$tmp/curl" 2>&1; then
         if grep -q HTTP/1 "$tmp/curl"; then
             echo -n 'curl HTTP/1.x only'
@@ -59,8 +59,7 @@ while read site; do
             echo "--- NIO DEBUG INFO: END ---"
         fi
     fi
-done < <(curl -qs https://moz.com/top500/domains/csv | sed 1d | head -n 100 | cut -d, -f2 | tr -d '"' | \
+done < <(curl -qs https://moz.com/top-500/download?table=top500Domains | sed 1d | head -n 100 | cut -d, -f2 | tr -d '"' | \
     grep -v -e ^qq.com -e ^go.com -e ^who.int)
-
 rm -rf "$tmp"
 exit "$nio_errors"

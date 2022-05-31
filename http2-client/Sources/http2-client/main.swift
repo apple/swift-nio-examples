@@ -378,6 +378,7 @@ for hostAndURL in hostToURLsMap {
     } catch {
         print("ERROR: \(error)")
         numberOfErrors += 1
+        forwardChannelErrorToStreamsPromise.fail(error)
     }
 }
 exit(numberOfErrors == 0 ? EXIT_SUCCESS : EXIT_FAILURE)
