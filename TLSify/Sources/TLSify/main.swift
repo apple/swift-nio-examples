@@ -38,6 +38,9 @@ struct TLSifyCommand: ParsableCommand {
     @Option(name: .long, help: "TLS certificate verfication: full (default)/no-hostname/none.")
     var tlsCertificateValidation: String = "full"
 
+    @Option(help: "The ALPN protocols to send.")
+    var alpn: [String] = []
+
     func run() throws {
         var tlsConfig = TLSConfiguration.makeClientConfiguration()
         switch self.tlsCertificateValidation {
@@ -48,6 +51,7 @@ struct TLSifyCommand: ParsableCommand {
         default:
             tlsConfig.certificateVerification = .fullVerification
         }
+        tlsConfig.applicationProtocols = self.alpn
         let sslContext = try NIOSSLContext(configuration: tlsConfig)
         MultiThreadedEventLoopGroup.withCurrentThreadAsEventLoop { el in
             ServerBootstrap(group: el)
