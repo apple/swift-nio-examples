@@ -1,4 +1,4 @@
-// swift-tools-version:5.4
+// swift-tools-version:5.5
 import PackageDescription
 
 let package = Package(
@@ -7,7 +7,7 @@ let package = Package(
         .macOS(.v10_15), .iOS(.v13), .tvOS(.v13)
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-nio.git", from: "2.16.1"),
+        .package(url: "https://github.com/apple/swift-nio.git", from: "2.42.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.1.0"),
     ],
     targets: [
