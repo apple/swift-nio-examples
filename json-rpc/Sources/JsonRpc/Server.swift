@@ -8,7 +8,7 @@ public final class TCPServer: @unchecked Sendable {
     private var channel: Channel?
     private let closure: RPCClosure
     private var state = State.initializing
-    private let lock = Lock()
+    private let lock = NIOLock()
 
     public init(group: MultiThreadedEventLoopGroup, config: Config = Config(), closure: @escaping RPCClosure) {
         self.group = group

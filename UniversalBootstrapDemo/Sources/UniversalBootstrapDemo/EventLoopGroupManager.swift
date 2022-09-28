@@ -33,7 +33,7 @@ import NIOConcurrencyHelpers
 /// knowing the concrete `EventLoopGroup` type (it may be `SelectableEventLoop` which is an internal `NIO` types).
 /// `EventLoopGroupManager` should support all those use cases with a simple API.
 public class EventLoopGroupManager: @unchecked Sendable {
-    private let lock = Lock()
+    private let lock = NIOLock()
     private var group: Optional<EventLoopGroup>
     private let provider: Provider
     private var sslContext = try! NIOSSLContext(configuration: .makeClientConfiguration())

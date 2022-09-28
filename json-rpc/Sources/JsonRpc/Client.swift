@@ -3,7 +3,7 @@ import NIO
 import NIOConcurrencyHelpers
 
 public final class TCPClient: @unchecked Sendable {
-    private let lock = Lock()
+    private let lock = NIOLock()
     private var state = State.initializing
     public let group: MultiThreadedEventLoopGroup
     public let config: Config
