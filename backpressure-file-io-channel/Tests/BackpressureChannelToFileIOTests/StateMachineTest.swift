@@ -402,7 +402,7 @@ extension StateMachineTest {
         self.coordinator = nil
     }
 
-    func moveToBodyStreamingState(file: StaticString = #file, line: UInt = #line) {
+    func moveToBodyStreamingState(file: StaticString = #filePath, line: UInt = #line) {
         XCTAssertTrue(self.coordinator.shouldWeReadMoreDataFromNetwork(), file: file, line: line)
         self.coordinator.didReceiveRequestBegin(targetPath: "/")
             .assertOpenFile({ XCTAssertEqual("/", $0) }, file: file, line: line)
@@ -414,7 +414,7 @@ extension StateMachineTest {
         XCTAssertTrue(self.coordinator.shouldWeReadMoreDataFromNetwork())
     }
 
-    func moveFromBodyStreamingToEnd(expectError: Bool, file: StaticString = #file, line: UInt = #line) {
+    func moveFromBodyStreamingToEnd(expectError: Bool, file: StaticString = #filePath, line: UInt = #line) {
         if expectError {
             XCTAssertFalse(self.coordinator.shouldWeReadMoreDataFromNetwork(), file: file, line: line)
             self.coordinator.didReceiveRequestEnd()
@@ -457,7 +457,7 @@ extension StateMachineTest {
 extension FileIOCoordinatorState.Action {
     @discardableResult
     func assertOpenFile(_ check: (String) throws -> Void,
-                        file: StaticString = #file,
+                        file: StaticString = #filePath,
                         line: UInt = #line) -> Self {
         if case .openFile(let path) = self.main {
             XCTAssertNoThrow(try check(path))
@@ -469,7 +469,7 @@ extension FileIOCoordinatorState.Action {
 
     @discardableResult
     func assertDiscardResources(_ check: (NIOFileHandle?, Error?) throws -> Void,
-                                file: StaticString = #file,
+                                file: StaticString = #filePath,
                                 line: UInt = #line) -> Self {
         if case .processingCompletedDiscardResources(let fileHandle, let error) = self.main {
             XCTAssertNoThrow(try check(fileHandle, error))
@@ -481,7 +481,7 @@ extension FileIOCoordinatorState.Action {
 
     @discardableResult
     func assertCloseFile(_ check: (NIOFileHandle) throws -> Void,
-                         file: StaticString = #file,
+                         file: StaticString = #filePath,
                          line: UInt = #line) -> Self {
         if case .closeFile(let fileHandle) = self.main {
             XCTAssertNoThrow(try check(fileHandle))
@@ -492,7 +492,7 @@ extension FileIOCoordinatorState.Action {
     }
 
     @discardableResult
-    func assertNothing(file: StaticString = #file,
+    func assertNothing(file: StaticString = #filePath,
                        line: UInt = #line) -> Self {
         if case .nothingWeAreWaiting = self.main {
             () // cool
@@ -503,7 +503,7 @@ extension FileIOCoordinatorState.Action {
     }
 
     @discardableResult
-    func assertStartWriting(file: StaticString = #file,
+    func assertStartWriting(file: StaticString = #filePath,
                             line: UInt = #line) -> Self {
         if case .startWritingToTargetFile = self.main {
             () // cool
@@ -514,14 +514,14 @@ extension FileIOCoordinatorState.Action {
     }
 
     @discardableResult
-    func assertCallRead(file: StaticString = #file,
+    func assertCallRead(file: StaticString = #filePath,
                        line: UInt = #line) -> Self {
         XCTAssertTrue(self.callRead, file: file, line: line)
         return self
     }
 
     @discardableResult
-    func assertDoNotCallRead(file: StaticString = #file,
+    func assertDoNotCallRead(file: StaticString = #filePath,
                        line: UInt = #line) -> Self {
         XCTAssertFalse(self.callRead, "callRead unexpectedly true", file: file, line: line)
         return self

@@ -32,7 +32,7 @@ public final class SaveEverythingHTTPServer {
         if let logger = logger {
             self.logger = logger
         } else {
-            self.logger = Logger(label: "\(#file)")
+            self.logger = Logger(label: "\(#filePath)")
         }
         self.uploadDirectory = uploadDirectory
     }
