@@ -1,6 +1,7 @@
 import Foundation
-import NIO
+import NIOCore
 import NIOConcurrencyHelpers
+import NIOPosix
 
 public final class TCPClient: @unchecked Sendable {
     private let lock = NIOLock()

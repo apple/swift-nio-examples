@@ -19,7 +19,9 @@ let package = Package(
         .target(
             name: "JSONRPC",
             dependencies: [
-                .product(name: "NIO", package: "swift-nio"),
+                .product(name: "NIOCore", package: "swift-nio"),
+                .product(name: "NIOConcurrencyHelpers", package: "swift-nio"),
+                .product(name: "NIOPosix", package: "swift-nio"),
                 .product(name: "NIOFoundationCompat", package: "swift-nio"),
                 .product(name: "NIOExtras", package: "swift-nio-extras"),
             ],
@@ -42,7 +44,9 @@ let package = Package(
         .testTarget(
             name: "JSONRPCTests",
             dependencies: [
-                "JSONRPC"
+                "JSONRPC",
+                .product(name: "NIOCore", package: "swift-nio"),
+                .product(name: "NIOPosix", package: "swift-nio"),
             ],
             path: "Tests/JsonRpcTests"),
     ]

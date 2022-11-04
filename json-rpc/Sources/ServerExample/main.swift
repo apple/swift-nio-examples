@@ -1,6 +1,7 @@
 import Dispatch
 import JSONRPC
-import NIO
+import NIOCore
+import NIOPosix
 
 private final class Calculator: Sendable  {
     func handle(method: String, params: RPCObject, callback: (RPCResult) -> Void) {
