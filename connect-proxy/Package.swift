@@ -28,7 +28,8 @@ let package = Package(
         .executableTarget(
             name: "ConnectProxy",
             dependencies: [
-                .product(name: "NIO", package: "swift-nio"),
+                .product(name: "NIOCore", package: "swift-nio"),
+                .product(name: "NIOPosix", package: "swift-nio"),
                 .product(name: "NIOHTTP1", package: "swift-nio"),
                 .product(name: "Logging", package: "swift-log"),
             ]),

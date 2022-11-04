@@ -12,7 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-import NIO
+import NIOCore
+import NIOPosix
 import NIOHTTP1
 import Logging
 import Dispatch
