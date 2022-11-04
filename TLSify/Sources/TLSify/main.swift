@@ -13,7 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 import ArgumentParser
-import NIO
+import NIOCore
+import NIOPosix
 import NIOSSL
 import Logging
 
@@ -31,7 +32,7 @@ struct TLSifyCommand: ParsableCommand {
 
     @Argument(help: "The host to connect to.")
     var connectHost: String
-    
+
     @Argument(help: "The port to connect to.")
     var connectPort: Int
 
