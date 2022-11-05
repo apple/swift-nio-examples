@@ -12,7 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-import NIO
+import NIOCore
+import NIOPosix
 import NIOHTTP1
 import Logging
 
@@ -36,7 +37,7 @@ public final class SaveEverythingHTTPServer {
         }
         self.uploadDirectory = uploadDirectory
     }
-    
+
     deinit {
         assert(self.state.inFinalState, "illegal state on handler removal: \(self.state)")
     }

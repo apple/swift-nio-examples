@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-import NIO
+import NIOCore
 import Logging
 
 final class GlueHandler {
@@ -21,7 +21,7 @@ final class GlueHandler {
     var context: Optional<ChannelHandlerContext> = nil
     var partner: Optional<GlueHandler> = nil
     private var pendingRead = false
-    
+
     internal init(logger: Logger) {
         self.logger = logger
     }
@@ -59,15 +59,15 @@ extension GlueHandler {
 extension GlueHandler: ChannelDuplexHandler {
     typealias InboundIn = ByteBuffer
     typealias InboundOut = ByteBuffer
-    
+
     typealias OutboundIn = ByteBuffer
     typealias OutboundOut = ByteBuffer
-    
+
     func handlerAdded(context: ChannelHandlerContext) {
         self.logger[metadataKey: "channel"] = "\(context.channel)"
         self.context = context
     }
-    
+
     func handlerRemoved(context: ChannelHandlerContext) {
         self.context = nil
         self.partner = nil

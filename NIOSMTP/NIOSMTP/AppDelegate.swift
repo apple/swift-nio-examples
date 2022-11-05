@@ -13,8 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 import UIKit
-import NIO
-import NIOTransportServices
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {

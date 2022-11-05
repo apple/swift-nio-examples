@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-import NIO
+import NIOCore
 
 internal struct FileIOCoordinatorState {
     /// The actions for the driver of the state machine to perform.

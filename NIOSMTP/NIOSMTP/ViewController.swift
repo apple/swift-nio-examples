@@ -13,8 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 import UIKit
-import NIO
+import NIOCore
 import NIOExtras
+import NIOPosix
 import NIOTransportServices
 import NIOTLS
 import NIOSSL
@@ -127,7 +128,7 @@ func makeNIOSMTPHandlers(communicationHandler: @escaping (String) -> Void,
     ]
 }
 
-private let sslContext = try! NIOSSLContext(configuration: TLSConfiguration.forClient())
+private let sslContext = try! NIOSSLContext(configuration: TLSConfiguration.makeClientConfiguration())
 
 func configureBootstrap(group: EventLoopGroup,
                         email: Email,

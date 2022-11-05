@@ -14,7 +14,8 @@
 
 import ArgumentParser
 import Foundation
-import NIO
+import NIOCore
+import NIOPosix
 import NIOTransportServices
 
 struct UniversalBootstrapDemo: ParsableCommand {

@@ -1,5 +1,6 @@
 import JSONRPC
-import NIO
+import NIOCore
+import NIOPosix
 
 guard CommandLine.arguments.count > 1 else {
     fatalError("invalid arguments")

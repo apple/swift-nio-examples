@@ -1,5 +1,6 @@
 import Foundation
-import NIO
+import NIOCore
+import NIOPosix
 import NIOConcurrencyHelpers
 
 public final class TCPServer: @unchecked Sendable {

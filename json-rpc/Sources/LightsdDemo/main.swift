@@ -1,5 +1,6 @@
 import JSONRPC
-import NIO
+import NIOCore
+import NIOPosix
 
 struct Lifx {
     let id: String

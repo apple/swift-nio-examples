@@ -12,18 +12,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-import NIO
+import NIOCore
 import Logging
 
 final class CloseOnErrorHandler: ChannelInboundHandler, Sendable {
     typealias InboundIn = Never
-    
+
     private let logger: Logger
-    
+
     init(logger: Logger) {
         self.logger = logger
     }
-    
+
     func errorCaught(context: ChannelHandlerContext, error: Error) {
         self.logger.info("unhandled error \(error), closing \(context.channel)")
         context.close(promise: nil)

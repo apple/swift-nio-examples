@@ -12,7 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-import NIO
+import NIOCore
+import NIOPosix
 import NIOSSL
 import NIOHTTP1
 import NIOHTTP2

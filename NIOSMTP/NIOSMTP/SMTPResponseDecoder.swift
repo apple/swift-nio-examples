@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-import NIO
+import NIOCore
 
 /// `SMTPResponseDecoder` decodes exactly one SMTP response from already newline-framed input messages.
 ///

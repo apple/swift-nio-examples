@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 import ArgumentParser
-import NIO
 
 struct CLI: ParsableCommand {
     static let configuration = CommandConfiguration(

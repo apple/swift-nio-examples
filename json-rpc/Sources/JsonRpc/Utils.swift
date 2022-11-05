@@ -1,5 +1,4 @@
 import Foundation
-import NIO
 
 public enum ResultType<Value, Error> {
     case success(Value)

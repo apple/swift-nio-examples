@@ -12,7 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-import NIO
+import NIOCore
+import NIOPosix
 import NIOSSL
 import Logging
 
@@ -34,7 +35,7 @@ public final class TLSProxy {
     private let port: Int
     private var logger: Logger
     private let sslContext: NIOSSLContext
-    
+
     public init(host: String, port: Int, sslContext: NIOSSLContext, logger: Logger) {
         self.host = host
         self.port = port
@@ -43,11 +44,11 @@ public final class TLSProxy {
         self.logger[metadataKey: "side"] = "Source <--[plain text]--> Proxy"
 
     }
-    
+
     func illegalTransition(to: String = #function) -> Never {
         preconditionFailure("illegal transition to \(to) in \(self.state)")
     }
-    
+
     func gotError(_ error: Error) {
         self.logger.warning("unexpected error: \(#function): \(error)")
 
@@ -58,7 +59,7 @@ public final class TLSProxy {
             ()
         }
     }
-    
+
     func connected(partnerChannel: Channel,
                    myChannel: Channel,
                    contextForInitialData: ChannelHandlerContext) {
@@ -113,7 +114,7 @@ public final class TLSProxy {
         }
         contextForInitialData.read()
     }
-    
+
     func connectPartner(eventLoop: EventLoop) -> EventLoopFuture<Channel> {
         self.logger.debug("connecting to \(self.host):\(self.port)")
 
@@ -136,7 +137,7 @@ extension TLSProxy: ChannelDuplexHandler {
 
     public func handlerAdded(context: ChannelHandlerContext) {
         self.logger[metadataKey: "channel"] = "\(context.channel)"
-        
+
         self.logger.trace("added to Channel")
         switch self.state {
         case .waitingToBeAdded:
@@ -145,7 +146,7 @@ extension TLSProxy: ChannelDuplexHandler {
                 switch result {
                 case .failure(let error):
                     self.gotError(error)
-                    
+
                     context.fireErrorCaught(error)
                 case .success(let channel):
                     self.connected(partnerChannel: channel,
@@ -159,7 +160,7 @@ extension TLSProxy: ChannelDuplexHandler {
             ()
         }
     }
-    
+
     public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         switch self.state {
         case .connected:
@@ -178,7 +179,7 @@ extension TLSProxy: ChannelDuplexHandler {
             self.illegalTransition()
         }
     }
-    
+
     public func read(context: ChannelHandlerContext) {
         switch self.state {
         case .connected:
@@ -189,7 +190,7 @@ extension TLSProxy: ChannelDuplexHandler {
             self.illegalTransition()
         }
     }
-    
+
     public func channelInactive(context: ChannelHandlerContext) {
         self.logger.debug("Channel inactive")
         defer {

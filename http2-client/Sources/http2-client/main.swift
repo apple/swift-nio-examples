@@ -12,9 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-import NIO
+import NIOCore
 import NIOHTTP1
 import NIOHTTP2
+import NIOPosix
 import NIOTLS
 import NIOSSL
 import Foundation
@@ -118,7 +119,7 @@ final class CollectErrorsAndCloseStreamHandler: ChannelInboundHandler, Sendable 
     typealias InboundIn = Never
 
     private let promise: EventLoopPromise<Void>
-    
+
     init(promise: EventLoopPromise<Void>) {
         self.promise = promise
     }

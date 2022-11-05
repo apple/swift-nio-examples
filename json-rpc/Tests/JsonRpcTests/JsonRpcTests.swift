@@ -1,5 +1,6 @@
 @testable import JSONRPC
-import NIO
+import NIOCore
+import NIOPosix
 import XCTest
 
 final class JSONRPCTests: XCTestCase {

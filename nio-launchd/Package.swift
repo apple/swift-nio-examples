@@ -11,7 +11,8 @@ let package = Package(
         .executableTarget(
             name: "nio-launchd",
             dependencies: [
-                .product(name: "NIO", package: "swift-nio"),
+                .product(name: "NIOCore", package: "swift-nio"),
+                .product(name: "NIOPosix", package: "swift-nio"),
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ]),
     ]
