@@ -283,7 +283,7 @@ final class JSONRPCTests: XCTestCase {
         }
         // perform another method call
         XCTAssertThrowsError(try client.call(method: "disconnect", params: .none).wait()) { error in
-            XCTAssertEqual(error as! NIO.ChannelError, NIO.ChannelError.ioOnClosedChannel)
+            XCTAssertEqual(error as! NIOCore.ChannelError, NIOCore.ChannelError.ioOnClosedChannel)
         }
         // shutdown
         try! client.disconnect().wait()
@@ -424,7 +424,7 @@ final class JSONRPCTests: XCTestCase {
         let request = JSONRequest(id: UUID().uuidString, method: "foo", params: .none)
         let json = try! JSONEncoder().encode(request)
         XCTAssertThrowsError(try client.request(string: String(data: json, encoding: .utf8)!).wait()) { error in
-            XCTAssertEqual(error as! NIO.ChannelError, NIO.ChannelError.ioOnClosedChannel)
+            XCTAssertEqual(error as! NIOCore.ChannelError, NIOCore.ChannelError.ioOnClosedChannel)
         }
         // shutdown
         try! client.disconnect().wait()
