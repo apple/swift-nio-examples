@@ -138,8 +138,11 @@ extension TLSProxy: ChannelDuplexHandler {
     public func handlerAdded(context: ChannelHandlerContext) {
         self.logger[metadataKey: "channel"] = "\(context.channel)"
 
-        self.logger.trace("added to Channel", metadata: ["isActive": "\(context.channel.isActive)"])
-        self.beginConnecting(context: context)
+        let isActive = context.channel.isActive
+        self.logger.trace("added to Channel", metadata: ["isActive": "\(isActive)"])
+        if isActive {
+            self.beginConnecting(context: context)
+        }
     }
 
     public func channelActive(context: ChannelHandlerContext) {
