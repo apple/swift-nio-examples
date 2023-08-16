@@ -19,13 +19,13 @@ import Logging
 
 public final class TLSProxy {
     enum State {
-        case waitingToBeAdded
+        case waitingToBeActivated
         case connecting(ByteBuffer)
         case connected
         case error(Error)
         case closed
     }
-    private var state = State.waitingToBeAdded {
+    private var state = State.waitingToBeActivated {
         didSet {
             self.logger.trace("SM new state: \(self.state)")
         }
@@ -53,7 +53,7 @@ public final class TLSProxy {
         self.logger.warning("unexpected error: \(#function): \(error)")
 
         switch self.state {
-        case .connected, .connecting, .waitingToBeAdded, .closed:
+        case .connected, .connecting, .waitingToBeActivated, .closed:
             self.state = .error(error)
         case .error:
             ()
@@ -67,7 +67,7 @@ public final class TLSProxy {
 
         let bytes: ByteBuffer
         switch self.state {
-        case .waitingToBeAdded, .connected:
+        case .waitingToBeActivated, .connected:
             self.illegalTransition()
         case .error(let error):
             partnerChannel.pipeline.fireErrorCaught(error)
@@ -138,9 +138,21 @@ extension TLSProxy: ChannelDuplexHandler {
     public func handlerAdded(context: ChannelHandlerContext) {
         self.logger[metadataKey: "channel"] = "\(context.channel)"
 
-        self.logger.trace("added to Channel")
+        let isActive = context.channel.isActive
+        self.logger.trace("added to Channel", metadata: ["isActive": "\(isActive)"])
+        if isActive {
+            self.beginConnecting(context: context)
+        }
+    }
+
+    public func channelActive(context: ChannelHandlerContext) {
+        self.logger.trace("Received channelActive")
+        self.beginConnecting(context: context)
+    }
+
+    private func beginConnecting(context: ChannelHandlerContext) {
         switch self.state {
-        case .waitingToBeAdded:
+        case .waitingToBeActivated:
             self.state = .connecting(context.channel.allocator.buffer(capacity: 0))
             self.connectPartner(eventLoop: context.eventLoop).whenComplete { result in
                 switch result {
@@ -154,9 +166,9 @@ extension TLSProxy: ChannelDuplexHandler {
                                    contextForInitialData: context)
                 }
             }
-        case .connected, .connecting:
-            self.illegalTransition()
-        case .error, .closed:
+        case .connecting, .connected, .error, .closed:
+            // Duplicate call, fine. Can happen if channelActive is awkwardly
+            // ordered.
             ()
         }
     }
@@ -175,7 +187,7 @@ extension TLSProxy: ChannelDuplexHandler {
             }
         case .error, .closed:
             () // we can drop this
-        case .waitingToBeAdded:
+        case .waitingToBeActivated:
             self.illegalTransition()
         }
     }
@@ -186,7 +198,7 @@ extension TLSProxy: ChannelDuplexHandler {
             context.read()
         case .connecting, .error, .closed:
             () // No, let's not read more that we'd need to buffer/drop anyway
-        case .waitingToBeAdded:
+        case .waitingToBeActivated:
             self.illegalTransition()
         }
     }
@@ -201,7 +213,7 @@ extension TLSProxy: ChannelDuplexHandler {
             self.state = .closed
         case .error:
             ()
-        case .closed, .waitingToBeAdded:
+        case .closed, .waitingToBeActivated:
             self.illegalTransition()
         }
     }
