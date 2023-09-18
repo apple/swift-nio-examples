@@ -58,10 +58,13 @@ struct TLSifyCommand: ParsableCommand {
             ServerBootstrap(group: el)
                 .serverChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
                 .childChannelInitializer { channel in
-                    channel.pipeline.addHandler(TLSProxy(host: self.connectHost,
-                                                         port: self.connectPort,
-                                                         sslContext: sslContext,
-                                                         logger: rootLogger))
+                    channel.pipeline.addHandlers([
+                        TLSProxy(host: self.connectHost,
+                                 port: self.connectPort,
+                                 sslContext: sslContext,
+                                 logger: rootLogger),
+                        CloseOnErrorHandler(logger: rootLogger),
+                    ])
                 }
                 .bind(host: self.listenHost, port: self.listenPort)
             .map { channel in
