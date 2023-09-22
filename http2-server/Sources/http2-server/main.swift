@@ -113,7 +113,7 @@ let sslCertificate = try! NIOSSLCertificateSource.certificate(NIOSSLCertificate(
 // `NIOHTTP2SupportedALPNProtocols` which (using ALPN (https://en.wikipedia.org/wiki/Application-Layer_Protocol_Negotiation))
 // advertises the support of HTTP/2 to the client.
 var serverConfig = TLSConfiguration.makeServerConfiguration(certificateChain: [sslCertificate], privateKey: sslPrivateKey)
-serverConfig.applicationProtocols = NIOHTTP2SupportedALPNProtocols
+serverConfig.applicationProtocols = ["h2"]
 // Configure the SSL context that is used by all SSL handlers.
 let sslContext = try! NIOSSLContext(configuration: serverConfig)
 
