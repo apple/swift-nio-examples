@@ -142,15 +142,15 @@ extension ConnectHandler {
     private func connectTo(host: String, port: Int, context: ChannelHandlerContext) {
         self.logger.info("Connecting to \(host):\(port)")
 
-        let channelFuture = ClientBootstrap(group: context.eventLoop)
-            .connect(host: String(host), port: port)
-
-        channelFuture.whenSuccess { channel in
-            self.connectSucceeded(channel: channel, context: context)
-        }
-        channelFuture.whenFailure { error in
-            self.connectFailed(error: error, context: context)
-        }
+        ClientBootstrap(group: context.eventLoop)
+            .connect(host: String(host), port: port).assumeIsolatedUnsafeUnchecked().whenComplete { result in
+                switch result {
+                case .success(let channel):
+                    self.connectSucceeded(channel: channel, context: context)
+                case .failure(let error):
+                    self.connectFailed(error: error, context: context)
+                }
+            }
     }
 
     private func connectSucceeded(channel: Channel, context: ChannelHandlerContext) {
@@ -214,16 +214,15 @@ extension ConnectHandler {
 
         // Now we need to glue our channel and the peer channel together.
         let (localGlue, peerGlue) = GlueHandler.matchedPair()
-        context.channel.pipeline.addHandler(localGlue).and(peerChannel.pipeline.addHandler(peerGlue)).whenComplete { result in
-            switch result {
-            case .success(_):
-                context.pipeline.removeHandler(self, promise: nil)
-            case .failure(_):
-                // Close connected peer channel before closing our channel.
-                peerChannel.close(mode: .all, promise: nil)
-                context.close(promise: nil)
-            }
+        do {
+            try context.channel.pipeline.syncOperations.addHandler(localGlue)
+            try peerChannel.pipeline.syncOperations.addHandler(peerGlue)
+        } catch {
+            // Close connected peer channel before closing our channel.
+            peerChannel.close(mode: .all, promise: nil)
+            context.close(promise: nil)
         }
+        context.pipeline.syncOperations.removeHandler(self, promise: nil)
     }
 
     private func httpErrorAndClose(context: ChannelHandlerContext) {
@@ -232,7 +231,7 @@ extension ConnectHandler {
         let headers = HTTPHeaders([("Content-Length", "0"), ("Connection", "close")])
         let head = HTTPResponseHead(version: .init(major: 1, minor: 1), status: .badRequest, headers: headers)
         context.write(self.wrapOutboundOut(.head(head)), promise: nil)
-        context.writeAndFlush(self.wrapOutboundOut(.end(nil))).whenComplete { (_: Result<Void, Error>) in
+        context.writeAndFlush(self.wrapOutboundOut(.end(nil))).assumeIsolatedUnsafeUnchecked().whenComplete { (_: Result<Void, Error>) in
             context.close(mode: .output, promise: nil)
         }
     }
@@ -240,14 +239,13 @@ extension ConnectHandler {
     private func removeDecoder(context: ChannelHandlerContext) {
         // We drop the future on the floor here as these handlers must all be in our own pipeline, and this should
         // therefore succeed fast.
-        context.pipeline.context(handlerType: ByteToMessageHandler<HTTPRequestDecoder>.self).whenSuccess {
-            context.pipeline.removeHandler(context: $0, promise: nil)
-        }
+
+        let byteToMessageHandlerContext = try! context.pipeline.syncOperations.context(handlerType: ByteToMessageHandler<HTTPRequestDecoder>.self)
+        context.pipeline.syncOperations.removeHandler(context: byteToMessageHandlerContext, promise: nil)
     }
 
     private func removeEncoder(context: ChannelHandlerContext) {
-        context.pipeline.context(handlerType: HTTPResponseEncoder.self).whenSuccess {
-            context.pipeline.removeHandler(context: $0, promise: nil)
-        }
+        let httpResponseEncoderContext = try! context.pipeline.syncOperations.context(handlerType: HTTPResponseEncoder.self)
+        context.pipeline.syncOperations.removeHandler(context: httpResponseEncoderContext, promise: nil)
     }
 }
