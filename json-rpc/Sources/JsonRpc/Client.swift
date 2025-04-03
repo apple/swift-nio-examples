@@ -28,15 +28,14 @@ public final class TCPClient: @unchecked Sendable {
             let bootstrap = ClientBootstrap(group: self.group)
                 .channelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
                 .channelInitializer { channel in
-                    return channel.pipeline.addTimeoutHandlers(self.config.timeout)
-                        .flatMap {
-                            channel.pipeline.addFramingHandlers(framing: self.config.framing)
-                        }.flatMap {
-                            channel.pipeline.addHandlers([
-                                CodableCodec<JSONResponse, JSONRequest>(),
-                                Handler(),
-                            ])
-                        }
+                    return channel.pipeline.eventLoop.makeCompletedFuture {
+                        try channel.pipeline.syncOperations.addTimeoutHandlers(self.config.timeout)
+                        try channel.pipeline.syncOperations.addFramingHandlers(framing: self.config.framing)
+                        try channel.pipeline.syncOperations.addHandlers([
+                            CodableCodec<JSONResponse, JSONRequest>(),
+                            Handler(),
+                        ])
+                    }
                 }
 
             self.state = .connecting("\(host):\(port)")
