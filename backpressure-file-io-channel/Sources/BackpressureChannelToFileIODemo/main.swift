@@ -30,17 +30,26 @@ defer {
 
 let fileIO = NonBlockingFileIO(threadPool: threadPool)
 
-var logger = Logger(label: "BackpressureChannelToFileIO")
-logger.logLevel = .info
+let logger: Logger = {
+    var logger = Logger(label: "BackpressureChannelToFileIO")
+    logger.logLevel = .info
+    return logger
+}()
+
 let server = try ServerBootstrap(group: group)
         .serverChannelOption(ChannelOptions.socket(.init(SOL_SOCKET), .init(SO_REUSEADDR)), value: 1)
         .childChannelInitializer { [logger] channel in
-            var logger = logger
-            logger[metadataKey: "connection"] = "\(channel.remoteAddress!)"
+            let logger: Logger = {
+                var logger = logger
+                logger[metadataKey: "connection"] = "\(channel.remoteAddress!)"
+                return logger
+            }()
             return channel.pipeline.configureHTTPServerPipeline(withErrorHandling: false).flatMap {
-                channel.pipeline.addHandler(SaveEverythingHTTPServer(fileIO: fileIO,
-                                                                     uploadDirectory: "/tmp",
-                                                                     logger: logger))
+                channel.eventLoop.makeCompletedFuture {
+                    try channel.pipeline.syncOperations.addHandler(SaveEverythingHTTPServer(fileIO: fileIO,
+                                                                                            uploadDirectory: "/tmp",
+                                                                                            logger: logger))
+                }
             }
         }
         .bind(host: "localhost", port: 8080)
