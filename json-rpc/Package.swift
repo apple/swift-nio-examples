@@ -1,4 +1,4 @@
-// swift-tools-version:5.7
+// swift-tools-version:5.9
 //===----------------------------------------------------------------------===//
 //
 // This source file is part of the SwiftNIO open source project
@@ -14,6 +14,24 @@
 //===----------------------------------------------------------------------===//
 
 import PackageDescription
+
+let strictConcurrencyDevelopment = false
+
+let strictConcurrencySettings: [SwiftSetting] = {
+    var initialSettings: [SwiftSetting] = []
+    initialSettings.append(contentsOf: [
+        .enableUpcomingFeature("StrictConcurrency"),
+        .enableUpcomingFeature("InferSendableFromCaptures"),
+    ])
+
+    if strictConcurrencyDevelopment {
+        // -warnings-as-errors here is a workaround so that IDE-based development can
+        // get tripped up on -require-explicit-sendable.
+        initialSettings.append(.unsafeFlags(["-require-explicit-sendable", "-warnings-as-errors"]))
+    }
+
+    return initialSettings
+}()
 
 let package = Package(
     name: "swift-json-rpc",
@@ -37,22 +55,29 @@ let package = Package(
                 .product(name: "NIOFoundationCompat", package: "swift-nio"),
                 .product(name: "NIOExtras", package: "swift-nio-extras"),
             ],
-            path: "Sources/JsonRpc"),
+            path: "Sources/JsonRpc"
+        ),
         .executableTarget(
             name: "ServerExample",
             dependencies: [
                 "JSONRPC"
-            ]),
+            ],
+            swiftSettings: strictConcurrencySettings
+        ),
         .executableTarget(
             name: "ClientExample",
             dependencies: [
                 "JSONRPC"
-            ]),
+            ],
+            swiftSettings: strictConcurrencySettings
+        ),
         .executableTarget(
             name: "LightsdDemo",
             dependencies: [
                 "JSONRPC"
-            ]),
+            ],
+            swiftSettings: strictConcurrencySettings
+        ),
         .testTarget(
             name: "JSONRPCTests",
             dependencies: [
@@ -60,6 +85,8 @@ let package = Package(
                 .product(name: "NIOCore", package: "swift-nio"),
                 .product(name: "NIOPosix", package: "swift-nio"),
             ],
-            path: "Tests/JsonRpcTests"),
+            path: "Tests/JsonRpcTests",
+            swiftSettings: strictConcurrencySettings
+        ),
     ]
 )

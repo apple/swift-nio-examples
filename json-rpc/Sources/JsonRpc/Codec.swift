@@ -19,26 +19,26 @@ import NIOFoundationCompat
 
 private let maxPayload = 1_000_000 // 1MB
 
-internal extension ChannelPipeline {
-    func addTimeoutHandlers(_ timeout: TimeAmount) -> EventLoopFuture<Void> {
-        return self.addHandlers([IdleStateHandler(readTimeout: timeout), HalfCloseOnTimeout()])
+internal extension ChannelPipeline.SynchronousOperations {
+    func addTimeoutHandlers(_ timeout: TimeAmount) throws {
+        return try self.addHandlers([IdleStateHandler(readTimeout: timeout), HalfCloseOnTimeout()])
     }
 }
 
-internal extension ChannelPipeline {
-    func addFramingHandlers(framing: Framing) -> EventLoopFuture<Void> {
+internal extension ChannelPipeline.SynchronousOperations {
+    func addFramingHandlers(framing: Framing) throws {
         switch framing {
         case .jsonpos:
             let framingHandler = JSONPosCodec()
-            return self.addHandlers([ByteToMessageHandler(framingHandler),
+            return try self.addHandlers([ByteToMessageHandler(framingHandler),
                                      MessageToByteHandler(framingHandler)])
         case .brute:
             let framingHandler = BruteForceCodec<JSONResponse>()
-            return self.addHandlers([ByteToMessageHandler(framingHandler),
+            return try self.addHandlers([ByteToMessageHandler(framingHandler),
                                      MessageToByteHandler(framingHandler)])
         case .default:
             let framingHandler = NewlineEncoder()
-            return self.addHandlers([ByteToMessageHandler(framingHandler),
+            return try self.addHandlers([ByteToMessageHandler(framingHandler),
                                      MessageToByteHandler(framingHandler)])
         }
     }
