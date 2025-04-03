@@ -92,11 +92,12 @@ public final class TLSProxy {
         partnerGlue.partner = myGlue
 
         assert(partnerChannel.eventLoop === myChannel.eventLoop)
-        myChannel.pipeline.addHandler(myGlue, position: .after(contextForInitialData.handler)).flatMap {
-            partnerChannel.pipeline.handler(type: CloseOnErrorHandler.self)
-        }.flatMap { errorHandler in
-            partnerChannel.pipeline.addHandler(partnerGlue)
-        }.whenFailure { error in
+
+        do {
+            try myChannel.pipeline.syncOperations.addHandler(myGlue, position: .after(contextForInitialData.handler))
+            _ = try partnerChannel.pipeline.syncOperations.handler(type: CloseOnErrorHandler.self)
+            try partnerChannel.pipeline.syncOperations.addHandler(partnerGlue)
+        } catch {
             self.gotError(error)
 
             partnerChannel.pipeline.fireErrorCaught(error)
@@ -119,14 +120,20 @@ public final class TLSProxy {
         self.logger.debug("connecting to \(self.host):\(self.port)")
 
         return ClientBootstrap(group: eventLoop)
-            .channelInitializer { channel in
-                channel.pipeline.addHandlers(try! NIOSSLClientHandler(context: self.sslContext,
-                                                                      serverHostname: self.host),
-                                             CloseOnErrorHandler(logger: self.logger))
+            .channelInitializer { [sslContext, host, logger] channel in
+                channel.pipeline.eventLoop.makeCompletedFuture {
+                    try channel.pipeline.syncOperations.addHandlers(
+                        try! NIOSSLClientHandler(context: sslContext, serverHostname: host),
+                        CloseOnErrorHandler(logger: logger)
+                    )
+                }
         }
         .connect(host: self.host, port: self.port)
     }
 }
+
+@available(*, unavailable)
+extension TLSProxy: Sendable { }
 
 extension TLSProxy: ChannelDuplexHandler {
     public typealias InboundIn = ByteBuffer
@@ -154,7 +161,7 @@ extension TLSProxy: ChannelDuplexHandler {
         switch self.state {
         case .waitingToBeActivated:
             self.state = .connecting(context.channel.allocator.buffer(capacity: 0))
-            self.connectPartner(eventLoop: context.eventLoop).whenComplete { result in
+            self.connectPartner(eventLoop: context.eventLoop).assumeIsolatedUnsafeUnchecked().whenComplete { result in
                 switch result {
                 case .failure(let error):
                     self.gotError(error)
