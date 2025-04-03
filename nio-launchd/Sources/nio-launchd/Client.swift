@@ -25,7 +25,9 @@ struct Client: ParsableCommand {
             // Enable SO_REUSEADDR.
             .channelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
             .channelInitializer { channel in
-                channel.pipeline.addHandler(EchoHandler())
+                channel.eventLoop.makeCompletedFuture {
+                    try channel.pipeline.syncOperations.addHandler(EchoHandler())
+                }
             }
 
         let channel = try bootstrap.connect(unixDomainSocketPath: "/tmp/nio.launchd.sock").wait()
