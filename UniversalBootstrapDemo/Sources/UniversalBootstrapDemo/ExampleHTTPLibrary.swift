@@ -59,8 +59,9 @@ public final class ExampleHTTPLibrary: Sendable {
         let useTLS = scheme == "https"
         let connection = try groupManager.makeBootstrap(hostname: hostname, useTLS: useTLS)
                 .channelInitializer { channel in
-                    channel.pipeline.addHTTPClientHandlers().flatMap {
-                        channel.pipeline.addHandler(PrintToStdoutHandler())
+                    channel.eventLoop.makeCompletedFuture {
+                        try channel.pipeline.syncOperations.addHTTPClientHandlers()
+                        try channel.pipeline.syncOperations.addHandler(PrintToStdoutHandler())
                     }
                 }
                 .connect(host: hostname, port: useTLS ? 443 : 80)
