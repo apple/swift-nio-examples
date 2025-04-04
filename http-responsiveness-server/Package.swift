@@ -15,6 +15,24 @@
 
 import PackageDescription
 
+let strictConcurrencyDevelopment = false
+
+let strictConcurrencySettings: [SwiftSetting] = {
+    var initialSettings: [SwiftSetting] = []
+    initialSettings.append(contentsOf: [
+        .enableUpcomingFeature("StrictConcurrency"),
+        .enableUpcomingFeature("InferSendableFromCaptures"),
+    ])
+
+    if strictConcurrencyDevelopment {
+        // -warnings-as-errors here is a workaround so that IDE-based development can
+        // get tripped up on -require-explicit-sendable.
+        initialSettings.append(.unsafeFlags(["-Xfrontend", "-require-explicit-sendable", "-warnings-as-errors"]))
+    }
+
+    return initialSettings
+}()
+
 let package = Package(
     name: "nio-http-responsiveness-server",
     platforms: [
@@ -52,9 +70,7 @@ let package = Package(
                 .product(name: "ExtrasJSON", package: "swift-extras-json"),
                 .product(name: "NIOTransportServices", package: "swift-nio-transport-services"),
             ],
-            swiftSettings: [
-                .enableExperimentalFeature("StrictConcurrency")
-            ]
+            swiftSettings: strictConcurrencySettings
         )
     ]
 )
