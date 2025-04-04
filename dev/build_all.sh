@@ -19,7 +19,7 @@ log() { printf -- "** %s\n" "$*" >&2; }
 error() { printf -- "** ERROR: %s\n" "$*" >&2; }
 fatal() { error "$@"; exit 1; }
 
-default_package_directories="TLSify UniversalBootstrapDemo backpressure-file-io-channel connect-proxy http2-client http2-server json-rpc nio-launchd"
+default_package_directories="TLSify UniversalBootstrapDemo backpressure-file-io-channel http-responsiveness-server connect-proxy http2-client http2-server json-rpc nio-launchd"
 default_project_directories="NIOSMTP"
 
 # --
