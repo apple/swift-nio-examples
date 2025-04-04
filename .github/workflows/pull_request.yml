@@ -1,0 +1,36 @@
+name: PR
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+jobs:
+  soundness:
+    name: Soundness
+    uses: swiftlang/github-workflows/.github/workflows/soundness.yml@main
+    with:
+      license_header_check_project_name: "SwiftNIO"
+      docs_check_enabled: false
+
+  construct-build-test-matrix:
+    name: Construct integration test matrix
+    runs-on: ubuntu-latest
+    outputs:
+      build-test-matrix: '${{ steps.generate-matrix.outputs.build-test-matrix }}'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - id: generate-matrix
+        run: echo "build-test-matrix=$(curl -s https://raw.githubusercontent.com/apple/swift-nio/main/scripts/generate_matrix.sh | bash)" >> "$GITHUB_OUTPUT"
+        env:
+          MATRIX_LINUX_COMMAND: STRICT_CONCURRENCY=true SWIFT_PACKAGE_DIRECTORIES="TLSify UniversalBootstrapDemo connect-proxy http2-client http2-server json-rpc nio-launchd" dev/build_all.sh && SWIFT_PACKAGE_DIRECTORIES="backpressure-file-io-channel" dev/build_all.sh
+
+  build-tests:
+    name: Build tests
+    needs: construct-build-test-matrix
+    uses: apple/swift-nio/.github/workflows/swift_test_matrix.yml@main
+    with:
+      name: "Build tests"
+      matrix_string: '${{ needs.construct-build-test-matrix.outputs.build-test-matrix }}'
