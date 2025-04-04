@@ -80,7 +80,7 @@ private enum Signal: Int32 {
     case INT = 2
     case QUIT = 3
     case ABRT = 6
-    case KILL = 9
+    case KILL = 9  // ignore-unacceptable-language
     case ALRM = 14
     case TERM = 15
 }
