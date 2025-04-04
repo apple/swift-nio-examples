@@ -12,11 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 import Foundation
+import NIOConcurrencyHelpers
 import NIOCore
 import NIOPosix
-import NIOConcurrencyHelpers
 
 public final class TCPServer: @unchecked Sendable {
     private let group: MultiThreadedEventLoopGroup
@@ -26,7 +25,11 @@ public final class TCPServer: @unchecked Sendable {
     private var state = State.initializing
     private let lock = NIOLock()
 
-    public init(group: MultiThreadedEventLoopGroup, config: Config = Config(), closure: @escaping RPCClosure) {
+    public init(
+        group: MultiThreadedEventLoopGroup,
+        config: Config = Config(),
+        closure: @escaping RPCClosure
+    ) {
         self.group = group
         self.config = config
         self.closure = closure
@@ -43,19 +46,25 @@ public final class TCPServer: @unchecked Sendable {
 
             let bootstrap = ServerBootstrap(group: group)
                 .serverChannelOption(ChannelOptions.backlog, value: 256)
-                .serverChannelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
+                .serverChannelOption(
+                    ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR),
+                    value: 1
+                )
                 .childChannelInitializer { channel in
-                    return channel.pipeline.eventLoop.makeCompletedFuture {
+                    channel.pipeline.eventLoop.makeCompletedFuture {
                         try channel.pipeline.syncOperations.addTimeoutHandlers(self.config.timeout)
                         try channel.pipeline.syncOperations.addFramingHandlers(framing: self.config.framing)
                         try channel.pipeline.syncOperations.addHandlers([
                             CodableCodec<JSONRequest, JSONResponse>(),
-                            Handler(self.closure)
+                            Handler(self.closure),
                         ])
-                        }
+                    }
                 }
                 .childChannelOption(ChannelOptions.socket(IPPROTO_TCP, TCP_NODELAY), value: 1)
-                .childChannelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
+                .childChannelOption(
+                    ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR),
+                    value: 1
+                )
 
             self.state = .starting("\(host):\(port)")
             return bootstrap.bind(host: host, port: port).flatMap { channel in
@@ -115,18 +124,22 @@ private class Handler: ChannelInboundHandler {
 
     public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         let request = unwrapInboundIn(data)
-        self.closure(request.method, RPCObject(request.params), { result in
-            let response: JSONResponse
-            switch result {
-            case .success(let handlerResult):
-                print("rpc handler returned success", handlerResult)
-                response = JSONResponse(id: request.id, result: handlerResult)
-            case .failure(let handlerError):
-                print("rpc handler returned failure", handlerError)
-                response = JSONResponse(id: request.id, error: handlerError)
+        self.closure(
+            request.method,
+            RPCObject(request.params),
+            { result in
+                let response: JSONResponse
+                switch result {
+                case .success(let handlerResult):
+                    print("rpc handler returned success", handlerResult)
+                    response = JSONResponse(id: request.id, result: handlerResult)
+                case .failure(let handlerError):
+                    print("rpc handler returned failure", handlerError)
+                    response = JSONResponse(id: request.id, error: handlerError)
+                }
+                context.channel.writeAndFlush(response, promise: nil)
             }
-            context.channel.writeAndFlush(response, promise: nil)
-        })
+        )
     }
 
     public func errorCaught(context: ChannelHandlerContext, error: Error) {

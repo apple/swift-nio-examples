@@ -12,14 +12,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-import NIOCore
 import Logging
+import NIOCore
 
 final class GlueHandler {
 
     var logger: Logger
-    var context: Optional<ChannelHandlerContext> = nil
-    var partner: Optional<GlueHandler> = nil
+    var context: ChannelHandlerContext? = nil
+    var partner: GlueHandler? = nil
     private var pendingRead = false
 
     internal init(logger: Logger) {

@@ -12,10 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-import XCTest
+import BackpressureChannelToFileIO
 import NIOCore
 import NIOPosix
-import BackpressureChannelToFileIO
+import XCTest
 
 final class IntegrationTest: XCTestCase {
     private var channel: Channel!
@@ -27,8 +27,9 @@ final class IntegrationTest: XCTestCase {
     private var tempDir: String!
 
     func testBasicRoundtrip() {
-        let twoReqs = "POST /foo HTTP/1.1\r\ncontent-length: 5\r\n\r\nabcde" +
-            /*     */ "POST /bar HTTP/1.1\r\ncontent-length: 3\r\n\r\nfoo"
+        let twoReqs =
+            "POST /foo HTTP/1.1\r\ncontent-length: 5\r\n\r\nabcde"
+            + "POST /bar HTTP/1.1\r\ncontent-length: 3\r\n\r\nfoo"
         self.testToChannel.write(Data(twoReqs.utf8))
         let results = (0..<6).compactMap { _ in self.channelToTest.readLine() }
         guard results.count == 6 else {
@@ -39,10 +40,18 @@ final class IntegrationTest: XCTestCase {
         XCTAssertEqual(Data("HTTP/1.1 200 OK\r\n".utf8), results[0])
         XCTAssertEqual(Data("HTTP/1.1 200 OK\r\n".utf8), results[3])
 
-        XCTAssertNoThrow(XCTAssertEqual(Data("abcde".utf8),
-                                        try Data(contentsOf: URL(fileURLWithPath: "\(self.tempDir!)/uploaded_file__foo"))))
-        XCTAssertNoThrow(XCTAssertEqual(Data("foo".utf8),
-                                        try Data(contentsOf: URL(fileURLWithPath: "\(self.tempDir!)/uploaded_file__bar"))))
+        XCTAssertNoThrow(
+            XCTAssertEqual(
+                Data("abcde".utf8),
+                try Data(contentsOf: URL(fileURLWithPath: "\(self.tempDir!)/uploaded_file__foo"))
+            )
+        )
+        XCTAssertNoThrow(
+            XCTAssertEqual(
+                Data("foo".utf8),
+                try Data(contentsOf: URL(fileURLWithPath: "\(self.tempDir!)/uploaded_file__bar"))
+            )
+        )
     }
 
     func testWeSurviveTheChannelGoingAwayWhilstWriting() {
@@ -74,17 +83,21 @@ final class IntegrationTest: XCTestCase {
         // Now, let's close the input side of the channel, which should actually close the whole channel, because
         // we have half-closure disabled (default).
         XCTAssertNoThrow(try self.testToChannel.close())
-        self.testToChannel = nil // So tearDown doesn't close it again.
+        self.testToChannel = nil  // So tearDown doesn't close it again.
 
         // To make sure that EOF is seen, we'll inject a `read()` because otherwise there won't be reads because the
         // HTTP server implements backpressure correctly... The read injection handler has to go at the very beginning
         // of the pipeline so the HTTP server can't hold that `read()`.
-        XCTAssertNoThrow(try self.channel.pipeline.addHandler(InjectReadHandler(), position: .first).wait())
+        XCTAssertNoThrow(
+            try self.channel.pipeline.addHandler(InjectReadHandler(), position: .first).wait()
+        )
         XCTAssertNoThrow(try self.channel.closeFuture.wait())
-        self.channel = nil // So tearDown doesn't close it again.
+        self.channel = nil  // So tearDown doesn't close it again.
 
         // The write can't have happened yet (because the thread pool's blocked).
-        XCTAssertNoThrow(XCTAssertEqual(Data(), try Data(contentsOf: URL(fileURLWithPath: destinationFilePath))))
+        XCTAssertNoThrow(
+            XCTAssertEqual(Data(), try Data(contentsOf: URL(fileURLWithPath: destinationFilePath)))
+        )
 
         // Now, let's kick off the writes.
         semaphore.signal()
@@ -106,12 +119,16 @@ extension IntegrationTest {
         XCTAssertNil(self.testToChannel)
         XCTAssertNil(self.channelToTest)
 
-        guard let temp = try? FileManager.default.url(for: .itemReplacementDirectory,
-                                                      in: .userDomainMask,
-                                                      appropriateFor: URL(string: "/")!,
-                                                      create: true) else {
-                                                        XCTFail("can't create temp dir")
-                                                        return
+        guard
+            let temp = try? FileManager.default.url(
+                for: .itemReplacementDirectory,
+                in: .userDomainMask,
+                appropriateFor: URL(string: "/")!,
+                create: true
+            )
+        else {
+            XCTFail("can't create temp dir")
+            return
 
         }
         self.tempDir = temp.path
@@ -123,22 +140,34 @@ extension IntegrationTest {
         let channelToTest = Pipe()
 
         var maybeChannel: Channel? = nil
-        XCTAssertNoThrow(try maybeChannel = NIOPipeBootstrap(group: group)
-            .channelInitializer { channel in
-                channel.pipeline.configureHTTPServerPipeline(withErrorHandling: false).flatMap {
-                    channel.pipeline.addHandler(SaveEverythingHTTPServer(fileIO: self.fileIO,
-                                                                         uploadDirectory: self.tempDir))
+        XCTAssertNoThrow(
+            try maybeChannel = NIOPipeBootstrap(group: group)
+                .channelInitializer { channel in
+                    channel.pipeline.configureHTTPServerPipeline(withErrorHandling: false).flatMap {
+                        channel.pipeline.addHandler(
+                            SaveEverythingHTTPServer(
+                                fileIO: self.fileIO,
+                                uploadDirectory: self.tempDir
+                            )
+                        )
+                    }
                 }
-            }
-            .withPipes(inputDescriptor: dup(testToChannel.fileHandleForReading.fileDescriptor),
-                       outputDescriptor: dup(channelToTest.fileHandleForWriting.fileDescriptor))
-            .wait())
+                .withPipes(
+                    inputDescriptor: dup(testToChannel.fileHandleForReading.fileDescriptor),
+                    outputDescriptor: dup(channelToTest.fileHandleForWriting.fileDescriptor)
+                )
+                .wait()
+        )
         guard let channel = maybeChannel else {
             XCTFail("can't get a Channel")
             return
         }
-        self.testToChannel = FileHandle(fileDescriptor: dup(testToChannel.fileHandleForWriting.fileDescriptor))
-        self.channelToTest = FileHandle(fileDescriptor: dup(channelToTest.fileHandleForReading.fileDescriptor))
+        self.testToChannel = FileHandle(
+            fileDescriptor: dup(testToChannel.fileHandleForWriting.fileDescriptor)
+        )
+        self.channelToTest = FileHandle(
+            fileDescriptor: dup(channelToTest.fileHandleForReading.fileDescriptor)
+        )
         self.channel = channel
     }
 

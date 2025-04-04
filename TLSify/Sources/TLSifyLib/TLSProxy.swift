@@ -12,10 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+import Logging
 import NIOCore
 import NIOPosix
 import NIOSSL
-import Logging
 
 public final class TLSProxy {
     enum State {
@@ -60,9 +60,11 @@ public final class TLSProxy {
         }
     }
 
-    func connected(partnerChannel: Channel,
-                   myChannel: Channel,
-                   contextForInitialData: ChannelHandlerContext) {
+    func connected(
+        partnerChannel: Channel,
+        myChannel: Channel,
+        contextForInitialData: ChannelHandlerContext
+    ) {
         self.logger.debug("connected to \(partnerChannel)")
 
         let bytes: ByteBuffer
@@ -81,7 +83,7 @@ public final class TLSProxy {
         case .connecting(let buffer):
             bytes = buffer
             self.state = .connected
-            // fall through
+        // fall through
         }
 
         var partnerLogger = self.logger
@@ -94,7 +96,10 @@ public final class TLSProxy {
         assert(partnerChannel.eventLoop === myChannel.eventLoop)
 
         do {
-            try myChannel.pipeline.syncOperations.addHandler(myGlue, position: .after(contextForInitialData.handler))
+            try myChannel.pipeline.syncOperations.addHandler(
+                myGlue,
+                position: .after(contextForInitialData.handler)
+            )
             _ = try partnerChannel.pipeline.syncOperations.handler(type: CloseOnErrorHandler.self)
             try partnerChannel.pipeline.syncOperations.addHandler(partnerGlue)
         } catch {
@@ -127,13 +132,13 @@ public final class TLSProxy {
                         CloseOnErrorHandler(logger: logger)
                     )
                 }
-        }
-        .connect(host: self.host, port: self.port)
+            }
+            .connect(host: self.host, port: self.port)
     }
 }
 
 @available(*, unavailable)
-extension TLSProxy: Sendable { }
+extension TLSProxy: Sendable {}
 
 extension TLSProxy: ChannelDuplexHandler {
     public typealias InboundIn = ByteBuffer
@@ -168,9 +173,11 @@ extension TLSProxy: ChannelDuplexHandler {
 
                     context.fireErrorCaught(error)
                 case .success(let channel):
-                    self.connected(partnerChannel: channel,
-                                   myChannel: context.channel,
-                                   contextForInitialData: context)
+                    self.connected(
+                        partnerChannel: channel,
+                        myChannel: context.channel,
+                        contextForInitialData: context
+                    )
                 }
             }
         case .connecting, .connected, .error, .closed:
@@ -183,7 +190,7 @@ extension TLSProxy: ChannelDuplexHandler {
     public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         switch self.state {
         case .connected:
-            context.fireChannelRead(data) // Glue will pick that up and forward to other Channel
+            context.fireChannelRead(data)  // Glue will pick that up and forward to other Channel
         case .connecting(var buffer):
             var incomingBuffer = self.unwrapInboundIn(data)
             if buffer.readableBytes == 0 {
@@ -193,7 +200,7 @@ extension TLSProxy: ChannelDuplexHandler {
                 self.state = .connecting(buffer)
             }
         case .error, .closed:
-            () // we can drop this
+            ()  // we can drop this
         case .waitingToBeActivated:
             self.illegalTransition()
         }
@@ -204,7 +211,7 @@ extension TLSProxy: ChannelDuplexHandler {
         case .connected:
             context.read()
         case .connecting, .error, .closed:
-            () // No, let's not read more that we'd need to buffer/drop anyway
+            ()  // No, let's not read more that we'd need to buffer/drop anyway
         case .waitingToBeActivated:
             self.illegalTransition()
         }

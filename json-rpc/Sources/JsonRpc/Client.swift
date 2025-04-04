@@ -12,10 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 import Foundation
-import NIOCore
 import NIOConcurrencyHelpers
+import NIOCore
 import NIOPosix
 
 public final class TCPClient: @unchecked Sendable {
@@ -43,7 +42,7 @@ public final class TCPClient: @unchecked Sendable {
             let bootstrap = ClientBootstrap(group: self.group)
                 .channelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
                 .channelInitializer { channel in
-                    return channel.pipeline.eventLoop.makeCompletedFuture {
+                    channel.pipeline.eventLoop.makeCompletedFuture {
                         try channel.pipeline.syncOperations.addTimeoutHandlers(self.config.timeout)
                         try channel.pipeline.syncOperations.addFramingHandlers(framing: self.config.framing)
                         try channel.pipeline.syncOperations.addHandlers([
@@ -95,7 +94,7 @@ public final class TCPClient: @unchecked Sendable {
             let request = JSONRequest(id: NSUUID().uuidString, method: method, params: JSONObject(params))
             let requestWrapper = JSONRequestWrapper(request: request, promise: promise)
             let future = channel.writeAndFlush(requestWrapper)
-            future.cascadeFailure(to: promise) // if write fails
+            future.cascadeFailure(to: promise)  // if write fails
             return future.flatMap {
                 promise.futureResult.map { Result($0) }
             }
@@ -122,7 +121,10 @@ public final class TCPClient: @unchecked Sendable {
         }
 
         internal init(_ error: JSONError) {
-            self.init(kind: JSONErrorCode(rawValue: error.code).map { Kind($0) } ?? .otherServerError, description: error.message)
+            self.init(
+                kind: JSONErrorCode(rawValue: error.code).map { Kind($0) } ?? .otherServerError,
+                description: error.message
+            )
         }
 
         public enum Kind {
@@ -177,7 +179,7 @@ private class Handler: ChannelInboundHandler, ChannelOutboundHandler {
     // inbound
     public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         if self.queue.isEmpty {
-            context.fireChannelRead(data) // already complete
+            context.fireChannelRead(data)  // already complete
             return
         }
         let promise = queue.removeFirst().1
@@ -190,7 +192,7 @@ private class Handler: ChannelInboundHandler, ChannelOutboundHandler {
             print("server", remoteAddress, "error", error)
         }
         if self.queue.isEmpty {
-            context.fireErrorCaught(error) // already complete
+            context.fireErrorCaught(error)  // already complete
             return
         }
         let item = queue.removeFirst()
@@ -242,14 +244,16 @@ internal enum ClientError: Error {
     case connectionResetByPeer
 }
 
-internal extension ResultType where Value == RPCObject, Error == TCPClient.Error {
+extension ResultType where Value == RPCObject, Error == TCPClient.Error {
     init(_ response: JSONResponse) {
         if let result = response.result {
             self = .success(RPCObject(result))
         } else if let error = response.error {
             self = .failure(TCPClient.Error(error))
         } else {
-            self = .failure(TCPClient.Error(kind: .invalidServerResponse, description: "invalid server response"))
+            self = .failure(
+                TCPClient.Error(kind: .invalidServerResponse, description: "invalid server response")
+            )
         }
     }
 }

@@ -12,10 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-import NIOCore
-import NIOPosix
-import NIOHTTP1
 import Logging
+import NIOCore
+import NIOHTTP1
+import NIOPosix
 
 final class ConnectHandler {
     private var upgradeState: State
@@ -28,7 +28,6 @@ final class ConnectHandler {
     }
 }
 
-
 extension ConnectHandler {
     fileprivate enum State {
         case idle
@@ -39,7 +38,6 @@ extension ConnectHandler {
         case upgradeFailed
     }
 }
-
 
 extension ConnectHandler: ChannelInboundHandler {
     typealias InboundIn = HTTPServerRequestPart
@@ -71,7 +69,7 @@ extension ConnectHandler: ChannelInboundHandler {
             pendingBytes.append(data)
             self.upgradeState = .awaitingConnection(pendingBytes: pendingBytes)
 
-        case .upgradeComplete(pendingBytes: var pendingBytes):
+        case .upgradeComplete(var pendingBytes):
             // We're currently delivering data, keep doing so.
             self.upgradeState = .upgradeComplete(pendingBytes: [])
             pendingBytes.append(data)
@@ -85,14 +83,17 @@ extension ConnectHandler: ChannelInboundHandler {
     func handlerAdded(context: ChannelHandlerContext) {
         // Add logger metadata.
         self.logger[metadataKey: "localAddress"] = "\(String(describing: context.channel.localAddress))"
-        self.logger[metadataKey: "remoteAddress"] = "\(String(describing: context.channel.remoteAddress))"
+        self.logger[metadataKey: "remoteAddress"] =
+            "\(String(describing: context.channel.remoteAddress))"
         self.logger[metadataKey: "channel"] = "\(ObjectIdentifier(context.channel))"
     }
 }
 
-
 extension ConnectHandler: RemovableChannelHandler {
-    func removeHandler(context: ChannelHandlerContext, removalToken: ChannelHandlerContext.RemovalToken) {
+    func removeHandler(
+        context: ChannelHandlerContext,
+        removalToken: ChannelHandlerContext.RemovalToken
+    ) {
         var didRead = false
 
         // We are being removed, and need to deliver any pending bytes we may have if we're upgrading.
@@ -143,7 +144,8 @@ extension ConnectHandler {
         self.logger.info("Connecting to \(host):\(port)")
 
         ClientBootstrap(group: context.eventLoop)
-            .connect(host: String(host), port: port).assumeIsolatedUnsafeUnchecked().whenComplete { result in
+            .connect(host: String(host), port: port).assumeIsolatedUnsafeUnchecked().whenComplete {
+                result in
                 switch result {
                 case .success(let channel):
                     self.connectSucceeded(channel: channel, context: context)
@@ -161,7 +163,7 @@ extension ConnectHandler {
             // Ok, we have a channel, let's wait for end.
             self.upgradeState = .awaitingEnd(connectResult: channel)
 
-        case .awaitingConnection(pendingBytes: let pendingBytes):
+        case .awaitingConnection(let pendingBytes):
             // Upgrade complete! Begin gluing the connection together.
             self.upgradeState = .upgradeComplete(pendingBytes: pendingBytes)
             self.glue(channel, context: context)
@@ -199,7 +201,9 @@ extension ConnectHandler {
     }
 
     private func glue(_ peerChannel: Channel, context: ChannelHandlerContext) {
-        self.logger.debug("Gluing together \(ObjectIdentifier(context.channel)) and \(ObjectIdentifier(peerChannel))")
+        self.logger.debug(
+            "Gluing together \(ObjectIdentifier(context.channel)) and \(ObjectIdentifier(peerChannel))"
+        )
 
         // Ok, upgrade has completed! We now need to begin the upgrade process.
         // First, send the 200 message.
@@ -229,23 +233,35 @@ extension ConnectHandler {
         self.upgradeState = .upgradeFailed
 
         let headers = HTTPHeaders([("Content-Length", "0"), ("Connection", "close")])
-        let head = HTTPResponseHead(version: .init(major: 1, minor: 1), status: .badRequest, headers: headers)
+        let head = HTTPResponseHead(
+            version: .init(major: 1, minor: 1),
+            status: .badRequest,
+            headers: headers
+        )
         context.write(self.wrapOutboundOut(.head(head)), promise: nil)
-        context.writeAndFlush(self.wrapOutboundOut(.end(nil))).assumeIsolatedUnsafeUnchecked().whenComplete { (_: Result<Void, Error>) in
-            context.close(mode: .output, promise: nil)
-        }
+        context.writeAndFlush(self.wrapOutboundOut(.end(nil))).assumeIsolatedUnsafeUnchecked()
+            .whenComplete { (_: Result<Void, Error>) in
+                context.close(mode: .output, promise: nil)
+            }
     }
 
     private func removeDecoder(context: ChannelHandlerContext) {
         // We drop the future on the floor here as these handlers must all be in our own pipeline, and this should
         // therefore succeed fast.
 
-        let byteToMessageHandlerContext = try! context.pipeline.syncOperations.context(handlerType: ByteToMessageHandler<HTTPRequestDecoder>.self)
-        context.pipeline.syncOperations.removeHandler(context: byteToMessageHandlerContext, promise: nil)
+        let byteToMessageHandlerContext = try! context.pipeline.syncOperations.context(
+            handlerType: ByteToMessageHandler<HTTPRequestDecoder>.self
+        )
+        context.pipeline.syncOperations.removeHandler(
+            context: byteToMessageHandlerContext,
+            promise: nil
+        )
     }
 
     private func removeEncoder(context: ChannelHandlerContext) {
-        let httpResponseEncoderContext = try! context.pipeline.syncOperations.context(handlerType: HTTPResponseEncoder.self)
+        let httpResponseEncoderContext = try! context.pipeline.syncOperations.context(
+            handlerType: HTTPResponseEncoder.self
+        )
         context.pipeline.syncOperations.removeHandler(context: httpResponseEncoderContext, promise: nil)
     }
 }

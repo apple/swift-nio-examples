@@ -12,11 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-@testable import JSONRPC
 import NIOCore
 import NIOPosix
 import XCTest
+
+@testable import JSONRPC
 
 final class JSONRPCTests: XCTestCase {
     func testSuccess() {
@@ -70,7 +70,11 @@ final class JSONRPCTests: XCTestCase {
         case .success(let response):
             XCTFail("expected to fail but succeeded with \(response)")
         case .failure(let error):
-            XCTAssertEqual(TCPClient.Error(JSONError(expectedFailure)), error, "expected failure ot match")
+            XCTAssertEqual(
+                TCPClient.Error(JSONError(expectedFailure)),
+                error,
+                "expected failure ot match"
+            )
         }
         // shutdown
         try! client.disconnect().wait()
@@ -100,7 +104,11 @@ final class JSONRPCTests: XCTestCase {
         case .success(let response):
             XCTFail("expected to fail but succeeded with \(response)")
         case .failure(let error):
-            XCTAssertEqual(TCPClient.Error(JSONError(expectedFailure)), error, "expected failure ot match")
+            XCTAssertEqual(
+                TCPClient.Error(JSONError(expectedFailure)),
+                error,
+                "expected failure ot match"
+            )
             XCTAssertEqual(customError, error.description, "expected failure ot match")
         }
         // shutdown
@@ -109,17 +117,19 @@ final class JSONRPCTests: XCTestCase {
     }
 
     func testParamTypes() {
-        let expectedParams = [RPCObject("foo"),
-                              RPCObject(1),
-                              RPCObject(true),
-                              RPCObject(["foo", "bar"]),
-                              RPCObject(["foo": "bar"]),
-                              RPCObject([1, 2]),
-                              RPCObject(["foo": 1, "bar": 2])]
+        let expectedParams = [
+            RPCObject("foo"),
+            RPCObject(1),
+            RPCObject(true),
+            RPCObject(["foo", "bar"]),
+            RPCObject(["foo": "bar"]),
+            RPCObject([1, 2]),
+            RPCObject(["foo": 1, "bar": 2]),
+        ]
         let address = ("127.0.0.1", 8000)
         let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
         let expectedResponse = RPCObject("ok")
-        expectedParams.forEach { expectedParams in
+        for expectedParams in expectedParams {
             // start server
             let server = TCPServer(group: eventLoopGroup) { _, params, callback in
                 XCTAssertEqual(expectedParams, params, "expected params to match")
@@ -146,14 +156,16 @@ final class JSONRPCTests: XCTestCase {
     func testResponseTypes() {
         let address = ("127.0.0.1", 8000)
         let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
-        let expectedResponse = [RPCObject("foo"),
-                                RPCObject(1),
-                                RPCObject(true),
-                                RPCObject(["foo", "bar"]),
-                                RPCObject(["foo": "bar"]),
-                                RPCObject([1, 2]),
-                                RPCObject(["foo": 1, "bar": 2])]
-        expectedResponse.forEach { expectedResponse in
+        let expectedResponse = [
+            RPCObject("foo"),
+            RPCObject(1),
+            RPCObject(true),
+            RPCObject(["foo", "bar"]),
+            RPCObject(["foo": "bar"]),
+            RPCObject([1, 2]),
+            RPCObject(["foo": 1, "bar": 2]),
+        ]
+        for expectedResponse in expectedResponse {
             // start server
             let server = TCPServer(group: eventLoopGroup) { _, _, callback in
                 callback(.success(expectedResponse))
@@ -189,7 +201,7 @@ final class JSONRPCTests: XCTestCase {
         _ = try! client.connect(host: address.0, port: address.1).wait()
         // perform the method call
         let group = DispatchGroup()
-        (0 ... Int.random(in: 100 ... 500)).forEach { i in
+        for i in (0...Int.random(in: 100...500)) {
             group.enter()
             DispatchQueue.global().async {
                 let result = try! client.call(method: "\(i)", params: .none).wait()
@@ -209,7 +221,7 @@ final class JSONRPCTests: XCTestCase {
     }
 
     func testBadServerResponse1() {
-        Framing.allCases.forEach { framing in
+        for framing in Framing.allCases {
             print("===== testing with \(framing) framing")
             let address = ("127.0.0.1", 8000)
             let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
@@ -217,7 +229,10 @@ final class JSONRPCTests: XCTestCase {
             let server = BadServer(group: eventLoopGroup, framing: framing)
             _ = try! server.start(host: address.0, port: address.1).wait()
             // connect client
-            let client = TCPClient(group: eventLoopGroup, config: TCPClient.Config(timeout: TimeAmount.milliseconds(100), framing: framing))
+            let client = TCPClient(
+                group: eventLoopGroup,
+                config: TCPClient.Config(timeout: TimeAmount.milliseconds(100), framing: framing)
+            )
             _ = try! client.connect(host: address.0, port: address.1).wait()
             // perform the method call
             let result = try! client.call(method: "{boom}", params: .none).wait()
@@ -225,7 +240,11 @@ final class JSONRPCTests: XCTestCase {
             case .success(let response):
                 XCTFail("expected to fail but succeeded with \(response)")
             case .failure(let error):
-                XCTAssertEqual(TCPClient.Error.Kind.invalidServerResponse, error.kind, "expected error ot match")
+                XCTAssertEqual(
+                    TCPClient.Error.Kind.invalidServerResponse,
+                    error.kind,
+                    "expected error ot match"
+                )
             }
             // shutdown
             try! client.disconnect().wait()
@@ -234,7 +253,7 @@ final class JSONRPCTests: XCTestCase {
     }
 
     func testBadServerResponse2() {
-        Framing.allCases.forEach { framing in
+        for framing in Framing.allCases {
             print("===== testing with \(framing) framing")
             let address = ("127.0.0.1", 8000)
             let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
@@ -242,7 +261,10 @@ final class JSONRPCTests: XCTestCase {
             let server = BadServer(group: eventLoopGroup, framing: framing)
             _ = try! server.start(host: address.0, port: address.1).wait()
             // connect client
-            let client = TCPClient(group: eventLoopGroup, config: TCPClient.Config(timeout: TimeAmount.milliseconds(100), framing: framing))
+            let client = TCPClient(
+                group: eventLoopGroup,
+                config: TCPClient.Config(timeout: TimeAmount.milliseconds(100), framing: framing)
+            )
             _ = try! client.connect(host: address.0, port: address.1).wait()
             // perform the method call
             let result = try! client.call(method: "boom", params: .none).wait()
@@ -250,7 +272,11 @@ final class JSONRPCTests: XCTestCase {
             case .success(let response):
                 XCTFail("expected to fail but succeeded with \(response)")
             case .failure(let error):
-                XCTAssertEqual(TCPClient.Error.Kind.invalidServerResponse, error.kind, "expected error ot match")
+                XCTAssertEqual(
+                    TCPClient.Error.Kind.invalidServerResponse,
+                    error.kind,
+                    "expected error ot match"
+                )
             }
             // shutdown
             try! client.disconnect().wait()
@@ -259,7 +285,7 @@ final class JSONRPCTests: XCTestCase {
     }
 
     func testBadServerResponse3() {
-        Framing.allCases.forEach { framing in
+        for framing in Framing.allCases {
             print("===== testing with \(framing) framing")
             let address = ("127.0.0.1", 8000)
             let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
@@ -267,7 +293,10 @@ final class JSONRPCTests: XCTestCase {
             let server = BadServer(group: eventLoopGroup, framing: framing)
             _ = try! server.start(host: address.0, port: address.1).wait()
             // connect client
-            let client = TCPClient(group: eventLoopGroup, config: TCPClient.Config(timeout: TimeAmount.milliseconds(100), framing: framing))
+            let client = TCPClient(
+                group: eventLoopGroup,
+                config: TCPClient.Config(timeout: TimeAmount.milliseconds(100), framing: framing)
+            )
             _ = try! client.connect(host: address.0, port: address.1).wait()
             // perform the method call
             let result = try! client.call(method: "do not encode", params: .none).wait()
@@ -275,7 +304,11 @@ final class JSONRPCTests: XCTestCase {
             case .success(let response):
                 XCTFail("expected to fail but succeeded with \(response)")
             case .failure(let error):
-                XCTAssertEqual(TCPClient.Error.Kind.invalidServerResponse, error.kind, "expected error ot match")
+                XCTAssertEqual(
+                    TCPClient.Error.Kind.invalidServerResponse,
+                    error.kind,
+                    "expected error ot match"
+                )
             }
             // shutdown
             try! client.disconnect().wait()
@@ -312,7 +345,10 @@ final class JSONRPCTests: XCTestCase {
         let server = BadServer(group: eventLoopGroup, framing: .default)
         _ = try! server.start(host: address.0, port: address.1).wait()
         // connect client
-        let client = TCPClient(group: eventLoopGroup, config: TCPClient.Config(timeout: TimeAmount.milliseconds(100)))
+        let client = TCPClient(
+            group: eventLoopGroup,
+            config: TCPClient.Config(timeout: TimeAmount.milliseconds(100))
+        )
         _ = try! client.connect(host: address.0, port: address.1).wait()
         // perform the method call
         XCTAssertThrowsError(try client.call(method: "timeout", params: .none).wait()) { error in
@@ -324,12 +360,15 @@ final class JSONRPCTests: XCTestCase {
     }
 
     func testBadClientRequest1() {
-        Framing.allCases.forEach { framing in
+        for framing in Framing.allCases {
             print("===== testing with \(framing) framing")
             let address = ("127.0.0.1", 8000)
             let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
             // start server
-            let server = TCPServer(group: eventLoopGroup, config: TCPServer.Config(timeout: TimeAmount.milliseconds(100), framing: framing)) { _, _, callback in
+            let server = TCPServer(
+                group: eventLoopGroup,
+                config: TCPServer.Config(timeout: TimeAmount.milliseconds(100), framing: framing)
+            ) { _, _, callback in
                 callback(.success(RPCObject("yay")))
             }
             _ = try! server.start(host: address.0, port: address.1).wait()
@@ -340,7 +379,11 @@ final class JSONRPCTests: XCTestCase {
             let result = try! client.request(string: "{boom}").wait()
             XCTAssertNil(result.result, "expected to fail but succeeded with \(result.result!)")
             XCTAssertNotNil(result.error, "expected error to be non-nil")
-            XCTAssertEqual(result.error!.code, JSONErrorCode.parseError.rawValue, "expected error ot match")
+            XCTAssertEqual(
+                result.error!.code,
+                JSONErrorCode.parseError.rawValue,
+                "expected error ot match"
+            )
             // shutdown
             try! client.disconnect().wait()
             try! server.stop().wait()
@@ -348,12 +391,15 @@ final class JSONRPCTests: XCTestCase {
     }
 
     func testBadClientRequest2() {
-        Framing.allCases.forEach { framing in
+        for framing in Framing.allCases {
             print("===== testing with \(framing) framing")
             let address = ("127.0.0.1", 8000)
             let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
             // start server
-            let server = TCPServer(group: eventLoopGroup, config: TCPServer.Config(timeout: TimeAmount.milliseconds(100), framing: framing)) { _, _, callback in
+            let server = TCPServer(
+                group: eventLoopGroup,
+                config: TCPServer.Config(timeout: TimeAmount.milliseconds(100), framing: framing)
+            ) { _, _, callback in
                 callback(.success(RPCObject("yay")))
             }
             _ = try! server.start(host: address.0, port: address.1).wait()
@@ -364,7 +410,11 @@ final class JSONRPCTests: XCTestCase {
             let result = try! client.request(string: "boom").wait()
             XCTAssertNil(result.result, "expected to fail but succeeded with \(result.result!)")
             XCTAssertNotNil(result.error, "expected error to be non-nil")
-            XCTAssertEqual(result.error!.code, JSONErrorCode.parseError.rawValue, "expected error ot match")
+            XCTAssertEqual(
+                result.error!.code,
+                JSONErrorCode.parseError.rawValue,
+                "expected error ot match"
+            )
             // shutdown
             try! client.disconnect().wait()
             try! server.stop().wait()
@@ -372,12 +422,15 @@ final class JSONRPCTests: XCTestCase {
     }
 
     func testBadClientRequest3() {
-        Framing.allCases.forEach { framing in
+        for framing in Framing.allCases {
             print("===== testing with \(framing) framing")
             let address = ("127.0.0.1", 8000)
             let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
             // start server
-            let server = TCPServer(group: eventLoopGroup, config: TCPServer.Config(timeout: TimeAmount.milliseconds(100), framing: framing)) { _, _, callback in
+            let server = TCPServer(
+                group: eventLoopGroup,
+                config: TCPServer.Config(timeout: TimeAmount.milliseconds(100), framing: framing)
+            ) { _, _, callback in
                 callback(.success(RPCObject("yay")))
             }
             _ = try! server.start(host: address.0, port: address.1).wait()
@@ -388,7 +441,11 @@ final class JSONRPCTests: XCTestCase {
             let result = try! client.request(string: "do not encode").wait()
             XCTAssertNil(result.result, "expected to fail but succeeded with \(result.result!)")
             XCTAssertNotNil(result.error, "expected error to be non-nil")
-            XCTAssertEqual(result.error!.code, JSONErrorCode.parseError.rawValue, "expected error ot match")
+            XCTAssertEqual(
+                result.error!.code,
+                JSONErrorCode.parseError.rawValue,
+                "expected error ot match"
+            )
             // shutdown
             try! client.disconnect().wait()
             try! server.stop().wait()
@@ -396,12 +453,15 @@ final class JSONRPCTests: XCTestCase {
     }
 
     func testBadClientRequest4() {
-        Framing.allCases.forEach { framing in
+        for framing in Framing.allCases {
             print("===== testing with \(framing) framing")
             let address = ("127.0.0.1", 8000)
             let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
             // start server
-            let server = TCPServer(group: eventLoopGroup, config: TCPServer.Config(timeout: TimeAmount.milliseconds(100), framing: framing)) { _, _, callback in
+            let server = TCPServer(
+                group: eventLoopGroup,
+                config: TCPServer.Config(timeout: TimeAmount.milliseconds(100), framing: framing)
+            ) { _, _, callback in
                 callback(.success(RPCObject("yay")))
             }
             _ = try! server.start(host: address.0, port: address.1).wait()
@@ -412,7 +472,11 @@ final class JSONRPCTests: XCTestCase {
             let result = try! client.request(string: String(repeating: "*", count: 1_000_001)).wait()
             XCTAssertNil(result.result, "expected to fail but succeeded with \(result.result!)")
             XCTAssertNotNil(result.error, "expected error to be non-nil")
-            XCTAssertEqual(result.error!.code, JSONErrorCode.invalidRequest.rawValue, "expected error ot match")
+            XCTAssertEqual(
+                result.error!.code,
+                JSONErrorCode.invalidRequest.rawValue,
+                "expected error ot match"
+            )
             // shutdown
             try! client.disconnect().wait()
             try! server.stop().wait()
@@ -423,7 +487,10 @@ final class JSONRPCTests: XCTestCase {
         let address = ("127.0.0.1", 8000)
         let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
         // start server
-        let server = TCPServer(group: eventLoopGroup, config: TCPServer.Config(timeout: TimeAmount.milliseconds(100))) { _, _, callback in
+        let server = TCPServer(
+            group: eventLoopGroup,
+            config: TCPServer.Config(timeout: TimeAmount.milliseconds(100))
+        ) { _, _, callback in
             callback(.success(RPCObject("yay")))
         }
         _ = try! server.start(host: address.0, port: address.1).wait()
@@ -434,11 +501,16 @@ final class JSONRPCTests: XCTestCase {
         let response = try! client.request(string: "boom").wait()
         XCTAssertNil(response.result, "expected to fail but succeeded with \(response.result!)")
         XCTAssertNotNil(response.error, "expected error to be non-nil")
-        XCTAssertEqual(response.error!.code, JSONErrorCode.parseError.rawValue, "expected error ot match")
+        XCTAssertEqual(
+            response.error!.code,
+            JSONErrorCode.parseError.rawValue,
+            "expected error ot match"
+        )
         // perform another call
         let request = JSONRequest(id: UUID().uuidString, method: "foo", params: .none)
         let json = try! JSONEncoder().encode(request)
-        XCTAssertThrowsError(try client.request(string: String(data: json, encoding: .utf8)!).wait()) { error in
+        XCTAssertThrowsError(try client.request(string: String(data: json, encoding: .utf8)!).wait()) {
+            error in
             XCTAssertEqual(error as! NIOCore.ChannelError, NIOCore.ChannelError.ioOnClosedChannel)
         }
         // shutdown
@@ -459,8 +531,13 @@ private class BadServer {
 
     func start(host: String, port: Int) -> EventLoopFuture<BadServer> {
         let bootstrap = ServerBootstrap(group: group)
-            .serverChannelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
-            .childChannelInitializer { channel in channel.pipeline.addHandler(Handler(framing: self.framing)) }
+            .serverChannelOption(
+                ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR),
+                value: 1
+            )
+            .childChannelInitializer { channel in
+                channel.pipeline.addHandler(Handler(framing: self.framing))
+            }
         return bootstrap.bind(host: host, port: port).flatMap { channel in
             self.channel = channel
             return channel.eventLoop.makeSucceededFuture(self)
@@ -496,7 +573,8 @@ private class BadServer {
                 if "disconnect" == request.method {
                     return context.channel.close(promise: nil)
                 }
-                let encoded = "do not encode" != request.method ? encode(request.method, self.framing) : request.method
+                let encoded =
+                    "do not encode" != request.method ? encode(request.method, self.framing) : request.method
                 var bufffer2 = context.channel.allocator.buffer(capacity: encoded.utf8.count)
                 bufffer2.writeBytes(encoded.utf8)
                 context.writeAndFlush(NIOAny(bufffer2), promise: nil)
@@ -562,7 +640,11 @@ private class BadClient {
             self.framing = framing
         }
 
-        public func write(context: ChannelHandlerContext, data: NIOAny, promise: EventLoopPromise<Void>?) {
+        public func write(
+            context: ChannelHandlerContext,
+            data: NIOAny,
+            promise: EventLoopPromise<Void>?
+        ) {
             let wrapper = self.unwrapOutboundIn(data)
             queue.append(wrapper.promise)
             context.write(wrapOutboundOut(wrapper.request), promise: promise)
@@ -596,10 +678,8 @@ private func encode(_ text: String, _ framing: Framing) -> String {
     case .default:
         return text + "\r\n"
     case .jsonpos:
-        return String(text.utf8.count, radix: 16).leftPadding(toLength: 8, withPad: "0") +
-            ":" +
-            text +
-            "\n"
+        return String(text.utf8.count, radix: 16).leftPadding(toLength: 8, withPad: "0") + ":" + text
+            + "\n"
     case .brute:
         return text
     }

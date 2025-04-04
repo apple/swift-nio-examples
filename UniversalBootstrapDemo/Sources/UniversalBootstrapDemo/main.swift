@@ -23,10 +23,11 @@ struct UniversalBootstrapDemo: ParsableCommand {
 
     static let configuration = CommandConfiguration(
         abstract: """
-                     Demonstrates using NIO's universal bootstrap. Try for example
+               Demonstrates using NIO's universal bootstrap. Try for example
 
-                         UniversalBootstrapDemo https://httpbin.org/get
-                  """)
+                   UniversalBootstrapDemo https://httpbin.org/get
+            """
+    )
 
     @Flag(help: "Force using NIO on Network.framework.")
     var forceTransportServices = false

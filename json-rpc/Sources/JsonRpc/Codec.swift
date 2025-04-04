@@ -12,34 +12,39 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 import Foundation
 import NIOCore
 import NIOFoundationCompat
 
-private let maxPayload = 1_000_000 // 1MB
+private let maxPayload = 1_000_000  // 1MB
 
-internal extension ChannelPipeline.SynchronousOperations {
+extension ChannelPipeline.SynchronousOperations {
     func addTimeoutHandlers(_ timeout: TimeAmount) throws {
-        return try self.addHandlers([IdleStateHandler(readTimeout: timeout), HalfCloseOnTimeout()])
+        try self.addHandlers([IdleStateHandler(readTimeout: timeout), HalfCloseOnTimeout()])
     }
 }
 
-internal extension ChannelPipeline.SynchronousOperations {
+extension ChannelPipeline.SynchronousOperations {
     func addFramingHandlers(framing: Framing) throws {
         switch framing {
         case .jsonpos:
             let framingHandler = JSONPosCodec()
-            return try self.addHandlers([ByteToMessageHandler(framingHandler),
-                                     MessageToByteHandler(framingHandler)])
+            return try self.addHandlers([
+                ByteToMessageHandler(framingHandler),
+                MessageToByteHandler(framingHandler),
+            ])
         case .brute:
             let framingHandler = BruteForceCodec<JSONResponse>()
-            return try self.addHandlers([ByteToMessageHandler(framingHandler),
-                                     MessageToByteHandler(framingHandler)])
+            return try self.addHandlers([
+                ByteToMessageHandler(framingHandler),
+                MessageToByteHandler(framingHandler),
+            ])
         case .default:
             let framingHandler = NewlineEncoder()
-            return try self.addHandlers([ByteToMessageHandler(framingHandler),
-                                     MessageToByteHandler(framingHandler)])
+            return try self.addHandlers([
+                ByteToMessageHandler(framingHandler),
+                MessageToByteHandler(framingHandler),
+            ])
         }
     }
 }
@@ -56,7 +61,12 @@ internal final class NewlineEncoder: ByteToMessageDecoder, MessageToByteEncoder 
     private var lastIndex = 0
 
     // inbound
-    public func decode(context: ChannelHandlerContext, buffer: inout ByteBuffer) throws -> DecodingState {
+    public func decode(
+        context: ChannelHandlerContext,
+        buffer: inout ByteBuffer
+    ) throws
+        -> DecodingState
+    {
         guard buffer.readableBytes < maxPayload else {
             throw CodecError.requestTooLarge
         }
@@ -84,7 +94,13 @@ internal final class NewlineEncoder: ByteToMessageDecoder, MessageToByteEncoder 
         return .continue
     }
 
-    public func decodeLast(context: ChannelHandlerContext, buffer: inout ByteBuffer, seenEOF: Bool) throws -> DecodingState {
+    public func decodeLast(
+        context: ChannelHandlerContext,
+        buffer: inout ByteBuffer,
+        seenEOF: Bool
+    )
+        throws -> DecodingState
+    {
         while try self.decode(context: context, buffer: &buffer) == .continue {}
         if buffer.readableBytes > buffer.readerIndex {
             throw CodecError.badFraming
@@ -118,7 +134,12 @@ internal final class JSONPosCodec: ByteToMessageDecoder, MessageToByteEncoder {
     private let colon = UInt8(ascii: ":")
 
     // inbound
-    public func decode(context: ChannelHandlerContext, buffer: inout ByteBuffer) throws -> DecodingState {
+    public func decode(
+        context: ChannelHandlerContext,
+        buffer: inout ByteBuffer
+    ) throws
+        -> DecodingState
+    {
         guard buffer.readableBytes < maxPayload else {
             throw CodecError.requestTooLarge
         }
@@ -128,9 +149,9 @@ internal final class JSONPosCodec: ByteToMessageDecoder, MessageToByteEncoder {
 
         let readableBytesView = buffer.readableBytesView
         // assuming we have the format <length>:<payload>\n
-        let lengthView = readableBytesView.prefix(8) // contains <length>
-        let fromColonView = readableBytesView.dropFirst(8) // contains :<payload>\n
-        let payloadView = fromColonView.dropFirst() // contains <payload>\n
+        let lengthView = readableBytesView.prefix(8)  // contains <length>
+        let fromColonView = readableBytesView.dropFirst(8)  // contains :<payload>\n
+        let payloadView = fromColonView.dropFirst()  // contains <payload>\n
         let hex = String(decoding: lengthView, as: Unicode.UTF8.self)
 
         guard let payloadSize = Int(hex, radix: 16) else {
@@ -152,7 +173,13 @@ internal final class JSONPosCodec: ByteToMessageDecoder, MessageToByteEncoder {
         return .continue
     }
 
-    public func decodeLast(context: ChannelHandlerContext, buffer: inout ByteBuffer, seenEOF: Bool) throws -> DecodingState {
+    public func decodeLast(
+        context: ChannelHandlerContext,
+        buffer: inout ByteBuffer,
+        seenEOF: Bool
+    )
+        throws -> DecodingState
+    {
         while try self.decode(context: context, buffer: &buffer) == .continue {}
         if buffer.readableBytes > buffer.readerIndex {
             throw CodecError.badFraming
@@ -175,7 +202,8 @@ internal final class JSONPosCodec: ByteToMessageDecoder, MessageToByteEncoder {
 }
 
 // no delimeter is provided, brute force try to decode the json
-internal final class BruteForceCodec<T>: ByteToMessageDecoder, MessageToByteEncoder where T: Decodable {
+internal final class BruteForceCodec<T>: ByteToMessageDecoder, MessageToByteEncoder
+where T: Decodable {
     public typealias InboundIn = ByteBuffer
     public typealias InboundOut = ByteBuffer
     public typealias OutboundIn = ByteBuffer
@@ -184,14 +212,19 @@ internal final class BruteForceCodec<T>: ByteToMessageDecoder, MessageToByteEnco
     private let last = UInt8(ascii: "}")
     private var lastIndex = 0
 
-    public func decode(context: ChannelHandlerContext, buffer: inout ByteBuffer) throws -> DecodingState {
+    public func decode(
+        context: ChannelHandlerContext,
+        buffer: inout ByteBuffer
+    ) throws
+        -> DecodingState
+    {
         guard buffer.readableBytes < maxPayload else {
             throw CodecError.requestTooLarge
         }
 
         // try to find a payload by looking for a json payload, first rough cut is looking for a trailing }
         let readableBytesView = buffer.readableBytesView.dropFirst(self.lastIndex)
-        guard let _ = readableBytesView.firstIndex(of: last) else {
+        guard readableBytesView.firstIndex(of: last) != nil else {
             self.lastIndex = buffer.readableBytes
             return .needMoreData
         }
@@ -214,7 +247,13 @@ internal final class BruteForceCodec<T>: ByteToMessageDecoder, MessageToByteEnco
         return .continue
     }
 
-    public func decodeLast(context: ChannelHandlerContext, buffer: inout ByteBuffer, seenEOF: Bool) throws -> DecodingState {
+    public func decodeLast(
+        context: ChannelHandlerContext,
+        buffer: inout ByteBuffer,
+        seenEOF: Bool
+    )
+        throws -> DecodingState
+    {
         while try self.decode(context: context, buffer: &buffer) == .continue {}
         if buffer.readableBytes > buffer.readerIndex {
             throw CodecError.badFraming
@@ -230,7 +269,8 @@ internal final class BruteForceCodec<T>: ByteToMessageDecoder, MessageToByteEnco
 }
 
 // bytes to codable and back
-internal final class CodableCodec<In, Out>: ChannelInboundHandler, ChannelOutboundHandler where In: Decodable, Out: Encodable {
+internal final class CodableCodec<In, Out>: ChannelInboundHandler, ChannelOutboundHandler
+where In: Decodable, Out: Encodable {
     public typealias InboundIn = ByteBuffer
     public typealias InboundOut = In
     public typealias OutboundIn = Out
@@ -244,7 +284,9 @@ internal final class CodableCodec<In, Out>: ChannelInboundHandler, ChannelOutbou
         var buffer = unwrapInboundIn(data)
         let data = buffer.readData(length: buffer.readableBytes)!
         do {
-            print("--> decoding \(String(decoding: data[data.startIndex ..< min(data.startIndex + 100, data.endIndex)], as: UTF8.self))")
+            print(
+                "--> decoding \(String(decoding: data[data.startIndex ..< min(data.startIndex + 100, data.endIndex)], as: UTF8.self))"
+            )
             let decodable = try self.decoder.decode(In.self, from: data)
             // call next handler
             context.fireChannelRead(wrapInboundOut(decodable))

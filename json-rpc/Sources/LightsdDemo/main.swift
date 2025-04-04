@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 import JSONRPC
 import NIOCore
 import NIOPosix
@@ -98,7 +97,17 @@ func list(_ client: TCPClient) -> [Lifx] {
 
 func on(_ client: TCPClient, id: String, color: Color = .white, transition: Int = 0) {
     let saturation = .white == color ? 0.0 : 1.0
-    switch try! client.call(method: "set_light_from_hsbk", params: hsbk(target: id, hue: color.rawValue, saturation: saturation, brightness: 0.1, temperature: 5000, transition: transition)).wait() {
+    switch try! client.call(
+        method: "set_light_from_hsbk",
+        params: hsbk(
+            target: id,
+            hue: color.rawValue,
+            saturation: saturation,
+            brightness: 0.1,
+            temperature: 5000,
+            transition: transition
+        )
+    ).wait() {
     case .failure(let error):
         fatalError("set_light_from_hsbk failed with \(error)")
     case .success:
@@ -145,7 +154,7 @@ func show(_ client: TCPClient) {
     sleep(1)
 
     var bulbIndex = 0
-    for _ in 0 ..< bulbs.count * 10 {
+    for _ in 0..<bulbs.count * 10 {
         for (index, bulb) in bulbs.enumerated() {
             if index == bulbIndex {
                 on(client, id: bulb.id, color: .white, transition: 100)
@@ -161,8 +170,8 @@ func show(_ client: TCPClient) {
     sleep(1)
 
     bulbIndex = 0
-    for colorIndex in 0 ..< colors.count {
-        for _ in 0 ..< bulbs.count {
+    for colorIndex in 0..<colors.count {
+        for _ in 0..<bulbs.count {
             for (index, bulb) in bulbs.enumerated() {
                 if index == bulbIndex {
                     on(client, id: bulb.id, color: colors[colorIndex], transition: 100)
@@ -180,7 +189,7 @@ func show(_ client: TCPClient) {
 
     bulbIndex = 0
     var colorIndex = 0
-    for _ in 0 ..< bulbs.count * colors.count {
+    for _ in 0..<bulbs.count * colors.count {
         for (index, bulb) in bulbs.enumerated() {
             if index == bulbIndex {
                 on(client, id: bulb.id, color: colors[colorIndex], transition: 100)
@@ -210,13 +219,23 @@ func show(_ client: TCPClient) {
     }
 }
 
-func hsbk(target: String, hue: Int, saturation: Double, brightness: Double, temperature: Int, transition: Int = 0) -> RPCObject {
+func hsbk(
+    target: String,
+    hue: Int,
+    saturation: Double,
+    brightness: Double,
+    temperature: Int,
+    transition: Int = 0
+) -> RPCObject {
     assert(hue >= 0 && hue <= 360, "Hue from 0 to 360")
     assert(saturation >= 0 && saturation <= 1, "Saturation from 0 to 1")
     assert(brightness >= 0 && brightness <= 1, "Brightness from 0 to 1")
     assert(temperature >= 2500 && temperature <= 9000, "Temperature in Kelvin from 2500 to 9000")
     //assert (transition >= 0 && transition <= 60000, "Transition duration to this color in ms")
-    return RPCObject([RPCObject(target), RPCObject(hue), RPCObject(saturation), RPCObject(brightness), RPCObject(temperature), RPCObject(transition)])
+    return RPCObject([
+        RPCObject(target), RPCObject(hue), RPCObject(saturation), RPCObject(brightness),
+        RPCObject(temperature), RPCObject(transition),
+    ])
 }
 
 let address = ("127.0.0.1", 7000)
@@ -235,7 +254,7 @@ case "reset":
 case "list":
     let bulbs = list(client)
     print("======= bulbs =======")
-    bulbs.forEach { print(" \($0)") }
+    for bulb in bulbs { print(" \(bulb)") }
     print("=====================")
 case "on":
     if CommandLine.arguments.count < 3 {

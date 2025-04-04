@@ -12,31 +12,35 @@
 //
 //===----------------------------------------------------------------------===//
 
-import UIKit
 import NIOCore
 import NIOExtras
 import NIOPosix
-import NIOTransportServices
-import NIOTLS
 import NIOSSL
+import NIOTLS
+import NIOTransportServices
+import UIKit
 
 #if canImport(Network)
 import Network
 #endif
 
-func sendEmail(_ email: Email,
-               group: EventLoopGroup,
-               communicationHandler: @escaping (String) -> Void,
-               queue: DispatchQueue,
-               _ handler: @escaping (Error?) -> Void) {
+func sendEmail(
+    _ email: Email,
+    group: EventLoopGroup,
+    communicationHandler: @escaping (String) -> Void,
+    queue: DispatchQueue,
+    _ handler: @escaping (Error?) -> Void
+) {
     let emailSentPromise: EventLoopPromise<Void> = group.next().makePromise()
 
     let bootstrap: NIOClientTCPBootstrap
     do {
-        bootstrap = try configureBootstrap(group: group,
-                                           email: email,
-                                           emailSentPromise: emailSentPromise,
-                                           communicationHandler: communicationHandler)
+        bootstrap = try configureBootstrap(
+            group: group,
+            email: email,
+            emailSentPromise: emailSentPromise,
+            communicationHandler: communicationHandler
+        )
     } catch {
         queue.async {
             handler(error)
@@ -44,8 +48,10 @@ func sendEmail(_ email: Email,
         return
     }
 
-    let connection = bootstrap.connect(host: Configuration.shared.serverConfig.hostname,
-                                       port: Configuration.shared.serverConfig.port)
+    let connection = bootstrap.connect(
+        host: Configuration.shared.serverConfig.hostname,
+        port: Configuration.shared.serverConfig.port
+    )
 
     connection.cascadeFailure(to: emailSentPromise)
     emailSentPromise.futureResult.map {
@@ -61,7 +67,6 @@ func sendEmail(_ email: Email,
     }
 }
 
-
 class ViewController: UIViewController {
     var group: EventLoopGroup? = nil
 
@@ -74,18 +79,25 @@ class ViewController: UIViewController {
 
     @IBAction func sendEmailAction(_ sender: UIButton) {
         self.logView.text = ""
-        let email = Email(senderName: nil,
-                          senderEmail: self.fromField.text!,
-                          recipientName: nil,
-                          recipientEmail: self.toField.text!,
-                          subject: self.subjectField.text!,
-                          body: self.textField.text!)
+        let email = Email(
+            senderName: nil,
+            senderEmail: self.fromField.text!,
+            recipientName: nil,
+            recipientEmail: self.toField.text!,
+            subject: self.subjectField.text!,
+            body: self.textField.text!
+        )
         let commHandler: (String) -> Void = { str in
             DispatchQueue.main.async {
                 self.logView.text += str + "\n"
             }
         }
-        sendEmail(email, group: self.group!, communicationHandler: commHandler, queue: DispatchQueue.main) { maybeError in
+        sendEmail(
+            email,
+            group: self.group!,
+            communicationHandler: commHandler,
+            queue: DispatchQueue.main
+        ) { maybeError in
             assert(Thread.isMainThread)
             if let error = maybeError {
                 self.sendEmailButton.titleLabel?.text = "❌"
@@ -114,62 +126,84 @@ class ViewController: UIViewController {
 
 // MARK: - NIO/NIOTS handling
 
-func makeNIOSMTPHandlers(communicationHandler: @escaping (String) -> Void,
-                         email: Email,
-                         emailSentPromise: EventLoopPromise<Void>) -> [ChannelHandler] {
-    return [
+func makeNIOSMTPHandlers(
+    communicationHandler: @escaping (String) -> Void,
+    email: Email,
+    emailSentPromise: EventLoopPromise<Void>
+) -> [ChannelHandler] {
+    [
         PrintEverythingHandler(handler: communicationHandler),
         ByteToMessageHandler(LineBasedFrameDecoder()),
         SMTPResponseDecoder(),
         MessageToByteHandler(SMTPRequestEncoder()),
-        SendEmailHandler(configuration: Configuration.shared.serverConfig,
-                         email: email,
-                         allDonePromise: emailSentPromise)
+        SendEmailHandler(
+            configuration: Configuration.shared.serverConfig,
+            email: email,
+            allDonePromise: emailSentPromise
+        ),
     ]
 }
 
-private let sslContext = try! NIOSSLContext(configuration: TLSConfiguration.makeClientConfiguration())
+private let sslContext = try! NIOSSLContext(
+    configuration: TLSConfiguration.makeClientConfiguration()
+)
 
-func configureBootstrap(group: EventLoopGroup,
-                        email: Email,
-                        emailSentPromise: EventLoopPromise<Void>,
-                        communicationHandler: @escaping (String) -> Void) throws -> NIOClientTCPBootstrap {
+func configureBootstrap(
+    group: EventLoopGroup,
+    email: Email,
+    emailSentPromise: EventLoopPromise<Void>,
+    communicationHandler: @escaping (String) -> Void
+) throws -> NIOClientTCPBootstrap {
     let hostname = Configuration.shared.serverConfig.hostname
     let bootstrap: NIOClientTCPBootstrap
 
     switch (NetworkImplementation.best, Configuration.shared.serverConfig.tlsConfiguration) {
     case (.transportServices, .regularTLS), (.transportServices, .insecureNoTLS):
         if #available(macOS 10.14, iOS 12, tvOS 12, watchOS 3, *) {
-            bootstrap = NIOClientTCPBootstrap(NIOTSConnectionBootstrap(group: group),
-                                              tls: NIOTSClientTLSProvider())
+            bootstrap = NIOClientTCPBootstrap(
+                NIOTSConnectionBootstrap(group: group),
+                tls: NIOTSClientTLSProvider()
+            )
         } else {
             fatalError("Network.framework unsupported on this OS yet it was selected as the best option.")
         }
     case (.transportServices, .startTLS):
         if #available(macOS 10.14, iOS 12, tvOS 12, watchOS 3, *) {
-            bootstrap = try NIOClientTCPBootstrap(NIOTSConnectionBootstrap(group: group),
-                                                  tls: NIOSSLClientTLSProvider(context: sslContext,
-                                                                               serverHostname: hostname))
+            bootstrap = try NIOClientTCPBootstrap(
+                NIOTSConnectionBootstrap(group: group),
+                tls: NIOSSLClientTLSProvider(
+                    context: sslContext,
+                    serverHostname: hostname
+                )
+            )
         } else {
             fatalError("Network.framework unsupported on this OS yet it was selected as the best option.")
         }
     case (.posix, _):
-        bootstrap = try NIOClientTCPBootstrap(ClientBootstrap(group: group),
-                                              tls: NIOSSLClientTLSProvider(context: sslContext,
-                                                                           serverHostname: hostname))
+        bootstrap = try NIOClientTCPBootstrap(
+            ClientBootstrap(group: group),
+            tls: NIOSSLClientTLSProvider(
+                context: sslContext,
+                serverHostname: hostname
+            )
+        )
     }
 
     switch Configuration.shared.serverConfig.tlsConfiguration {
     case .regularTLS:
         bootstrap.enableTLS()
     case .insecureNoTLS, .startTLS:
-        () // no TLS to start with
+        ()  // no TLS to start with
     }
 
     return bootstrap.channelInitializer { channel in
-        channel.pipeline.addHandlers(makeNIOSMTPHandlers(communicationHandler: communicationHandler,
-                                                         email: email,
-                                                         emailSentPromise: emailSentPromise))
+        channel.pipeline.addHandlers(
+            makeNIOSMTPHandlers(
+                communicationHandler: communicationHandler,
+                email: email,
+                emailSentPromise: emailSentPromise
+            )
+        )
     }
 }
 

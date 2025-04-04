@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 ///===----------------------------------------------------------------------===//
 //
 // This source file is part of the SwiftNIO open source project
@@ -37,9 +36,8 @@ final class GlueHandler {
 
     private var pendingRead: Bool = false
 
-    private init() { }
+    private init() {}
 }
-
 
 extension GlueHandler {
     static func matchedPair() -> (GlueHandler, GlueHandler) {
@@ -52,7 +50,6 @@ extension GlueHandler {
         return (first, second)
     }
 }
-
 
 extension GlueHandler {
     private func partnerWrite(_ data: NIOAny) {
@@ -82,7 +79,6 @@ extension GlueHandler {
         self.context?.channel.isWritable ?? false
     }
 }
-
 
 extension GlueHandler: ChannelDuplexHandler {
     typealias InboundIn = NIOAny

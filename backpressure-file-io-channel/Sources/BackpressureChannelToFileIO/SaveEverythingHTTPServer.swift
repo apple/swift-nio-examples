@@ -12,10 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-import NIOCore
-import NIOPosix
-import NIOHTTP1
 import Logging
+import NIOCore
+import NIOHTTP1
+import NIOPosix
 
 public final class SaveEverythingHTTPServer {
     private var state = FileIOCoordinatorState() {
@@ -54,37 +54,49 @@ extension SaveEverythingHTTPServer {
         case .processingCompletedDiscardResources(let fileHandle, let maybeError):
             try! fileHandle?.close()
             self.logger.debug("fully handled request: \(maybeError.debugDescription)")
-            self.requestFullyProcessed(context: context, result: maybeError.map { .failure($0) } ?? .success(()))
+            self.requestFullyProcessed(
+                context: context,
+                result: maybeError.map { .failure($0) } ?? .success(())
+            )
         case .openFile(let path):
-            self.fileIO.openFile(path: path,
-                                 mode: .write,
-                                 flags: .allowFileCreation(posixMode: 0o600),
-                                 eventLoop: context.eventLoop).flatMap { fileHandle in
-                        self.fileIO.changeFileSize(fileHandle: fileHandle,
-                                                   size: 0,
-                                                   eventLoop: context.eventLoop).map { fileHandle }
+            self.fileIO.openFile(
+                path: path,
+                mode: .write,
+                flags: .allowFileCreation(posixMode: 0o600),
+                eventLoop: context.eventLoop
+            ).flatMap { fileHandle in
+                self.fileIO.changeFileSize(
+                    fileHandle: fileHandle,
+                    size: 0,
+                    eventLoop: context.eventLoop
+                ).map { fileHandle }
             }.whenComplete { result in
                 switch result {
                 case .success(let fileHandle):
-                    self.runAction(self.state.didOpenTargetFile(fileHandle),
-                                   context: context)
+                    self.runAction(
+                        self.state.didOpenTargetFile(fileHandle),
+                        context: context
+                    )
                 case .failure(let error):
-                    self.runAction(self.state.didError(error),
-                                   context: context)
+                    self.runAction(
+                        self.state.didError(error),
+                        context: context
+                    )
                 }
             }
         case .nothingWeAreWaiting:
             ()
         case .startWritingToTargetFile:
             let (fileHandle, bytes) = self.state.pullNextChunkToWrite()
-            self.fileIO.write(fileHandle: fileHandle, buffer: bytes, eventLoop: context.eventLoop).whenComplete { result in
-                switch result {
-                case .success(()):
-                    self.runAction(self.state.didFinishWritingOneChunkToFile(), context: context)
-                case .failure(let error):
-                    self.runAction(self.state.didError(error), context: context)
+            self.fileIO.write(fileHandle: fileHandle, buffer: bytes, eventLoop: context.eventLoop)
+                .whenComplete { result in
+                    switch result {
+                    case .success(()):
+                        self.runAction(self.state.didFinishWritingOneChunkToFile(), context: context)
+                    case .failure(let error):
+                        self.runAction(self.state.didError(error), context: context)
+                    }
                 }
-            }
         }
         if action.callRead {
             context.read()
@@ -97,24 +109,50 @@ extension SaveEverythingHTTPServer {
     func requestFullyProcessed(context: ChannelHandlerContext, result: Result<Void, Error>) {
         switch result {
         case .success:
-            context.write(self.wrapOutboundOut(HTTPServerResponsePart.head(.init(version: .init(major: 1,
-                                                                                                minor: 1),
-                                                                                 status: .ok,
-                                                                                 headers: ["content-length": "0"]))),
-                          promise: nil)
+            context.write(
+                self.wrapOutboundOut(
+                    HTTPServerResponsePart.head(
+                        .init(
+                            version: .init(
+                                major: 1,
+                                minor: 1
+                            ),
+                            status: .ok,
+                            headers: ["content-length": "0"]
+                        )
+                    )
+                ),
+                promise: nil
+            )
             context.writeAndFlush(self.wrapOutboundOut(HTTPServerResponsePart.end(nil)), promise: nil)
         case .failure(let error):
             let errorPage = "ERROR on \(context.channel): \(error)"
-            context.write(self.wrapOutboundOut(HTTPServerResponsePart.head(.init(version: .init(major: 1,
-                                                                                                minor: 1),
-                                                                                 status: .internalServerError,
-                                                                                 headers: ["connection": "close",
-                                                                                           "content-length": "\(errorPage.utf8.count)"]))),
-                          promise: nil)
+            context.write(
+                self.wrapOutboundOut(
+                    HTTPServerResponsePart.head(
+                        .init(
+                            version: .init(
+                                major: 1,
+                                minor: 1
+                            ),
+                            status: .internalServerError,
+                            headers: [
+                                "connection": "close",
+                                "content-length": "\(errorPage.utf8.count)",
+                            ]
+                        )
+                    )
+                ),
+                promise: nil
+            )
             var buffer = context.channel.allocator.buffer(capacity: errorPage.utf8.count)
             buffer.writeString(errorPage)
-            context.write(self.wrapOutboundOut(HTTPServerResponsePart.body(.byteBuffer(buffer))), promise: nil)
-            context.writeAndFlush(self.wrapOutboundOut(HTTPServerResponsePart.end(nil))).whenComplete { _ in
+            context.write(
+                self.wrapOutboundOut(HTTPServerResponsePart.body(.byteBuffer(buffer))),
+                promise: nil
+            )
+            context.writeAndFlush(self.wrapOutboundOut(HTTPServerResponsePart.end(nil))).whenComplete {
+                _ in
                 context.close(promise: nil)
             }
         }
@@ -137,7 +175,10 @@ extension SaveEverythingHTTPServer: ChannelDuplexHandler {
 
         switch reqPart {
         case .head(let request):
-            self.runAction(self.state.didReceiveRequestBegin(targetPath: self.filenameForURI(request.uri)), context: context)
+            self.runAction(
+                self.state.didReceiveRequestBegin(targetPath: self.filenameForURI(request.uri)),
+                context: context
+            )
         case .body(let bytes):
             self.runAction(self.state.didReceiveRequestBodyBytes(bytes), context: context)
         case .end:
@@ -156,14 +197,16 @@ extension SaveEverythingHTTPServer: ChannelDuplexHandler {
 extension SaveEverythingHTTPServer {
     func filenameForURI(_ uri: String) -> String {
         var result = "\(self.uploadDirectory)/uploaded_file_"
-        result.append(contentsOf: uri.map { char in
-            switch char {
-            case "A" ... "Z", "a" ... "z", "0" ... "9":
-                return char
-            default:
-                return "_"
+        result.append(
+            contentsOf: uri.map { char in
+                switch char {
+                case "A"..."Z", "a"..."z", "0"..."9":
+                    return char
+                default:
+                    return "_"
+                }
             }
-        })
+        )
         return result
     }
 }

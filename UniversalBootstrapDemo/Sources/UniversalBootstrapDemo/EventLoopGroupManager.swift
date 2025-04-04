@@ -12,11 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+import NIOConcurrencyHelpers
 import NIOCore
 import NIOPosix
-import NIOTransportServices
 import NIOSSL
-import NIOConcurrencyHelpers
+import NIOTransportServices
 
 /// `EventLoopGroupManager` can be used to manage an `EventLoopGroup`, either by creating or by sharing an existing one.
 ///
@@ -73,7 +73,10 @@ extension EventLoopGroupManager {
         try self.lock.withLock {
             let bootstrap: NIOClientTCPBootstrap
             if let group = self.group {
-                bootstrap = try self.makeUniversalBootstrapWithExistingGroup(group, serverHostname: hostname)
+                bootstrap = try self.makeUniversalBootstrapWithExistingGroup(
+                    group,
+                    serverHostname: hostname
+                )
             } else {
                 bootstrap = try self.makeUniversalBootstrapWithSystemDefaults(serverHostname: hostname)
             }
@@ -98,7 +101,7 @@ extension EventLoopGroupManager {
             case .createNew:
                 try self.group?.syncShutdownGracefully()
             case .shared:
-                () // nothing to do.
+                ()  // nothing to do.
             }
             self.group = nil
         }
@@ -119,7 +122,11 @@ extension EventLoopGroupManager {
     // (`NIOClientTCPBootstrap`). This allows you to bootstrap connections (with or without TLS) using either the
     // NIO on sockets (`NIO`) or NIO on Network.framework (`NIOTransportServices`) stacks.
     // The remainder of the code should be platform-independent.
-    private func makeUniversalBootstrapWithSystemDefaults(serverHostname: String) throws -> NIOClientTCPBootstrap {
+    private func makeUniversalBootstrapWithSystemDefaults(
+        serverHostname: String
+    ) throws
+        -> NIOClientTCPBootstrap
+    {
         if let group = self.group {
             return try self.makeUniversalBootstrapWithExistingGroup(group, serverHostname: serverHostname)
         }
@@ -144,12 +151,18 @@ extension EventLoopGroupManager {
     }
 
     // If we already know the group, then let's just contruct the correct bootstrap.
-    private func makeUniversalBootstrapWithExistingGroup(_ group: EventLoopGroup,
-                                                                serverHostname: String) throws -> NIOClientTCPBootstrap {
+    private func makeUniversalBootstrapWithExistingGroup(
+        _ group: EventLoopGroup,
+        serverHostname: String
+    ) throws -> NIOClientTCPBootstrap {
         if let bootstrap = ClientBootstrap(validatingGroup: group) {
-            return try NIOClientTCPBootstrap(bootstrap,
-                                             tls: NIOSSLClientTLSProvider(context: self.sslContext,
-                                                                          serverHostname: serverHostname))
+            return try NIOClientTCPBootstrap(
+                bootstrap,
+                tls: NIOSSLClientTLSProvider(
+                    context: self.sslContext,
+                    serverHostname: serverHostname
+                )
+            )
         }
 
         #if canImport(Network)

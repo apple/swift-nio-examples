@@ -13,11 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 import ArgumentParser
+import Logging
 import NIOCore
 import NIOPosix
 import NIOSSL
-import Logging
-
 import TLSifyLib
 
 let rootLogger: Logger = {
@@ -74,17 +73,17 @@ struct TLSifyCommand: ParsableCommand {
                     }
                 }
                 .bind(host: self.listenHost, port: self.listenPort)
-            .map { channel in
-                rootLogger.info("Listening on \(channel.localAddress!)")
-            }
-            .whenFailure { [listenHost, listenPort] error in
-                rootLogger.error("Couldn't bind to \(listenHost):\(listenPort): \(error)")
-                el.shutdownGracefully { error in
-                    if let error = error {
-                        preconditionFailure("EL shutdown failed: \(error)")
+                .map { channel in
+                    rootLogger.info("Listening on \(channel.localAddress!)")
+                }
+                .whenFailure { [listenHost, listenPort] error in
+                    rootLogger.error("Couldn't bind to \(listenHost):\(listenPort): \(error)")
+                    el.shutdownGracefully { error in
+                        if let error = error {
+                            preconditionFailure("EL shutdown failed: \(error)")
+                        }
                     }
                 }
-            }
         }
     }
 }

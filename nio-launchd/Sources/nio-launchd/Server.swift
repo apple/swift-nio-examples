@@ -12,9 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+import ArgumentParser
 import NIOCore
 import NIOPosix
-import ArgumentParser
 import launch
 
 struct Server: ParsableCommand {

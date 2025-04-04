@@ -12,15 +12,15 @@
 //
 //===----------------------------------------------------------------------===//
 
+import Foundation
 import NIOConcurrencyHelpers
 import NIOCore
+import NIOExtras
 import NIOHTTP1
 import NIOHTTP2
 import NIOPosix
-import NIOTLS
 import NIOSSL
-import Foundation
-import NIOExtras
+import NIOTLS
 
 /// Fires off one GET request when our stream is active and collects all response parts into a promise.
 ///
@@ -34,7 +34,11 @@ final class SendRequestHandler: ChannelInboundHandler {
     private let host: String
     private let compoundRequest: HTTPRequest
 
-    init(host: String, request: HTTPRequest, responseReceivedPromise: EventLoopPromise<[HTTPClientResponsePart]>) {
+    init(
+        host: String,
+        request: HTTPRequest,
+        responseReceivedPromise: EventLoopPromise<[HTTPClientResponsePart]>
+    ) {
         self.responseReceivedPromise = responseReceivedPromise
         self.host = host
         self.compoundRequest = request
@@ -44,9 +48,11 @@ final class SendRequestHandler: ChannelInboundHandler {
         assert(context.channel.parent!.isActive)
         var headers = HTTPHeaders(self.compoundRequest.headers)
         headers.add(name: "host", value: self.host)
-        var reqHead = HTTPRequestHead(version: self.compoundRequest.version,
-                                      method: self.compoundRequest.method,
-                                      uri: self.compoundRequest.target)
+        var reqHead = HTTPRequestHead(
+            version: self.compoundRequest.version,
+            method: self.compoundRequest.method,
+            uri: self.compoundRequest.target
+        )
         reqHead.headers = headers
         context.write(self.wrapOutboundOut(.head(reqHead)), promise: nil)
         if let body = self.compoundRequest.body {
@@ -54,7 +60,10 @@ final class SendRequestHandler: ChannelInboundHandler {
             buffer.writeBytes(body)
             context.write(self.wrapOutboundOut(.body(.byteBuffer(buffer))), promise: nil)
         }
-        context.writeAndFlush(self.wrapOutboundOut(.end(self.compoundRequest.trailers.map(HTTPHeaders.init))), promise: nil)
+        context.writeAndFlush(
+            self.wrapOutboundOut(.end(self.compoundRequest.trailers.map(HTTPHeaders.init))),
+            promise: nil
+        )
         context.fireChannelActive()
     }
 
@@ -91,7 +100,9 @@ final class HeuristicForServerTooOldToSpeakGoodProtocolsHandler: ChannelInboundH
 
     func userInboundEventTriggered(context: ChannelHandlerContext, event: Any) {
         if self.bytesSeen == 0 {
-            if case let event = event as? TLSUserEvent, event == .shutdownCompleted || event == .handshakeCompleted(negotiatedProtocol: nil) {
+            if case let event = event as? TLSUserEvent,
+                event == .shutdownCompleted || event == .handshakeCompleted(negotiatedProtocol: nil)
+            {
                 context.fireErrorCaught(Error.serverDoesNotSpeakHTTP2)
                 return
             }
@@ -103,7 +114,7 @@ final class HeuristicForServerTooOldToSpeakGoodProtocolsHandler: ChannelInboundH
         if self.bytesSeen == 0 {
             switch error {
             case NIOSSLError.uncleanShutdown,
-                 is IOError where (error as! IOError).errnoCode == ECONNRESET:
+                is IOError where (error as! IOError).errnoCode == ECONNRESET:
                 // this is very highly likely a server doesn't speak HTTP/2 problem
                 context.fireErrorCaught(Error.serverDoesNotSpeakHTTP2)
                 return
@@ -190,19 +201,21 @@ guard urls.count > 0 else {
 ///
 /// hostsToURLsMap will contain two entries: One for `foo.com` (containing two URLs) and one for `example.net`
 /// (containing one URL).
-let hostToURLsMap: [HostAndPort: [URL]] = Dictionary(grouping:
-    urls.map { url -> (host: String, port: Int, url: URL) in
-        guard let host = url.host else {
-            print("ERROR: URL '\(url)' does not have a hostname which is required")
-            exit(1)
-        }
-        guard url.scheme == "https" else {
-            print("ERROR: URL '\(url)' is not https but that's required")
-            exit(1)
-        }
-        return (host, url.port ?? 443, url)
-    }
-    , by: { HostAndPort(host: $0.host, port: $0.port) }).mapValues { $0.map { $0.url }}
+let hostToURLsMap: [HostAndPort: [URL]] = Dictionary(
+    grouping:
+        urls.map { url -> (host: String, port: Int, url: URL) in
+            guard let host = url.host else {
+                print("ERROR: URL '\(url)' does not have a hostname which is required")
+                exit(1)
+            }
+            guard url.scheme == "https" else {
+                print("ERROR: URL '\(url)' is not https but that's required")
+                exit(1)
+            }
+            return (host, url.port ?? 443, url)
+        },
+    by: { HostAndPort(host: $0.host, port: $0.port) }
+).mapValues { $0.map { $0.url } }
 
 if verbose {
     print("* will create the following \(hostToURLsMap.count) HTTP/2 connections")
@@ -215,11 +228,15 @@ if verbose {
 }
 
 // This will open a file to which we can dump the PCAPs if that's required.
-let dumpPCAPFileSink = dumpPCAP.flatMap { (path: String) -> NIOWritePCAPHandler.SynchronizedFileSink? in
+let dumpPCAPFileSink = dumpPCAP.flatMap {
+    (path: String) -> NIOWritePCAPHandler.SynchronizedFileSink? in
     do {
-        return try NIOWritePCAPHandler.SynchronizedFileSink.fileSinkWritingToFile(path: path, errorHandler: {
-            print("WRITE PCAP ERROR: \($0)")
-        })
+        return try NIOWritePCAPHandler.SynchronizedFileSink.fileSinkWritingToFile(
+            path: path,
+            errorHandler: {
+                print("WRITE PCAP ERROR: \($0)")
+            }
+        )
     } catch {
         print("WRITE PCAP ERROR: \(error)")
         return nil
@@ -247,7 +264,8 @@ defer {
     channelErrorForwarder: EventLoopFuture<Void>
 ) -> EventLoopFuture<[(String, EventLoopPromise<[HTTPClientResponsePart]>)]> {
     // Step 1 is to find the HTTP2StreamMultiplexer so we can create HTTP/2 streams for our requests.
-    return channel.pipeline.handler(type: NIOHTTP2Handler.self).flatMapThrowing { http2Handler -> [(String, EventLoopPromise<[HTTPClientResponsePart]>)] in
+    channel.pipeline.handler(type: NIOHTTP2Handler.self).flatMapThrowing {
+        http2Handler -> [(String, EventLoopPromise<[HTTPClientResponsePart]>)] in
         // Step 2: Let's create an HTTP/2 stream for each request.
         var responseReceivedPromises: [(String, EventLoopPromise<[HTTPClientResponsePart]>)] = []
         for uri in uris {
@@ -255,7 +273,8 @@ defer {
             channelErrorForwarder.cascadeFailure(to: promise)
             responseReceivedPromises.append((uri, promise))
             // Create the actual HTTP/2 stream using the multiplexer's `createStreamChannel` method.
-            try http2Handler.syncMultiplexer().createStreamChannel(promise: nil) { (channel: Channel) -> EventLoopFuture<Void> in
+            try http2Handler.syncMultiplexer().createStreamChannel(promise: nil) {
+                (channel: Channel) -> EventLoopFuture<Void> in
                 channel.eventLoop.assertInEventLoop()
                 return channel.eventLoop.makeCompletedFuture {
                     try channel.pipeline.syncOperations.addHandlers(
@@ -270,7 +289,7 @@ defer {
                                     trailers: nil
                                 ),
                                 responseReceivedPromise: promise
-                            )
+                            ),
                         ],
                         position: .last
                     )
@@ -306,7 +325,7 @@ for hostAndURL in hostToURLsMap {
                 let sslHandler = try NIOSSLClientHandler(context: sslContext, serverHostname: host)
                 try sync.addHandlers([
                     sslHandler,
-                    HeuristicForServerTooOldToSpeakGoodProtocolsHandler()
+                    HeuristicForServerTooOldToSpeakGoodProtocolsHandler(),
                 ])
                 if let dumpPCAPFileSink = dumpPCAPFileSink {
                     try sync.addHandler(
@@ -318,7 +337,9 @@ for hostAndURL in hostToURLsMap {
                         position: .after(sslHandler)
                     )
                 }
-                try sync.addHandler(CollectErrorsAndCloseStreamHandler(promise: forwardChannelErrorToStreamsPromise))
+                try sync.addHandler(
+                    CollectErrorsAndCloseStreamHandler(promise: forwardChannelErrorToStreamsPromise)
+                )
                 try _ = sync.configureHTTP2Pipeline(
                     mode: .client,
                     connectionConfiguration: .init(),
@@ -351,14 +372,16 @@ for hostAndURL in hostToURLsMap {
         let responseFutures = uriResponsePairs.map { $0.1.futureResult }
 
         // Here, we build a future that aggregates all the responses from all the different requests.
-        let allURIsAndResponses = try EventLoopFuture<[[HTTPClientResponsePart]]>.reduce([],
-                                                                                   responseFutures,
-                                                                                   on: channel.eventLoop,
-                                                                                   { $0 + [$1] })
-            // zip the URIs and responses together again
-            .map { zip(targets, $0) }
-            // and just wait until they arrive.
-            .wait()
+        let allURIsAndResponses = try EventLoopFuture<[[HTTPClientResponsePart]]>.reduce(
+            [],
+            responseFutures,
+            on: channel.eventLoop,
+            { $0 + [$1] }
+        )
+        // zip the URIs and responses together again
+        .map { zip(targets, $0) }
+        // and just wait until they arrive.
+        .wait()
         for uriAndResponse in allURIsAndResponses {
             if verbose {
                 print("> GET \(uriAndResponse.0)")
@@ -376,7 +399,7 @@ for hostAndURL in hostToURLsMap {
                     let written = buffer.withUnsafeReadableBytes { ptr in
                         write(STDOUT_FILENO, ptr.baseAddress, ptr.count)
                     }
-                    precondition(written == buffer.readableBytes) // technically, write could write short ;)
+                    precondition(written == buffer.readableBytes)  // technically, write could write short ;)
                 case .end(_):
                     if verbose {
                         print("* Response fully received")

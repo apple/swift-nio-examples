@@ -12,13 +12,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 import Dispatch
 import JSONRPC
 import NIOCore
 import NIOPosix
 
-private final class Calculator: Sendable  {
+private final class Calculator: Sendable {
     func handle(method: String, params: RPCObject, callback: (RPCResult) -> Void) {
         switch method.lowercased() {
         case "add":
@@ -75,6 +74,7 @@ private func trap(signal sig: Signal, handler: @escaping (Signal) -> Void) -> Di
     return signalSource
 }
 
+// swift-format-ignore: AlwaysUseLowerCamelCase
 private enum Signal: Int32 {
     case HUP = 1
     case INT = 2

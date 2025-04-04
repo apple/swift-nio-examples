@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-import NIOCore
 import Logging
+import NIOCore
 
 public final class CloseOnErrorHandler: ChannelInboundHandler, Sendable {
     public typealias InboundIn = Never
