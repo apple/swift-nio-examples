@@ -1,3 +1,18 @@
+//===----------------------------------------------------------------------===//
+//
+// This source file is part of the SwiftNIO open source project
+//
+// Copyright (c) 2025 Apple Inc. and the SwiftNIO project authors
+// Licensed under Apache License v2.0
+//
+// See LICENSE.txt for license information
+// See CONTRIBUTORS.txt for the list of SwiftNIO project authors
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+//===----------------------------------------------------------------------===//
+
+
 import Dispatch
 import JSONRPC
 import NIOCore
@@ -65,7 +80,7 @@ private enum Signal: Int32 {
     case INT = 2
     case QUIT = 3
     case ABRT = 6
-    case KILL = 9
+    case KILL = 9  // ignore-unacceptable-language
     case ALRM = 14
     case TERM = 15
 }

@@ -25,7 +25,7 @@ echo -n 'compiling...'
 swift run http2-client https://google.com > "$tmp/compiling" 2>&1 || { cat "$tmp/compiling"; exit 1; }
 echo OK
 
-while read site; do
+while read -r site; do
     url="https://$site"
     is_http2=true
     echo "testing $url"
