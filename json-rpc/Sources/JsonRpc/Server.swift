@@ -43,7 +43,7 @@ public final class TCPServer: @unchecked Sendable {
 
             let bootstrap = ServerBootstrap(group: group)
                 .serverChannelOption(ChannelOptions.backlog, value: 256)
-                .serverChannelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
+                .serverChannelOption(ChannelOptions.socket(.init(SOL_SOCKET), .init(SO_REUSEADDR)), value: 1)
                 .childChannelInitializer { channel in
                     return channel.pipeline.eventLoop.makeCompletedFuture {
                         try channel.pipeline.syncOperations.addTimeoutHandlers(self.config.timeout)
@@ -54,8 +54,8 @@ public final class TCPServer: @unchecked Sendable {
                         ])
                         }
                 }
-                .childChannelOption(ChannelOptions.socket(IPPROTO_TCP, TCP_NODELAY), value: 1)
-                .childChannelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
+                .childChannelOption(ChannelOptions.socket(.init(IPPROTO_TCP), .init(TCP_NODELAY)), value: 1)
+                .childChannelOption(ChannelOptions.socket(.init(SOL_SOCKET), .init(SO_REUSEADDR)), value: 1)
 
             self.state = .starting("\(host):\(port)")
             return bootstrap.bind(host: host, port: port).flatMap { channel in

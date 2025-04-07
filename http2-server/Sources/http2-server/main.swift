@@ -130,7 +130,7 @@ let group = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
 let bootstrap = ServerBootstrap(group: group)
     // Specify backlog and enable SO_REUSEADDR for the server itself
     .serverChannelOption(ChannelOptions.backlog, value: 256)
-    .serverChannelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
+    .serverChannelOption(ChannelOptions.socket(.init(SOL_SOCKET), .init(SO_REUSEADDR)), value: 1)
 
     // Set the handlers that are applied to the accepted Channels
     .childChannelInitializer { channel in
@@ -159,8 +159,8 @@ let bootstrap = ServerBootstrap(group: group)
     }
 
     // Enable TCP_NODELAY and SO_REUSEADDR for the accepted Channels
-    .childChannelOption(ChannelOptions.socket(IPPROTO_TCP, TCP_NODELAY), value: 1)
-    .childChannelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
+    .childChannelOption(ChannelOptions.socket(.init(IPPROTO_TCP), .init(TCP_NODELAY)), value: 1)
+    .childChannelOption(ChannelOptions.socket(.init(SOL_SOCKET), .init(SO_REUSEADDR)), value: 1)
     .childChannelOption(ChannelOptions.maxMessagesPerRead, value: 1)
 
 defer {

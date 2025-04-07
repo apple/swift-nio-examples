@@ -41,7 +41,7 @@ public final class TCPClient: @unchecked Sendable {
             assert(.initializing == self.state)
 
             let bootstrap = ClientBootstrap(group: self.group)
-                .channelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
+                .channelOption(ChannelOptions.socket(.init(SOL_SOCKET), .init(SO_REUSEADDR)), value: 1)
                 .channelInitializer { channel in
                     return channel.pipeline.eventLoop.makeCompletedFuture {
                         try channel.pipeline.syncOperations.addTimeoutHandlers(self.config.timeout)

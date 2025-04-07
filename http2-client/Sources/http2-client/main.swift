@@ -299,7 +299,7 @@ for hostAndURL in hostToURLsMap {
     let forwardChannelErrorToStreamsPromise = eventLoop.makePromise(of: Void.self)
 
     let bootstrap = ClientBootstrap(group: eventLoop)
-        .channelOption(ChannelOptions.socket(IPPROTO_TCP, TCP_NODELAY), value: 1)
+        .channelOption(ChannelOptions.socket(.init(IPPROTO_TCP), .init(TCP_NODELAY)), value: 1)
         .channelInitializer { channel in
             let sync = channel.pipeline.syncOperations
             return channel.eventLoop.makeCompletedFuture {
