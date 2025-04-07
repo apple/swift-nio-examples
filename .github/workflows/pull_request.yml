@@ -15,7 +15,7 @@ jobs:
       format_check_enabled: false
 
   construct-build-test-matrix:
-    name: Construct integration test matrix
+    name: Construct build matrix
     runs-on: ubuntu-latest
     outputs:
       build-test-matrix: '${{ steps.generate-matrix.outputs.build-test-matrix }}'

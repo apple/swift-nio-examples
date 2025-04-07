@@ -13,14 +13,14 @@
 ##
 ##===----------------------------------------------------------------------===##
 
-set -uo pipefail
+set -euo pipefail
 
 log() { printf -- "** %s\n" "$*" >&2; }
 error() { printf -- "** ERROR: %s\n" "$*" >&2; }
 fatal() { error "$@"; exit 1; }
 
-default_package_directories="TLSify UniversalBootstrapDemo backpressure-file-io-channel http-responsiveness-server connect-proxy http2-client http2-server json-rpc nio-launchd"
-default_project_directories="NIOSMTP"
+default_package_directories="$(while read -r manifest; do dirname "$manifest"; done < <(ls -1 ./*/Package.swift))"
+default_project_directories="$(while read -r manifest; do dirname "$manifest"; done < <(ls -1 ./*/*.xcodeproj))"
 
 # --
 strict_concurrency="${STRICT_CONCURRENCY:-""}"
@@ -45,7 +45,7 @@ for directory in $package_directories; do
 done
 
 if [ -n "$xcode_build_enabled" ]; then
-for directory in $project_directories; do
+  for directory in $project_directories; do
     log "Building: $directory"
     cd "$directory" || fatal "Could not cd to ${directory}."
     $xcode_build_command
