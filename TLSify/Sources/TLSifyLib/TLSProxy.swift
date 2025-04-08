@@ -95,7 +95,6 @@ public final class TLSProxy {
 
         do {
             try myChannel.pipeline.syncOperations.addHandler(myGlue, position: .after(contextForInitialData.handler))
-            _ = try partnerChannel.pipeline.syncOperations.handler(type: CloseOnErrorHandler.self)
             try partnerChannel.pipeline.syncOperations.addHandler(partnerGlue)
         } catch {
             self.gotError(error)

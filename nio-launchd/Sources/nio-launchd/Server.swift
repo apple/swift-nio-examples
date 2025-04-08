@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if canImport(launch)
 import NIOCore
 import NIOPosix
 import ArgumentParser
@@ -104,3 +105,4 @@ private final class EchoHandler: ChannelInboundHandler {
         context.close(promise: nil)
     }
 }
+#endif

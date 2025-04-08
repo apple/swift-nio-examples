@@ -21,41 +21,40 @@ import NIOHTTP2
 final class HTTP1TestServer: ChannelInboundHandler {
     public typealias InboundIn = HTTPServerRequestPart
     public typealias OutboundOut = HTTPServerResponsePart
-
+    
     enum HTTP1TestServerError: Error {
         case noChannelOptions
     }
-
+    
     public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         guard case .end = self.unwrapInboundIn(data) else {
             return
         }
-
+        
         // Insert an event loop tick here. This more accurately represents real workloads in SwiftNIO, which will not
         // re-entrantly write their response frames.
         context.eventLoop.assumeIsolated().execute {
             do {
-            guard let streamID = try context.channel.syncOptions?.getOption(HTTP2StreamChannelOptions.streamID) else {
-                throw HTTP1TestServerError.noChannelOptions
-            }
+                guard let streamID = try context.channel.syncOptions?.getOption(HTTP2StreamChannelOptions.streamID) else {
+                    throw HTTP1TestServerError.noChannelOptions
+                }
                 var headers = HTTPHeaders()
                 headers.add(name: "content-length", value: "5")
                 headers.add(name: "x-stream-id", value: String(Int(streamID)))
                 context.channel.write(HTTPServerResponsePart.head(HTTPResponseHead(version: .init(major: 2, minor: 0), status: .ok, headers: headers)), promise: nil)
-
+                
                 var buffer = context.channel.allocator.buffer(capacity: 12)
                 buffer.writeStaticString("hello")
                 context.channel.write(HTTPServerResponsePart.body(.byteBuffer(buffer)), promise: nil)
-                _ = context.channel.writeAndFlush(HTTPServerResponsePart.end(nil))
-
-                context.close(promise: nil)
+                context.channel.writeAndFlush(HTTPServerResponsePart.end(nil)).assumeIsolated().whenComplete { _ in
+                    context.close(promise: nil)
+                }
             } catch {
                 print("Encountered error on channelRead: \(error)")
             }
         }
     }
 }
-
 
 final class ErrorHandler: ChannelInboundHandler, Sendable {
     typealias InboundIn = Never

@@ -217,12 +217,12 @@ extension ConnectHandler {
         do {
             try context.channel.pipeline.syncOperations.addHandler(localGlue)
             try peerChannel.pipeline.syncOperations.addHandler(peerGlue)
+            context.pipeline.syncOperations.removeHandler(self, promise: nil)
         } catch {
             // Close connected peer channel before closing our channel.
             peerChannel.close(mode: .all, promise: nil)
             context.close(promise: nil)
         }
-        context.pipeline.syncOperations.removeHandler(self, promise: nil)
     }
 
     private func httpErrorAndClose(context: ChannelHandlerContext) {
@@ -239,13 +239,14 @@ extension ConnectHandler {
     private func removeDecoder(context: ChannelHandlerContext) {
         // We drop the future on the floor here as these handlers must all be in our own pipeline, and this should
         // therefore succeed fast.
-
-        let byteToMessageHandlerContext = try! context.pipeline.syncOperations.context(handlerType: ByteToMessageHandler<HTTPRequestDecoder>.self)
-        context.pipeline.syncOperations.removeHandler(context: byteToMessageHandlerContext, promise: nil)
+        if let byteToMessageHandlerContext = try? context.pipeline.syncOperations.context(handlerType: ByteToMessageHandler<HTTPRequestDecoder>.self) {
+            context.pipeline.syncOperations.removeHandler(context: byteToMessageHandlerContext, promise: nil)
+        }
     }
 
     private func removeEncoder(context: ChannelHandlerContext) {
-        let httpResponseEncoderContext = try! context.pipeline.syncOperations.context(handlerType: HTTPResponseEncoder.self)
-        context.pipeline.syncOperations.removeHandler(context: httpResponseEncoderContext, promise: nil)
+        if let httpResponseEncoderContext = try? context.pipeline.syncOperations.context(handlerType: HTTPResponseEncoder.self) {
+            context.pipeline.syncOperations.removeHandler(context: httpResponseEncoderContext, promise: nil)
+        }
     }
 }
