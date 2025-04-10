@@ -43,18 +43,19 @@ public final class TCPServer: @unchecked Sendable {
 
             let bootstrap = ServerBootstrap(group: group)
                 .serverChannelOption(ChannelOptions.backlog, value: 256)
-                .serverChannelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
+                .serverChannelOption(ChannelOptions.socket(.init(SOL_SOCKET), .init(SO_REUSEADDR)), value: 1)
                 .childChannelInitializer { channel in
-                    return channel.pipeline.addTimeoutHandlers(self.config.timeout)
-                        .flatMap {
-                            channel.pipeline.addFramingHandlers(framing: self.config.framing)
-                        }.flatMap {
-                            channel.pipeline.addHandlers([CodableCodec<JSONRequest, JSONResponse>(),
-                                                          Handler(self.closure)])
+                    return channel.pipeline.eventLoop.makeCompletedFuture {
+                        try channel.pipeline.syncOperations.addTimeoutHandlers(self.config.timeout)
+                        try channel.pipeline.syncOperations.addFramingHandlers(framing: self.config.framing)
+                        try channel.pipeline.syncOperations.addHandlers([
+                            CodableCodec<JSONRequest, JSONResponse>(),
+                            Handler(self.closure)
+                        ])
                         }
                 }
-                .childChannelOption(ChannelOptions.socket(IPPROTO_TCP, TCP_NODELAY), value: 1)
-                .childChannelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
+                .childChannelOption(ChannelOptions.socket(.init(IPPROTO_TCP), .init(TCP_NODELAY)), value: 1)
+                .childChannelOption(ChannelOptions.socket(.init(SOL_SOCKET), .init(SO_REUSEADDR)), value: 1)
 
             self.state = .starting("\(host):\(port)")
             return bootstrap.bind(host: host, port: port).flatMap { channel in
@@ -124,7 +125,7 @@ private class Handler: ChannelInboundHandler {
                 print("rpc handler returned failure", handlerError)
                 response = JSONResponse(id: request.id, error: handlerError)
             }
-            context.channel.writeAndFlush(self.wrapOutboundOut(response), promise: nil)
+            context.channel.writeAndFlush(response, promise: nil)
         })
     }
 
@@ -135,13 +136,13 @@ private class Handler: ChannelInboundHandler {
         switch error {
         case CodecError.badFraming, CodecError.badJSON:
             let response = JSONResponse(id: "unknown", errorCode: .parseError, error: error)
-            context.channel.writeAndFlush(self.wrapOutboundOut(response), promise: nil)
+            context.channel.writeAndFlush(response, promise: nil)
         case CodecError.requestTooLarge:
             let response = JSONResponse(id: "unknown", errorCode: .invalidRequest, error: error)
-            context.channel.writeAndFlush(self.wrapOutboundOut(response), promise: nil)
+            context.channel.writeAndFlush(response, promise: nil)
         default:
             let response = JSONResponse(id: "unknown", errorCode: .internalError, error: error)
-            context.channel.writeAndFlush(self.wrapOutboundOut(response), promise: nil)
+            context.channel.writeAndFlush(response, promise: nil)
         }
         // close the client connection
         context.close(promise: nil)

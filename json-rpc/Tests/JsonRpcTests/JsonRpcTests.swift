@@ -459,7 +459,7 @@ private class BadServer {
 
     func start(host: String, port: Int) -> EventLoopFuture<BadServer> {
         let bootstrap = ServerBootstrap(group: group)
-            .serverChannelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
+            .serverChannelOption(ChannelOptions.socket(.init(SOL_SOCKET), .init(SO_REUSEADDR)), value: 1)
             .childChannelInitializer { channel in channel.pipeline.addHandler(Handler(framing: self.framing)) }
         return bootstrap.bind(host: host, port: port).flatMap { channel in
             self.channel = channel

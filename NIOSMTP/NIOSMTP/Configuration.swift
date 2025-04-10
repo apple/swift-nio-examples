@@ -16,7 +16,6 @@ import NIOTransportServices
 
 struct Configuration {
     static let shared: Configuration = {
-        #warning("You need to configure an SMTP server in code.")
         // If you don't want to use your real SMTP server, do try out https://mailtrap.io they offer you an
         // SMTP server that can be used for testing for free.
         let serverConfig = ServerConfiguration(hostname: "you.need.to.configure.your.providers.smtp.server",
@@ -24,6 +23,12 @@ struct Configuration {
                                                username: "put your username here",
                                                password: "and your password goes here",
                                                tlsConfiguration: .startTLS)
+
+        precondition(
+            serverConfig.hostname != "you.need.to.configure.your.providers.smtp.server",
+            "You need to configure an SMTP server in code."
+        )
+
         return Configuration(serverConfig: serverConfig)
     }()
 

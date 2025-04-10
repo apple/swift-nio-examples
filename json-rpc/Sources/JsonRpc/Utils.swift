@@ -15,7 +15,7 @@
 
 import Foundation
 
-public enum ResultType<Value, Error> {
+public enum ResultType<Value, Error>: Sendable where Value: Sendable, Error: Sendable {
     case success(Value)
     case failure(Error)
 }

@@ -21,32 +21,40 @@ import NIOHTTP2
 final class HTTP1TestServer: ChannelInboundHandler {
     public typealias InboundIn = HTTPServerRequestPart
     public typealias OutboundOut = HTTPServerResponsePart
-
+    
+    enum HTTP1TestServerError: Error {
+        case noChannelOptions
+    }
+    
     public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         guard case .end = self.unwrapInboundIn(data) else {
             return
         }
-
+        
         // Insert an event loop tick here. This more accurately represents real workloads in SwiftNIO, which will not
         // re-entrantly write their response frames.
-        context.eventLoop.execute {
-            context.channel.getOption(HTTP2StreamChannelOptions.streamID).flatMap { (streamID) -> EventLoopFuture<Void> in
+        context.eventLoop.assumeIsolated().execute {
+            do {
+                guard let streamID = try context.channel.syncOptions?.getOption(HTTP2StreamChannelOptions.streamID) else {
+                    throw HTTP1TestServerError.noChannelOptions
+                }
                 var headers = HTTPHeaders()
                 headers.add(name: "content-length", value: "5")
                 headers.add(name: "x-stream-id", value: String(Int(streamID)))
-                context.channel.write(self.wrapOutboundOut(HTTPServerResponsePart.head(HTTPResponseHead(version: .init(major: 2, minor: 0), status: .ok, headers: headers))), promise: nil)
-
+                context.channel.write(HTTPServerResponsePart.head(HTTPResponseHead(version: .init(major: 2, minor: 0), status: .ok, headers: headers)), promise: nil)
+                
                 var buffer = context.channel.allocator.buffer(capacity: 12)
                 buffer.writeStaticString("hello")
-                context.channel.write(self.wrapOutboundOut(HTTPServerResponsePart.body(.byteBuffer(buffer))), promise: nil)
-                return context.channel.writeAndFlush(self.wrapOutboundOut(HTTPServerResponsePart.end(nil)))
-            }.whenComplete { _ in
-                context.close(promise: nil)
+                context.channel.write(HTTPServerResponsePart.body(.byteBuffer(buffer)), promise: nil)
+                context.channel.writeAndFlush(HTTPServerResponsePart.end(nil)).assumeIsolated().whenComplete { _ in
+                    context.close(promise: nil)
+                }
+            } catch {
+                print("Encountered error on channelRead: \(error)")
             }
         }
     }
 }
-
 
 final class ErrorHandler: ChannelInboundHandler, Sendable {
     typealias InboundIn = Never
@@ -121,31 +129,37 @@ let group = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
 let bootstrap = ServerBootstrap(group: group)
     // Specify backlog and enable SO_REUSEADDR for the server itself
     .serverChannelOption(ChannelOptions.backlog, value: 256)
-    .serverChannelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
+    .serverChannelOption(ChannelOptions.socket(.init(SOL_SOCKET), .init(SO_REUSEADDR)), value: 1)
 
     // Set the handlers that are applied to the accepted Channels
     .childChannelInitializer { channel in
         // First, we need an SSL handler because HTTP/2 is almost always spoken over TLS.
-        channel.pipeline.addHandler(NIOSSLServerHandler(context: sslContext)).flatMap {
+        channel.pipeline.eventLoop.makeCompletedFuture {
+            try channel.pipeline.syncOperations.addHandler(NIOSSLServerHandler(context: sslContext))
+        }.flatMapThrowing {
             // Right after the SSL handler, we can configure the HTTP/2 pipeline.
-            channel.configureHTTP2Pipeline(mode: .server) { (streamChannel) -> EventLoopFuture<Void> in
-                // For every HTTP/2 stream that the client opens, we put in the `HTTP2ToHTTP1ServerCodec` which
-                // transforms the HTTP/2 frames to the HTTP/1 messages from the `NIOHTTP1` module.
-                streamChannel.pipeline.addHandler(HTTP2FramePayloadToHTTP1ServerCodec()).flatMap { () -> EventLoopFuture<Void> in
+           _ = try channel.pipeline.syncOperations.configureHTTP2Pipeline(
+                mode: .server,
+                connectionConfiguration: .init(),
+                streamConfiguration: .init()
+            ) { streamChannel in
+                streamChannel.pipeline.eventLoop.makeCompletedFuture {
+                    // For every HTTP/2 stream that the client opens, we put in the `HTTP2ToHTTP1ServerCodec` which
+                    // transforms the HTTP/2 frames to the HTTP/1 messages from the `NIOHTTP1` module.
+                    try streamChannel.pipeline.syncOperations.addHandler(HTTP2FramePayloadToHTTP1ServerCodec())
                     // And lastly, we put in our very basic HTTP server :).
-                    streamChannel.pipeline.addHandler(HTTP1TestServer())
-                }.flatMap { () -> EventLoopFuture<Void> in
-                    streamChannel.pipeline.addHandler(ErrorHandler())
+                    try streamChannel.pipeline.syncOperations.addHandler(HTTP1TestServer())
+                    try streamChannel.pipeline.syncOperations.addHandler(ErrorHandler())
                 }
             }
-        }.flatMap { (_: HTTP2StreamMultiplexer) in
+        }.flatMap {
             return channel.pipeline.addHandler(ErrorHandler())
         }
     }
 
     // Enable TCP_NODELAY and SO_REUSEADDR for the accepted Channels
-    .childChannelOption(ChannelOptions.socket(IPPROTO_TCP, TCP_NODELAY), value: 1)
-    .childChannelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
+    .childChannelOption(ChannelOptions.socket(.init(IPPROTO_TCP), .init(TCP_NODELAY)), value: 1)
+    .childChannelOption(ChannelOptions.socket(.init(SOL_SOCKET), .init(SO_REUSEADDR)), value: 1)
     .childChannelOption(ChannelOptions.maxMessagesPerRead, value: 1)
 
 defer {
@@ -176,9 +190,9 @@ case .ip(let host, let port):
     default:
         hostFormatted = "\(host)"
     }
-    print("    curl --insecure https://\(hostFormatted):\(port)/hello-world")
+    print("    curl --insecure \"https://\(hostFormatted):\(port)/hello-world\"")
 case .unixDomainSocket(let path):
-    print("    curl --insecure --unix-socket '\(path)' https://ignore-the-server.name/hello-world")
+    print("    curl --insecure --unix-socket '\(path)' \"https://ignore-the-server.name/hello-world\"")
 }
 
 

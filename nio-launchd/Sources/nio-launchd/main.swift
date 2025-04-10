@@ -14,6 +14,7 @@
 
 import ArgumentParser
 
+#if canImport(launch)
 struct CLI: ParsableCommand {
     static let configuration = CommandConfiguration(
         subcommands: [
@@ -24,3 +25,8 @@ struct CLI: ParsableCommand {
 }
 
 CLI.main()
+
+#else
+print("This example is Darwin-only.")
+
+#endif

@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if canImport(launch)
 import NIOCore
 import NIOPosix
 import ArgumentParser
@@ -62,10 +63,12 @@ struct Server: ParsableCommand {
 
             // Set the handlers that are appled to the accepted Channels
             .childChannelInitializer { channel in
-                // Ensure we don't read faster than we can write by adding the BackPressureHandler into the pipeline.
-                channel.pipeline.addHandler(BackPressureHandler()).flatMap { v in
-                    channel.pipeline.addHandler(EchoHandler())
+                channel.eventLoop.makeCompletedFuture {
+                    // Ensure we don't read faster than we can write by adding the BackPressureHandler into the pipeline.
+                    try channel.pipeline.syncOperations.addHandler(BackPressureHandler())
+                    try channel.pipeline.syncOperations.addHandler(EchoHandler())
                 }
+
             }
 
             // Enable SO_REUSEADDR for the accepted Channels
@@ -102,3 +105,4 @@ private final class EchoHandler: ChannelInboundHandler {
         context.close(promise: nil)
     }
 }
+#endif

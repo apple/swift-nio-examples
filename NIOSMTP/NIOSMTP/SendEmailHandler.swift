@@ -131,9 +131,16 @@ final class SendEmailHandler: ChannelInboundHandler {
             }
         case .okForStartTLS:
             self.currentlyWaitingFor = .tlsHandlerToBeAdded
-            context.channel.pipeline.addHandler(try! NIOSSLClientHandler(context: sslContext,
-                                                                         serverHostname: serverConfiguration.hostname),
-                                                position: .first).whenComplete { result in
+            context.channel.eventLoop.makeCompletedFuture {
+                try context.channel.pipeline.syncOperations.addHandler(
+                    try NIOSSLClientHandler(
+                        context: sslContext,
+                        serverHostname: serverConfiguration.hostname
+                    ),
+                    position: .first
+                )
+            }
+            .whenComplete { result in
                 guard case .tlsHandlerToBeAdded = self.currentlyWaitingFor else {
                     preconditionFailure("wrong state \(self.currentlyWaitingFor)")
                 }

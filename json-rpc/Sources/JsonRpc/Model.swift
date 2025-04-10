@@ -278,7 +278,7 @@ internal extension JSONObject {
     }
 }
 
-public enum RPCObject: Equatable {
+public enum RPCObject: Equatable, Sendable {
     case none
     case string(String)
     case integer(Int)
@@ -343,7 +343,7 @@ public enum RPCObject: Equatable {
     }
 }
 
-public struct RPCError {
+public struct RPCError: Sendable {
     public init(_ kind: Kind, description: String? = nil) {
         self.kind = kind
         self.description = description
@@ -352,7 +352,7 @@ public struct RPCError {
     public let kind: Kind
     public let description: String?
 
-    public enum Kind {
+    public enum Kind: Sendable {
         case invalidMethod
         case invalidParams(String)
         case invalidRequest(String)

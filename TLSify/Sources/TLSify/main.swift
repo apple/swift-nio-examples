@@ -20,8 +20,11 @@ import Logging
 
 import TLSifyLib
 
-var rootLogger = Logger(label: "TLSify")
-rootLogger.logLevel = .debug
+let rootLogger: Logger = {
+    var rootLogger = Logger(label: "TLSify")
+    rootLogger.logLevel = .debug
+    return rootLogger
+}()
 
 struct TLSifyCommand: ParsableCommand {
     @Option(name: .shortAndLong, help: "The host to listen to.")
@@ -57,21 +60,25 @@ struct TLSifyCommand: ParsableCommand {
         MultiThreadedEventLoopGroup.withCurrentThreadAsEventLoop { el in
             ServerBootstrap(group: el)
                 .serverChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
-                .childChannelInitializer { channel in
-                    channel.pipeline.addHandlers([
-                        TLSProxy(host: self.connectHost,
-                                 port: self.connectPort,
-                                 sslContext: sslContext,
-                                 logger: rootLogger),
-                        CloseOnErrorHandler(logger: rootLogger),
-                    ])
+                .childChannelInitializer { [connectHost, connectPort] channel in
+                    channel.eventLoop.makeCompletedFuture {
+                        try channel.pipeline.syncOperations.addHandlers([
+                            TLSProxy(
+                                host: connectHost,
+                                port: connectPort,
+                                sslContext: sslContext,
+                                logger: rootLogger
+                            ),
+                            CloseOnErrorHandler(logger: rootLogger),
+                        ])
+                    }
                 }
                 .bind(host: self.listenHost, port: self.listenPort)
             .map { channel in
                 rootLogger.info("Listening on \(channel.localAddress!)")
             }
-            .whenFailure { error in
-                rootLogger.error("Couldn't bind to \(self.listenHost):\(self.listenPort): \(error)")
+            .whenFailure { [listenHost, listenPort] error in
+                rootLogger.error("Couldn't bind to \(listenHost):\(listenPort): \(error)")
                 el.shutdownGracefully { error in
                     if let error = error {
                         preconditionFailure("EL shutdown failed: \(error)")

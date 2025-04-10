@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+import NIOConcurrencyHelpers
 import NIOCore
 import NIOHTTP1
 import NIOHTTP2
@@ -239,29 +240,14 @@ defer {
 ///  - returns: A future that will be fulfilled when the requests have been sent. The future holds a list of tuples.
 ///             Each tuple contains the `uri` of a request as well as the corresponding future that will hold the
 ///             `HTTPClientResponsePart`s of the received server response to that request.
-func makeRequests(channel: Channel,
-                  host: String,
-                  uris: [String],
-                  channelErrorForwarder: EventLoopFuture<Void>) -> EventLoopFuture<[(String, EventLoopPromise<[HTTPClientResponsePart]>)]> {
+@Sendable func makeRequests(
+    channel: Channel,
+    host: String,
+    uris: [String],
+    channelErrorForwarder: EventLoopFuture<Void>
+) -> EventLoopFuture<[(String, EventLoopPromise<[HTTPClientResponsePart]>)]> {
     // Step 1 is to find the HTTP2StreamMultiplexer so we can create HTTP/2 streams for our requests.
-    return channel.pipeline.handler(type: HTTP2StreamMultiplexer.self).map { http2Multiplexer -> [(String, EventLoopPromise<[HTTPClientResponsePart]>)] in
-        var remainingURIs = uris
-        // Helper function to initialise an HTTP/2 stream.
-        func requestStreamInitializer(uri: String,
-                                      responseReceivedPromise: EventLoopPromise<[HTTPClientResponsePart]>,
-                                      channel: Channel) -> EventLoopFuture<Void> {
-            let uri = remainingURIs.removeFirst()
-            channel.eventLoop.assertInEventLoop()
-            return channel.pipeline.addHandlers([HTTP2FramePayloadToHTTP1ClientCodec(httpProtocol: .https),
-                                                 SendRequestHandler(host: host,
-                                                                    request: .init(target: uri,
-                                                                                   headers: [],
-                                                                                   body: nil,
-                                                                                   trailers: nil),
-                                                                    responseReceivedPromise: responseReceivedPromise)],
-                                                position: .last)
-        }
-
+    return channel.pipeline.handler(type: NIOHTTP2Handler.self).flatMapThrowing { http2Handler -> [(String, EventLoopPromise<[HTTPClientResponsePart]>)] in
         // Step 2: Let's create an HTTP/2 stream for each request.
         var responseReceivedPromises: [(String, EventLoopPromise<[HTTPClientResponsePart]>)] = []
         for uri in uris {
@@ -269,11 +255,26 @@ func makeRequests(channel: Channel,
             channelErrorForwarder.cascadeFailure(to: promise)
             responseReceivedPromises.append((uri, promise))
             // Create the actual HTTP/2 stream using the multiplexer's `createStreamChannel` method.
-            http2Multiplexer.createStreamChannel(promise: nil) { (channel: Channel) -> EventLoopFuture<Void> in
-                // Call the above handler to initialise the stream which will send off the actual request.
-                requestStreamInitializer(uri: uri,
-                                         responseReceivedPromise: promise,
-                                         channel: channel)
+            try http2Handler.syncMultiplexer().createStreamChannel(promise: nil) { (channel: Channel) -> EventLoopFuture<Void> in
+                channel.eventLoop.assertInEventLoop()
+                return channel.eventLoop.makeCompletedFuture {
+                    try channel.pipeline.syncOperations.addHandlers(
+                        [
+                            HTTP2FramePayloadToHTTP1ClientCodec(httpProtocol: .https),
+                            SendRequestHandler(
+                                host: host,
+                                request: .init(
+                                    target: uri,
+                                    headers: [],
+                                    body: nil,
+                                    trailers: nil
+                                ),
+                                responseReceivedPromise: promise
+                            )
+                        ],
+                        position: .last
+                    )
+                }
             }
         }
         return responseReceivedPromises
@@ -298,39 +299,46 @@ for hostAndURL in hostToURLsMap {
     let forwardChannelErrorToStreamsPromise = eventLoop.makePromise(of: Void.self)
 
     let bootstrap = ClientBootstrap(group: eventLoop)
-        .channelOption(ChannelOptions.socket(IPPROTO_TCP, TCP_NODELAY), value: 1)
+        .channelOption(ChannelOptions.socket(.init(IPPROTO_TCP), .init(TCP_NODELAY)), value: 1)
         .channelInitializer { channel in
-            let heuristics = HeuristicForServerTooOldToSpeakGoodProtocolsHandler()
-            let errorHandler = CollectErrorsAndCloseStreamHandler(promise: forwardChannelErrorToStreamsPromise)
-            let sslHandler = try! NIOSSLClientHandler(context: sslContext, serverHostname: host)
-            return channel.pipeline.addHandler(sslHandler).flatMap {
-                return channel.pipeline.addHandler(heuristics, position: .after(sslHandler))
-            }.flatMap { _ in
+            let sync = channel.pipeline.syncOperations
+            return channel.eventLoop.makeCompletedFuture {
+                let sslHandler = try NIOSSLClientHandler(context: sslContext, serverHostname: host)
+                try sync.addHandlers([
+                    sslHandler,
+                    HeuristicForServerTooOldToSpeakGoodProtocolsHandler()
+                ])
                 if let dumpPCAPFileSink = dumpPCAPFileSink {
-                    return channel.pipeline.addHandler(NIOWritePCAPHandler(mode: .client,
-                                                                           fakeRemoteAddress: try! .init(ipAddress: "1.2.3.4", port: 12345),
-                                                                           fileSink: dumpPCAPFileSink.write),
-                                                       position: .after(sslHandler))
-                } else {
-                    return channel.eventLoop.makeSucceededFuture(())
+                    try sync.addHandler(
+                        NIOWritePCAPHandler(
+                            mode: .client,
+                            fakeRemoteAddress: try! .init(ipAddress: "1.2.3.4", port: 12345),
+                            fileSink: dumpPCAPFileSink.write
+                        ),
+                        position: .after(sslHandler)
+                    )
                 }
-            }.flatMap {
-                channel.pipeline.addHandler(errorHandler)
-            }.flatMap {
-                channel.configureHTTP2Pipeline(mode: .client) { channel in
-                    channel.eventLoop.makeSucceededVoidFuture()
-                }.map { (_: HTTP2StreamMultiplexer) in () }
+                try sync.addHandler(CollectErrorsAndCloseStreamHandler(promise: forwardChannelErrorToStreamsPromise))
+                try _ = sync.configureHTTP2Pipeline(
+                    mode: .client,
+                    connectionConfiguration: .init(),
+                    streamConfiguration: .init()
+                ) { streamChannel in
+                    streamChannel.pipeline.eventLoop.makeSucceededVoidFuture()
+                }
             }
-    }
+        }
 
     do {
         let (channel, uriResponsePairs) = try bootstrap.connect(host: host, port: port)
             .flatMap { channel in
-                makeRequests(channel: channel,
-                             host: host,
-                             uris: uris,
-                             channelErrorForwarder: forwardChannelErrorToStreamsPromise.futureResult).map {
-                                (channel, $0)
+                makeRequests(
+                    channel: channel,
+                    host: host,
+                    uris: uris,
+                    channelErrorForwarder: forwardChannelErrorToStreamsPromise.futureResult
+                ).map {
+                    (channel, $0)
                 }
             }
             .wait()

@@ -37,7 +37,8 @@ func configureCommonHTTPTypesServerPipeline(
             channel.configureHTTP2Pipeline(mode: .server) { streamChannel in
                 do {
                     try streamChannel.pipeline.syncOperations.addHandler(
-                        HTTP2FramePayloadToHTTPServerCodec())
+                        HTTP2FramePayloadToHTTPServerCodec()
+                    )
                 } catch {
                     return streamChannel.eventLoop.makeFailedFuture(error)
                 }
@@ -48,7 +49,8 @@ func configureCommonHTTPTypesServerPipeline(
             channel.pipeline.configureHTTPServerPipeline().flatMap { _ in
                 do {
                     try channel.pipeline.syncOperations.addHandler(
-                        HTTP1ToHTTPServerCodec(secure: true))
+                        HTTP1ToHTTPServerCodec(secure: true)
+                    )
                 } catch {
                     return channel.eventLoop.makeFailedFuture(error)
                 }
@@ -137,7 +139,8 @@ private struct HTTPResponsivenessServer: ParsableCommand {
 
     @Flag(
         name: .customLong("nw"),
-        help: "Use Network framework instead of NIOSSL. Disables TLS support.")
+        help: "Use Network framework instead of NIOSSL. Disables TLS support."
+    )
     var useNetwork: Bool = false
 
     @Option(help: "override how many threads to use")
@@ -184,41 +187,42 @@ private struct HTTPResponsivenessServer: ParsableCommand {
 
         if useNetwork {
             #if canImport(Network)
-                let socketBootstrap = NIOTSListenerBootstrap(
-                    group: NIOTSEventLoopGroup(loopCount: threads ?? 1)
+            let socketBootstrap = NIOTSListenerBootstrap(
+                group: NIOTSEventLoopGroup(loopCount: threads ?? 1)
+            )
+            // Enable SO_REUSEADDR for the server itself
+            .serverChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
+
+            // Set the handlers that are applied to the accepted Channels
+            .childChannelInitializer({ [useNetwork] channel in
+                channelInitializer(
+                    channel: channel,
+                    tls: tls,
+                    insecure: insecure,
+                    isNIOTS: useNetwork
                 )
-                // Enable SO_REUSEADDR for the server itself
-                .serverChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
+            })
 
-                // Set the handlers that are applied to the accepted Channels
-                .childChannelInitializer({ [useNetwork] channel in
-                    channelInitializer(
-                        channel: channel,
-                        tls: tls,
-                        insecure: insecure,
-                        isNIOTS: useNetwork
-                    )
-                })
+            // Enable SO_REUSEADDR for the accepted Channels
+            .childChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
+            .childChannelOption(ChannelOptions.tcpOption(.tcp_nodelay), value: 1)
+            .childChannelOption(
+                ChannelOptions.writeBufferWaterMark,
+                value: .init(low: 100 * 16384, high: 100 * 100 * 16384)
+            )
 
-                // Enable SO_REUSEADDR for the accepted Channels
-                .childChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
-                .childChannelOption(ChannelOptions.tcpOption(.tcp_nodelay), value: 1)
-                .childChannelOption(
-                    ChannelOptions.writeBufferWaterMark,
-                    value: .init(low: 100 * 16384, high: 100 * 100 * 16384)
-                )
-
-                // Split this out as a prior step because we want to initiate both binds at once without waiting on either one of them
-                secureChannelBootstrap = nil
-                insecureChannelBootstrap = insecurePort.map {
-                    socketBootstrap.bind(host: host, port: $0)
-                }
+            // Split this out as a prior step because we want to initiate both binds at once without waiting on either one of them
+            secureChannelBootstrap = nil
+            insecureChannelBootstrap = insecurePort.map {
+                socketBootstrap.bind(host: host, port: $0)
+            }
             #else
-                throw RunError.inputError("No Network.framework support on Linux")
+            throw RunError.inputError("No Network.framework support on Linux")
             #endif
         } else {
             let group = MultiThreadedEventLoopGroup(
-                numberOfThreads: threads ?? NIOSingletons.groupLoopCountSuggestion)
+                numberOfThreads: threads ?? NIOSingletons.groupLoopCountSuggestion
+            )
             let socketBootstrap = ServerBootstrap(group: group)
                 // Specify backlog and enable SO_REUSEADDR for the server itself
                 .serverChannelOption(ChannelOptions.backlog, value: 256)
@@ -237,7 +241,8 @@ private struct HTTPResponsivenessServer: ParsableCommand {
                 .childChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
                 .childChannelOption(ChannelOptions.tcpOption(.tcp_nodelay), value: 1)
                 .childChannelOption(
-                    ChannelOptions.socketOption(.init(rawValue: SO_SNDBUF)), value: 10 * 1024 * 1024
+                    ChannelOptions.socketOption(.init(rawValue: SO_SNDBUF)),
+                    value: 10 * 1024 * 1024
                 )
                 .childChannelOption(
                     ChannelOptions.writeBufferWaterMark,
