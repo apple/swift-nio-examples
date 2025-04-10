@@ -14,7 +14,6 @@ jobs:
       license_header_check_project_name: "SwiftNIO"
       docs_check_enabled: false
       api_breakage_check_enabled: false
-      format_check_enabled: false
 
   construct-build-test-matrix:
     name: Construct build matrix
