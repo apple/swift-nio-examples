@@ -39,12 +39,9 @@ let logger: Logger = {
 let server = try ServerBootstrap(group: group)
         .serverChannelOption(ChannelOptions.socket(.init(SOL_SOCKET), .init(SO_REUSEADDR)), value: 1)
         .childChannelInitializer { [logger] channel in
-            let logger: Logger = {
-                var logger = logger
-                logger[metadataKey: "connection"] = "\(channel.remoteAddress!)"
-                return logger
-            }()
-            return channel.pipeline.configureHTTPServerPipeline(withErrorHandling: false).flatMap {
+            var logger = logger
+            logger[metadataKey: "connection"] = "\(channel.remoteAddress!)"
+            return channel.pipeline.configureHTTPServerPipeline(withErrorHandling: false).flatMap { [logger] in
                 channel.eventLoop.makeCompletedFuture {
                     try channel.pipeline.syncOperations.addHandler(SaveEverythingHTTPServer(fileIO: fileIO,
                                                                                             uploadDirectory: "/tmp",
