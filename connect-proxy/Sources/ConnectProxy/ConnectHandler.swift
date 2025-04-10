@@ -12,10 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-import NIOCore
-import NIOPosix
-import NIOHTTP1
 import Logging
+import NIOCore
+import NIOHTTP1
+import NIOPosix
 
 final class ConnectHandler {
     private var upgradeState: State
@@ -28,7 +28,6 @@ final class ConnectHandler {
     }
 }
 
-
 extension ConnectHandler {
     fileprivate enum State {
         case idle
@@ -39,7 +38,6 @@ extension ConnectHandler {
         case upgradeFailed
     }
 }
-
 
 extension ConnectHandler: ChannelInboundHandler {
     typealias InboundIn = HTTPServerRequestPart
@@ -71,7 +69,7 @@ extension ConnectHandler: ChannelInboundHandler {
             pendingBytes.append(data)
             self.upgradeState = .awaitingConnection(pendingBytes: pendingBytes)
 
-        case .upgradeComplete(pendingBytes: var pendingBytes):
+        case .upgradeComplete(var pendingBytes):
             // We're currently delivering data, keep doing so.
             self.upgradeState = .upgradeComplete(pendingBytes: [])
             pendingBytes.append(data)
@@ -89,7 +87,6 @@ extension ConnectHandler: ChannelInboundHandler {
         self.logger[metadataKey: "channel"] = "\(ObjectIdentifier(context.channel))"
     }
 }
-
 
 extension ConnectHandler: RemovableChannelHandler {
     func removeHandler(context: ChannelHandlerContext, removalToken: ChannelHandlerContext.RemovalToken) {
@@ -161,7 +158,7 @@ extension ConnectHandler {
             // Ok, we have a channel, let's wait for end.
             self.upgradeState = .awaitingEnd(connectResult: channel)
 
-        case .awaitingConnection(pendingBytes: let pendingBytes):
+        case .awaitingConnection(let pendingBytes):
             // Upgrade complete! Begin gluing the connection together.
             self.upgradeState = .upgradeComplete(pendingBytes: pendingBytes)
             self.glue(channel, context: context)
@@ -231,7 +228,8 @@ extension ConnectHandler {
         let headers = HTTPHeaders([("Content-Length", "0"), ("Connection", "close")])
         let head = HTTPResponseHead(version: .init(major: 1, minor: 1), status: .badRequest, headers: headers)
         context.write(self.wrapOutboundOut(.head(head)), promise: nil)
-        context.writeAndFlush(self.wrapOutboundOut(.end(nil))).assumeIsolatedUnsafeUnchecked().whenComplete { (_: Result<Void, Error>) in
+        context.writeAndFlush(self.wrapOutboundOut(.end(nil))).assumeIsolatedUnsafeUnchecked().whenComplete {
+            (_: Result<Void, Error>) in
             context.close(mode: .output, promise: nil)
         }
     }
@@ -239,13 +237,17 @@ extension ConnectHandler {
     private func removeDecoder(context: ChannelHandlerContext) {
         // We drop the future on the floor here as these handlers must all be in our own pipeline, and this should
         // therefore succeed fast.
-        if let byteToMessageHandlerContext = try? context.pipeline.syncOperations.context(handlerType: ByteToMessageHandler<HTTPRequestDecoder>.self) {
+        if let byteToMessageHandlerContext = try? context.pipeline.syncOperations.context(
+            handlerType: ByteToMessageHandler<HTTPRequestDecoder>.self
+        ) {
             context.pipeline.syncOperations.removeHandler(context: byteToMessageHandlerContext, promise: nil)
         }
     }
 
     private func removeEncoder(context: ChannelHandlerContext) {
-        if let httpResponseEncoderContext = try? context.pipeline.syncOperations.context(handlerType: HTTPResponseEncoder.self) {
+        if let httpResponseEncoderContext = try? context.pipeline.syncOperations.context(
+            handlerType: HTTPResponseEncoder.self
+        ) {
             context.pipeline.syncOperations.removeHandler(context: httpResponseEncoderContext, promise: nil)
         }
     }

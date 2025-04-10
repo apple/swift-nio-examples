@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 import Foundation
 
 public enum ResultType<Value, Error>: Sendable where Value: Sendable, Error: Sendable {
@@ -26,7 +25,7 @@ public enum Framing: CaseIterable {
     case brute
 }
 
-internal extension NSLock {
+extension NSLock {
     func withLock<T>(_ body: () -> T) -> T {
         self.lock()
         defer {
@@ -36,7 +35,7 @@ internal extension NSLock {
     }
 }
 
-internal extension String {
+extension String {
     func leftPadding(toLength: Int, withPad character: Character) -> String {
         let stringLength = self.count
         if stringLength < toLength {

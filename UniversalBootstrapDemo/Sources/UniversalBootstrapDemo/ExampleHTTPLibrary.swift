@@ -12,9 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+import Foundation
 import NIOCore
 import NIOHTTP1
-import Foundation
 
 public struct UnsupportedURLError: Error {
     var url: String
@@ -39,7 +39,7 @@ public final class ExampleHTTPLibrary: Sendable {
             func channelRead(context: ChannelHandlerContext, data: NIOAny) {
                 switch self.unwrapInboundIn(data) {
                 case .head:
-                    () // ignore
+                    ()  // ignore
                 case .body(let buffer):
                     buffer.withUnsafeReadableBytes { ptr in
                         _ = write(STDOUT_FILENO, ptr.baseAddress, ptr.count)
@@ -51,30 +51,35 @@ public final class ExampleHTTPLibrary: Sendable {
         }
 
         guard let url = URL(string: urlString),
-              let hostname = url.host,
-              let scheme = url.scheme?.lowercased(),
-              ["http", "https"].contains(scheme) else {
+            let hostname = url.host,
+            let scheme = url.scheme?.lowercased(),
+            ["http", "https"].contains(scheme)
+        else {
             throw UnsupportedURLError(url: urlString)
         }
         let useTLS = scheme == "https"
         let connection = try groupManager.makeBootstrap(hostname: hostname, useTLS: useTLS)
-                .channelInitializer { channel in
-                    channel.eventLoop.makeCompletedFuture {
-                        try channel.pipeline.syncOperations.addHTTPClientHandlers()
-                        try channel.pipeline.syncOperations.addHandler(PrintToStdoutHandler())
-                    }
+            .channelInitializer { channel in
+                channel.eventLoop.makeCompletedFuture {
+                    try channel.pipeline.syncOperations.addHTTPClientHandlers()
+                    try channel.pipeline.syncOperations.addHandler(PrintToStdoutHandler())
                 }
-                .connect(host: hostname, port: useTLS ? 443 : 80)
-                .wait()
+            }
+            .connect(host: hostname, port: useTLS ? 443 : 80)
+            .wait()
         print("# Channel")
         print(connection)
         print("# ChannelPipeline")
         print("\(connection.pipeline)")
         print("# HTTP response body")
-        let reqHead = HTTPClientRequestPart.head(.init(version: .init(major: 1, minor: 1),
-                                                       method: .GET,
-                                                       uri: url.path,
-                                                       headers: ["host": hostname]))
+        let reqHead = HTTPClientRequestPart.head(
+            .init(
+                version: .init(major: 1, minor: 1),
+                method: .GET,
+                uri: url.path,
+                headers: ["host": hostname]
+            )
+        )
         connection.write(reqHead, promise: nil)
         try connection.writeAndFlush(HTTPClientRequestPart.end(nil)).wait()
         try connection.closeFuture.wait()

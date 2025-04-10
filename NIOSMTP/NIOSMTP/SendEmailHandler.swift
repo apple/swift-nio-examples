@@ -22,7 +22,7 @@ final class SendEmailHandler: ChannelInboundHandler {
     typealias InboundIn = SMTPResponse
     typealias OutboundIn = Email
     typealias OutboundOut = SMTPRequest
-    
+
     enum Expect {
         case initialMessageFromServer
         case okForOurHello
@@ -37,7 +37,7 @@ final class SendEmailHandler: ChannelInboundHandler {
         case okAfterMailData
         case okAfterQuit
         case nothing
-        
+
         case error(Error)
     }
 
@@ -58,13 +58,13 @@ final class SendEmailHandler: ChannelInboundHandler {
             return false
         }
     }
-    
+
     init(configuration: ServerConfiguration, email: Email, allDonePromise: EventLoopPromise<Void>) {
         self.email = email
         self.allDonePromise = allDonePromise
         self.serverConfiguration = configuration
     }
-    
+
     func send(context: ChannelHandlerContext, command: SMTPRequest) {
         context.writeAndFlush(self.wrapOutboundOut(command)).cascadeFailure(to: self.allDonePromise)
     }
@@ -84,12 +84,16 @@ final class SendEmailHandler: ChannelInboundHandler {
                 // we don't actually care about the NIOSSLClientHandler but we must be sure it's there.
                 goAhead()
             }.whenFailure { error in
-                if NetworkImplementation.best == .transportServices && self.serverConfiguration.tlsConfiguration == .regularTLS {
+                if NetworkImplementation.best == .transportServices
+                    && self.serverConfiguration.tlsConfiguration == .regularTLS
+                {
                     // If we're using NIOTransportServices and regular TLS, then TLS must have been configured ahead
                     // of time, we can't check it here.
                 } else {
-                    preconditionFailure("serious NIOSMTP bug: TLS handler should be present in " +
-                        "\(self.serverConfiguration.tlsConfiguration) but SSL handler \(error)")
+                    preconditionFailure(
+                        "serious NIOSMTP bug: TLS handler should be present in "
+                            + "\(self.serverConfiguration.tlsConfiguration) but SSL handler \(error)"
+                    )
                 }
             }
         case .insecureNoTLS:
@@ -107,7 +111,7 @@ final class SendEmailHandler: ChannelInboundHandler {
         self.allDonePromise.fail(error)
         context.close(promise: nil)
     }
-    
+
     func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         let result = self.unwrapInboundIn(data)
         switch result {
@@ -115,7 +119,7 @@ final class SendEmailHandler: ChannelInboundHandler {
             self.allDonePromise.fail(NSError(domain: "sending email", code: 1, userInfo: ["reason": message]))
             return
         case .ok:
-            () // cool
+            ()  // cool
         }
 
         switch self.currentlyWaitingFor {
@@ -178,7 +182,7 @@ final class SendEmailHandler: ChannelInboundHandler {
             context.close(promise: nil)
             self.currentlyWaitingFor = .nothing
         case .nothing:
-            () // ignoring more data whilst quit (it's odd though)
+            ()  // ignoring more data whilst quit (it's odd though)
         case .error:
             fatalError("error state")
         case .tlsHandlerToBeAdded:

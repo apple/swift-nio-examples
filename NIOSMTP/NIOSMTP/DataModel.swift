@@ -51,11 +51,11 @@ struct ServerConfiguration {
 struct Email {
     var senderName: String?
     var senderEmail: String
-    
+
     var recipientName: String?
     var recipientEmail: String
-    
+
     var subject: String
-    
+
     var body: String
 }

@@ -12,10 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-import XCTest
-
 import JSONRPCTests
+import XCTest
 
 var tests = [XCTestCaseEntry]()
 tests += JSONRPCTests.__allTests()
