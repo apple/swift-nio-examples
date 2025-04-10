@@ -18,11 +18,13 @@ struct Configuration {
     static let shared: Configuration = {
         // If you don't want to use your real SMTP server, do try out https://mailtrap.io they offer you an
         // SMTP server that can be used for testing for free.
-        let serverConfig = ServerConfiguration(hostname: "you.need.to.configure.your.providers.smtp.server",
-                                               port: 25,
-                                               username: "put your username here",
-                                               password: "and your password goes here",
-                                               tlsConfiguration: .startTLS)
+        let serverConfig = ServerConfiguration(
+            hostname: "you.need.to.configure.your.providers.smtp.server",
+            port: 25,
+            username: "put your username here",
+            password: "and your password goes here",
+            tlsConfiguration: .startTLS
+        )
 
         precondition(
             serverConfig.hostname != "you.need.to.configure.your.providers.smtp.server",

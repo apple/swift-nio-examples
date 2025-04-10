@@ -28,12 +28,14 @@ public struct HTTPRequest {
         var body: [UInt8]?
         var trailers: [(String, String)]?
 
-        init(method: HTTPMethod = .GET,
-             target: String,
-             version: HTTPVersion,
-             headers: [(String, String)],
-             body: [UInt8]?,
-             trailers: [(String, String)]?) {
+        init(
+            method: HTTPMethod = .GET,
+            target: String,
+            version: HTTPVersion,
+            headers: [(String, String)],
+            body: [UInt8]?,
+            trailers: [(String, String)]?
+        ) {
             self.method = method
             self.target = target
             self.version = version
@@ -46,36 +48,42 @@ public struct HTTPRequest {
 
     private var _storage: _Storage
 
-    public init(method: HTTPMethod = .GET,
-                target: String,
-                version: HTTPVersion = HTTPVersion(major: 1, minor: 1),
-                headers: [(String, String)],
-                body: [UInt8]?,
-                trailers: [(String, String)]?) {
-        self._storage = _Storage(method: method,
-                                 target: target,
-                                 version: version,
-                                 headers: headers,
-                                 body: body,
-                                 trailers: trailers)
+    public init(
+        method: HTTPMethod = .GET,
+        target: String,
+        version: HTTPVersion = HTTPVersion(major: 1, minor: 1),
+        headers: [(String, String)],
+        body: [UInt8]?,
+        trailers: [(String, String)]?
+    ) {
+        self._storage = _Storage(
+            method: method,
+            target: target,
+            version: version,
+            headers: headers,
+            body: body,
+            trailers: trailers
+        )
     }
 }
 
 extension HTTPRequest._Storage {
     func copy() -> HTTPRequest._Storage {
-        return HTTPRequest._Storage(method: self.method,
-                                            target: self.target,
-                                            version: self.version,
-                                            headers: self.headers,
-                                            body: self.body,
-                                            trailers: self.trailers)
+        HTTPRequest._Storage(
+            method: self.method,
+            target: self.target,
+            version: self.version,
+            headers: self.headers,
+            body: self.body,
+            trailers: self.trailers
+        )
     }
 }
 
 extension HTTPRequest {
     public var method: HTTPMethod {
         get {
-            return self._storage.method
+            self._storage.method
         }
         set {
             if !isKnownUniquelyReferenced(&self._storage) {
@@ -87,7 +95,7 @@ extension HTTPRequest {
 
     public var target: String {
         get {
-            return self._storage.target
+            self._storage.target
         }
         set {
             if !isKnownUniquelyReferenced(&self._storage) {
@@ -99,7 +107,7 @@ extension HTTPRequest {
 
     public var version: HTTPVersion {
         get {
-            return self._storage.version
+            self._storage.version
         }
         set {
             if !isKnownUniquelyReferenced(&self._storage) {
@@ -111,7 +119,7 @@ extension HTTPRequest {
 
     public var headers: [(String, String)] {
         get {
-            return self._storage.headers
+            self._storage.headers
         }
         set {
             if !isKnownUniquelyReferenced(&self._storage) {
@@ -123,7 +131,7 @@ extension HTTPRequest {
 
     public var body: [UInt8]? {
         get {
-            return self._storage.body
+            self._storage.body
         }
         set {
             if !isKnownUniquelyReferenced(&self._storage) {
@@ -135,7 +143,7 @@ extension HTTPRequest {
 
     public var trailers: [(String, String)]? {
         get {
-            return self._storage.trailers
+            self._storage.trailers
         }
         set {
             if !isKnownUniquelyReferenced(&self._storage) {

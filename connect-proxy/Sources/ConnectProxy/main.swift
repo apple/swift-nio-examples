@@ -12,11 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-import NIOCore
-import NIOPosix
-import NIOHTTP1
-import Logging
 import Dispatch
+import Logging
+import NIOCore
+import NIOHTTP1
+import NIOPosix
 
 let group = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
 let bootstrap = ServerBootstrap(group: group)
@@ -24,9 +24,13 @@ let bootstrap = ServerBootstrap(group: group)
     .childChannelOption(ChannelOptions.socket(.init(SOL_SOCKET), .init(SO_REUSEADDR)), value: 1)
     .childChannelInitializer { channel in
         channel.eventLoop.makeCompletedFuture {
-            try channel.pipeline.syncOperations.addHandler(ByteToMessageHandler(HTTPRequestDecoder(leftOverBytesStrategy: .forwardBytes)))
+            try channel.pipeline.syncOperations.addHandler(
+                ByteToMessageHandler(HTTPRequestDecoder(leftOverBytesStrategy: .forwardBytes))
+            )
             try channel.pipeline.syncOperations.addHandler(HTTPResponseEncoder())
-            try channel.pipeline.syncOperations.addHandler(ConnectHandler(logger: Logger(label: "com.apple.nio-connect-proxy.ConnectHandler")))
+            try channel.pipeline.syncOperations.addHandler(
+                ConnectHandler(logger: Logger(label: "com.apple.nio-connect-proxy.ConnectHandler"))
+            )
         }
     }
 

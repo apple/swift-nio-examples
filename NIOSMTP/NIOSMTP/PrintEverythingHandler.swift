@@ -12,16 +12,16 @@
 //
 //===----------------------------------------------------------------------===//
 
+import Foundation
 import NIOCore
 import NIOTransportServices
-import Foundation
 
 final class PrintEverythingHandler: ChannelDuplexHandler {
     typealias InboundIn = ByteBuffer
     typealias InboundOut = ByteBuffer
     typealias OutboundIn = ByteBuffer
     typealias OutboundOut = ByteBuffer
-    
+
     private let handler: (String) -> Void
 
     init(handler: @escaping (String) -> Void) {
@@ -33,10 +33,12 @@ final class PrintEverythingHandler: ChannelDuplexHandler {
         self.handler("☁️ \(String(decoding: buffer.readableBytesView, as: UTF8.self))")
         context.fireChannelRead(data)
     }
-    
+
     func write(context: ChannelHandlerContext, data: NIOAny, promise: EventLoopPromise<Void>?) {
         let buffer = self.unwrapOutboundIn(data)
-        if buffer.readableBytesView.starts(with: Data(Configuration.shared.serverConfig.password.utf8).base64EncodedData()) {
+        if buffer.readableBytesView.starts(
+            with: Data(Configuration.shared.serverConfig.password.utf8).base64EncodedData()
+        ) {
             self.handler("📱 <password hidden>\r\n")
         } else {
             self.handler("📱 \(String(decoding: buffer.readableBytesView, as: UTF8.self))")

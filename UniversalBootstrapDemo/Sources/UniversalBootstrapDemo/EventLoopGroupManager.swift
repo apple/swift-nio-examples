@@ -12,11 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+import NIOConcurrencyHelpers
 import NIOCore
 import NIOPosix
-import NIOTransportServices
 import NIOSSL
-import NIOConcurrencyHelpers
+import NIOTransportServices
 
 /// `EventLoopGroupManager` can be used to manage an `EventLoopGroup`, either by creating or by sharing an existing one.
 ///
@@ -98,7 +98,7 @@ extension EventLoopGroupManager {
             case .createNew:
                 try self.group?.syncShutdownGracefully()
             case .shared:
-                () // nothing to do.
+                ()  // nothing to do.
             }
             self.group = nil
         }
@@ -144,12 +144,18 @@ extension EventLoopGroupManager {
     }
 
     // If we already know the group, then let's just contruct the correct bootstrap.
-    private func makeUniversalBootstrapWithExistingGroup(_ group: EventLoopGroup,
-                                                                serverHostname: String) throws -> NIOClientTCPBootstrap {
+    private func makeUniversalBootstrapWithExistingGroup(
+        _ group: EventLoopGroup,
+        serverHostname: String
+    ) throws -> NIOClientTCPBootstrap {
         if let bootstrap = ClientBootstrap(validatingGroup: group) {
-            return try NIOClientTCPBootstrap(bootstrap,
-                                             tls: NIOSSLClientTLSProvider(context: self.sslContext,
-                                                                          serverHostname: serverHostname))
+            return try NIOClientTCPBootstrap(
+                bootstrap,
+                tls: NIOSSLClientTLSProvider(
+                    context: self.sslContext,
+                    serverHostname: serverHostname
+                )
+            )
         }
 
         #if canImport(Network)

@@ -12,11 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-@testable import JSONRPC
 import NIOCore
 import NIOPosix
 import XCTest
+
+@testable import JSONRPC
 
 final class JSONRPCTests: XCTestCase {
     func testSuccess() {
@@ -109,17 +109,19 @@ final class JSONRPCTests: XCTestCase {
     }
 
     func testParamTypes() {
-        let expectedParams = [RPCObject("foo"),
-                              RPCObject(1),
-                              RPCObject(true),
-                              RPCObject(["foo", "bar"]),
-                              RPCObject(["foo": "bar"]),
-                              RPCObject([1, 2]),
-                              RPCObject(["foo": 1, "bar": 2])]
+        let expectedParams = [
+            RPCObject("foo"),
+            RPCObject(1),
+            RPCObject(true),
+            RPCObject(["foo", "bar"]),
+            RPCObject(["foo": "bar"]),
+            RPCObject([1, 2]),
+            RPCObject(["foo": 1, "bar": 2]),
+        ]
         let address = ("127.0.0.1", 8000)
         let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
         let expectedResponse = RPCObject("ok")
-        expectedParams.forEach { expectedParams in
+        for expectedParam in expectedParams {
             // start server
             let server = TCPServer(group: eventLoopGroup) { _, params, callback in
                 XCTAssertEqual(expectedParams, params, "expected params to match")
@@ -146,14 +148,16 @@ final class JSONRPCTests: XCTestCase {
     func testResponseTypes() {
         let address = ("127.0.0.1", 8000)
         let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
-        let expectedResponse = [RPCObject("foo"),
-                                RPCObject(1),
-                                RPCObject(true),
-                                RPCObject(["foo", "bar"]),
-                                RPCObject(["foo": "bar"]),
-                                RPCObject([1, 2]),
-                                RPCObject(["foo": 1, "bar": 2])]
-        expectedResponse.forEach { expectedResponse in
+        let expectedResponses = [
+            RPCObject("foo"),
+            RPCObject(1),
+            RPCObject(true),
+            RPCObject(["foo", "bar"]),
+            RPCObject(["foo": "bar"]),
+            RPCObject([1, 2]),
+            RPCObject(["foo": 1, "bar": 2]),
+        ]
+        for expectedResponse in expectedResponses {
             // start server
             let server = TCPServer(group: eventLoopGroup) { _, _, callback in
                 callback(.success(expectedResponse))
@@ -189,7 +193,7 @@ final class JSONRPCTests: XCTestCase {
         _ = try! client.connect(host: address.0, port: address.1).wait()
         // perform the method call
         let group = DispatchGroup()
-        (0 ... Int.random(in: 100 ... 500)).forEach { i in
+        for i in (0...Int.random(in: 100...500)) {
             group.enter()
             DispatchQueue.global().async {
                 let result = try! client.call(method: "\(i)", params: .none).wait()
@@ -209,7 +213,7 @@ final class JSONRPCTests: XCTestCase {
     }
 
     func testBadServerResponse1() {
-        Framing.allCases.forEach { framing in
+        for framing in Framing.allCases {
             print("===== testing with \(framing) framing")
             let address = ("127.0.0.1", 8000)
             let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
@@ -217,7 +221,10 @@ final class JSONRPCTests: XCTestCase {
             let server = BadServer(group: eventLoopGroup, framing: framing)
             _ = try! server.start(host: address.0, port: address.1).wait()
             // connect client
-            let client = TCPClient(group: eventLoopGroup, config: TCPClient.Config(timeout: TimeAmount.milliseconds(100), framing: framing))
+            let client = TCPClient(
+                group: eventLoopGroup,
+                config: TCPClient.Config(timeout: TimeAmount.milliseconds(100), framing: framing)
+            )
             _ = try! client.connect(host: address.0, port: address.1).wait()
             // perform the method call
             let result = try! client.call(method: "{boom}", params: .none).wait()
@@ -234,7 +241,7 @@ final class JSONRPCTests: XCTestCase {
     }
 
     func testBadServerResponse2() {
-        Framing.allCases.forEach { framing in
+        for framing in Framing.allCases {
             print("===== testing with \(framing) framing")
             let address = ("127.0.0.1", 8000)
             let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
@@ -242,7 +249,10 @@ final class JSONRPCTests: XCTestCase {
             let server = BadServer(group: eventLoopGroup, framing: framing)
             _ = try! server.start(host: address.0, port: address.1).wait()
             // connect client
-            let client = TCPClient(group: eventLoopGroup, config: TCPClient.Config(timeout: TimeAmount.milliseconds(100), framing: framing))
+            let client = TCPClient(
+                group: eventLoopGroup,
+                config: TCPClient.Config(timeout: TimeAmount.milliseconds(100), framing: framing)
+            )
             _ = try! client.connect(host: address.0, port: address.1).wait()
             // perform the method call
             let result = try! client.call(method: "boom", params: .none).wait()
@@ -259,7 +269,7 @@ final class JSONRPCTests: XCTestCase {
     }
 
     func testBadServerResponse3() {
-        Framing.allCases.forEach { framing in
+        for framing in Framing.allCases {
             print("===== testing with \(framing) framing")
             let address = ("127.0.0.1", 8000)
             let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
@@ -267,7 +277,10 @@ final class JSONRPCTests: XCTestCase {
             let server = BadServer(group: eventLoopGroup, framing: framing)
             _ = try! server.start(host: address.0, port: address.1).wait()
             // connect client
-            let client = TCPClient(group: eventLoopGroup, config: TCPClient.Config(timeout: TimeAmount.milliseconds(100), framing: framing))
+            let client = TCPClient(
+                group: eventLoopGroup,
+                config: TCPClient.Config(timeout: TimeAmount.milliseconds(100), framing: framing)
+            )
             _ = try! client.connect(host: address.0, port: address.1).wait()
             // perform the method call
             let result = try! client.call(method: "do not encode", params: .none).wait()
@@ -324,12 +337,15 @@ final class JSONRPCTests: XCTestCase {
     }
 
     func testBadClientRequest1() {
-        Framing.allCases.forEach { framing in
+        for framing in Framing.allCases {
             print("===== testing with \(framing) framing")
             let address = ("127.0.0.1", 8000)
             let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
             // start server
-            let server = TCPServer(group: eventLoopGroup, config: TCPServer.Config(timeout: TimeAmount.milliseconds(100), framing: framing)) { _, _, callback in
+            let server = TCPServer(
+                group: eventLoopGroup,
+                config: TCPServer.Config(timeout: TimeAmount.milliseconds(100), framing: framing)
+            ) { _, _, callback in
                 callback(.success(RPCObject("yay")))
             }
             _ = try! server.start(host: address.0, port: address.1).wait()
@@ -348,12 +364,15 @@ final class JSONRPCTests: XCTestCase {
     }
 
     func testBadClientRequest2() {
-        Framing.allCases.forEach { framing in
+        for framing in Framing.allCases {
             print("===== testing with \(framing) framing")
             let address = ("127.0.0.1", 8000)
             let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
             // start server
-            let server = TCPServer(group: eventLoopGroup, config: TCPServer.Config(timeout: TimeAmount.milliseconds(100), framing: framing)) { _, _, callback in
+            let server = TCPServer(
+                group: eventLoopGroup,
+                config: TCPServer.Config(timeout: TimeAmount.milliseconds(100), framing: framing)
+            ) { _, _, callback in
                 callback(.success(RPCObject("yay")))
             }
             _ = try! server.start(host: address.0, port: address.1).wait()
@@ -372,12 +391,15 @@ final class JSONRPCTests: XCTestCase {
     }
 
     func testBadClientRequest3() {
-        Framing.allCases.forEach { framing in
+        for framing in Framing.allCases {
             print("===== testing with \(framing) framing")
             let address = ("127.0.0.1", 8000)
             let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
             // start server
-            let server = TCPServer(group: eventLoopGroup, config: TCPServer.Config(timeout: TimeAmount.milliseconds(100), framing: framing)) { _, _, callback in
+            let server = TCPServer(
+                group: eventLoopGroup,
+                config: TCPServer.Config(timeout: TimeAmount.milliseconds(100), framing: framing)
+            ) { _, _, callback in
                 callback(.success(RPCObject("yay")))
             }
             _ = try! server.start(host: address.0, port: address.1).wait()
@@ -396,12 +418,15 @@ final class JSONRPCTests: XCTestCase {
     }
 
     func testBadClientRequest4() {
-        Framing.allCases.forEach { framing in
+        for framing in Framing.allCases {
             print("===== testing with \(framing) framing")
             let address = ("127.0.0.1", 8000)
             let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
             // start server
-            let server = TCPServer(group: eventLoopGroup, config: TCPServer.Config(timeout: TimeAmount.milliseconds(100), framing: framing)) { _, _, callback in
+            let server = TCPServer(
+                group: eventLoopGroup,
+                config: TCPServer.Config(timeout: TimeAmount.milliseconds(100), framing: framing)
+            ) { _, _, callback in
                 callback(.success(RPCObject("yay")))
             }
             _ = try! server.start(host: address.0, port: address.1).wait()
@@ -423,7 +448,10 @@ final class JSONRPCTests: XCTestCase {
         let address = ("127.0.0.1", 8000)
         let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
         // start server
-        let server = TCPServer(group: eventLoopGroup, config: TCPServer.Config(timeout: TimeAmount.milliseconds(100))) { _, _, callback in
+        let server = TCPServer(group: eventLoopGroup, config: TCPServer.Config(timeout: TimeAmount.milliseconds(100))) {
+            _,
+            _,
+            callback in
             callback(.success(RPCObject("yay")))
         }
         _ = try! server.start(host: address.0, port: address.1).wait()
@@ -596,10 +624,7 @@ private func encode(_ text: String, _ framing: Framing) -> String {
     case .default:
         return text + "\r\n"
     case .jsonpos:
-        return String(text.utf8.count, radix: 16).leftPadding(toLength: 8, withPad: "0") +
-            ":" +
-            text +
-            "\n"
+        return String(text.utf8.count, radix: 16).leftPadding(toLength: 8, withPad: "0") + ":" + text + "\n"
     case .brute:
         return text
     }

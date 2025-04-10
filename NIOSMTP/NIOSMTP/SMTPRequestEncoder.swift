@@ -12,13 +12,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+import Foundation
 import NIOCore
 import NIOFoundationCompat
-import Foundation
 
 final class SMTPRequestEncoder: MessageToByteEncoder, Sendable {
     typealias OutboundIn = SMTPRequest
-    
+
     func encode(data: SMTPRequest, out: inout ByteBuffer) throws {
         switch data {
         case .sayHello(serverName: let server):
@@ -55,10 +55,10 @@ final class SMTPRequestEncoder: MessageToByteEncoder, Sendable {
             let passwordData = Data(password.utf8)
             out.writeBytes(passwordData.base64EncodedData())
         }
-        
+
         out.writeString("\r\n")
     }
-    
+
     func formatMIME(emailAddress: String, name: String?) -> String {
         if let name = name {
             return "\(name) <\(emailAddress)>"

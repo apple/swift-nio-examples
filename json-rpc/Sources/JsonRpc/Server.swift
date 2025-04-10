@@ -12,11 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 import Foundation
+import NIOConcurrencyHelpers
 import NIOCore
 import NIOPosix
-import NIOConcurrencyHelpers
 
 public final class TCPServer: @unchecked Sendable {
     private let group: MultiThreadedEventLoopGroup
@@ -45,14 +44,14 @@ public final class TCPServer: @unchecked Sendable {
                 .serverChannelOption(ChannelOptions.backlog, value: 256)
                 .serverChannelOption(ChannelOptions.socket(.init(SOL_SOCKET), .init(SO_REUSEADDR)), value: 1)
                 .childChannelInitializer { channel in
-                    return channel.pipeline.eventLoop.makeCompletedFuture {
+                    channel.pipeline.eventLoop.makeCompletedFuture {
                         try channel.pipeline.syncOperations.addTimeoutHandlers(self.config.timeout)
                         try channel.pipeline.syncOperations.addFramingHandlers(framing: self.config.framing)
                         try channel.pipeline.syncOperations.addHandlers([
                             CodableCodec<JSONRequest, JSONResponse>(),
-                            Handler(self.closure)
+                            Handler(self.closure),
                         ])
-                        }
+                    }
                 }
                 .childChannelOption(ChannelOptions.socket(.init(IPPROTO_TCP), .init(TCP_NODELAY)), value: 1)
                 .childChannelOption(ChannelOptions.socket(.init(SOL_SOCKET), .init(SO_REUSEADDR)), value: 1)
@@ -115,18 +114,22 @@ private class Handler: ChannelInboundHandler {
 
     public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         let request = unwrapInboundIn(data)
-        self.closure(request.method, RPCObject(request.params), { result in
-            let response: JSONResponse
-            switch result {
-            case .success(let handlerResult):
-                print("rpc handler returned success", handlerResult)
-                response = JSONResponse(id: request.id, result: handlerResult)
-            case .failure(let handlerError):
-                print("rpc handler returned failure", handlerError)
-                response = JSONResponse(id: request.id, error: handlerError)
+        self.closure(
+            request.method,
+            RPCObject(request.params),
+            { result in
+                let response: JSONResponse
+                switch result {
+                case .success(let handlerResult):
+                    print("rpc handler returned success", handlerResult)
+                    response = JSONResponse(id: request.id, result: handlerResult)
+                case .failure(let handlerError):
+                    print("rpc handler returned failure", handlerError)
+                    response = JSONResponse(id: request.id, error: handlerError)
+                }
+                context.channel.writeAndFlush(response, promise: nil)
             }
-            context.channel.writeAndFlush(response, promise: nil)
-        })
+        )
     }
 
     public func errorCaught(context: ChannelHandlerContext, error: Error) {

@@ -52,11 +52,11 @@ internal struct FileIOCoordinatorState {
             }
 
             var isEmpty: Bool {
-                return self.bufferedWrites.isEmpty
+                self.bufferedWrites.isEmpty
             }
 
             mutating func removeFirst() -> ByteBuffer {
-                return self.bufferedWrites.removeFirst()
+                self.bufferedWrites.removeFirst()
             }
         }
 
@@ -96,7 +96,8 @@ extension FileIOCoordinatorState {
             self.state = .openingFile(.init(bufferedWrites: [], heldUpRead: false, seenRequestEnd: false))
             return Action(main: .openFile(targetPath), callRead: false)
         case .error:
-            return Action(main: .nothingWeAreWaiting /* for the channel to go away */, callRead: false)
+            // waiting for the channel to go away
+            return Action(main: .nothingWeAreWaiting, callRead: false)
         default:
             self.illegalTransition()
         }
@@ -121,8 +122,11 @@ extension FileIOCoordinatorState {
         case .error, .errorWhilstWriting:
             ()
         }
-        return Action(main: .nothingWeAreWaiting /* for the file to open or the previous writes to complete */,
-                      callRead: false)
+        return Action(
+            // waiting for the file to open or the previous writes to complete
+            main: .nothingWeAreWaiting,
+            callRead: false
+        )
     }
 
     /// Tell the state machine that we've just finished writing one chunk.
@@ -139,7 +143,8 @@ extension FileIOCoordinatorState {
                     return Action(main: .processingCompletedDiscardResources(fileHandle, nil), callRead: heldUpRead)
                 } else {
                     self.state = .readyToWrite(fileHandle, buffers)
-                    return Action(main: .nothingWeAreWaiting /* for more data or EOF */, callRead: heldUpRead)
+                    // waiting for more data or EOF
+                    return Action(main: .nothingWeAreWaiting, callRead: heldUpRead)
                 }
             } else {
                 self.state = .writing(fileHandle, buffers)
@@ -150,7 +155,7 @@ extension FileIOCoordinatorState {
             self.state = .error(error)
             return Action(main: .processingCompletedDiscardResources(fileHandle, error), callRead: false)
         case .error:
-            self.illegalTransition() // if an error happened whilst writing then we should be in the above case.
+            self.illegalTransition()  // if an error happened whilst writing then we should be in the above case.
         }
     }
 
@@ -169,7 +174,7 @@ extension FileIOCoordinatorState {
             if buffers.isEmpty {
                 self.state = .idle
                 let heldUpRead = buffers.heldUpRead
-                buffers.heldUpRead = false // because we're delivering it now.
+                buffers.heldUpRead = false  // because we're delivering it now.
                 return Action(main: .processingCompletedDiscardResources(fileHandle, nil), callRead: heldUpRead)
             } else {
                 self.illegalTransition()
@@ -181,7 +186,8 @@ extension FileIOCoordinatorState {
         case .error, .errorWhilstWriting:
             ()
         }
-        return Action(main: .nothingWeAreWaiting /* for the writes to the file to complete */, callRead: false)
+        // waiting for the writes to the file to complete
+        return Action(main: .nothingWeAreWaiting, callRead: false)
     }
 
     /// Tell the state machine we finished opening the target file.
@@ -192,7 +198,7 @@ extension FileIOCoordinatorState {
         case .openingFile(var buffers):
             if buffers.isEmpty {
                 let heldUpRead = buffers.heldUpRead
-                buffers.heldUpRead = false // because we're replaying it now.
+                buffers.heldUpRead = false  // because we're replaying it now.
 
                 if buffers.seenRequestEnd {
                     // That's a zero length file
@@ -200,7 +206,8 @@ extension FileIOCoordinatorState {
                     return Action(main: .processingCompletedDiscardResources(fileHandle, nil), callRead: heldUpRead)
                 } else {
                     self.state = .readyToWrite(fileHandle, buffers)
-                    return Action(main: .nothingWeAreWaiting /* for more data or EOF */, callRead: heldUpRead)
+                    // waiting for more data or EOF
+                    return Action(main: .nothingWeAreWaiting, callRead: heldUpRead)
                 }
             } else {
                 self.state = .writing(fileHandle, buffers)
@@ -217,7 +224,8 @@ extension FileIOCoordinatorState {
         // Straight to error in these states:
         case .idle:
             self.state = .error(error)
-            return Action(main: .nothingWeAreWaiting /* the channel to go away */, callRead: false)
+            // waiting for the channel to go away
+            return Action(main: .nothingWeAreWaiting, callRead: false)
         case .openingFile:
             self.state = .error(error)
             return Action(main: .processingCompletedDiscardResources(nil, error), callRead: false)
@@ -228,14 +236,17 @@ extension FileIOCoordinatorState {
         // We need to go via .errorWhilstWriting
         case .writing(let fileHandle, _):
             self.state = .errorWhilstWriting(fileHandle, error)
-            return Action(main: .nothingWeAreWaiting /* for the write to complete */, callRead: false)
+            // waiting for the write to complete
+            return Action(main: .nothingWeAreWaiting, callRead: false)
 
         // Error states: We stay where we are
         case .errorWhilstWriting:
-            return Action(main: .nothingWeAreWaiting /* for the write to complete */, callRead: false)
+            // waiting for the write to complete
+            return Action(main: .nothingWeAreWaiting, callRead: false)
         case .error:
             // We'll stay in the existing error state
-            return Action(main: .nothingWeAreWaiting /* the channel to go away */, callRead: false)
+            // waiting for the channel to go away
+            return Action(main: .nothingWeAreWaiting, callRead: false)
         }
     }
 }
@@ -288,6 +299,6 @@ extension FileIOCoordinatorState {
 
 extension FileIOCoordinatorState: CustomStringConvertible {
     var description: String {
-        return "\(self.state)"
+        "\(self.state)"
     }
 }

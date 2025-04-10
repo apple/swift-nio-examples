@@ -13,36 +13,42 @@
 //===----------------------------------------------------------------------===//
 
 import NIOCore
-import NIOPosix
-import NIOSSL
 import NIOHTTP1
 import NIOHTTP2
+import NIOPosix
+import NIOSSL
 
 final class HTTP1TestServer: ChannelInboundHandler {
     public typealias InboundIn = HTTPServerRequestPart
     public typealias OutboundOut = HTTPServerResponsePart
-    
+
     enum HTTP1TestServerError: Error {
         case noChannelOptions
     }
-    
+
     public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         guard case .end = self.unwrapInboundIn(data) else {
             return
         }
-        
+
         // Insert an event loop tick here. This more accurately represents real workloads in SwiftNIO, which will not
         // re-entrantly write their response frames.
         context.eventLoop.assumeIsolated().execute {
             do {
-                guard let streamID = try context.channel.syncOptions?.getOption(HTTP2StreamChannelOptions.streamID) else {
+                guard let streamID = try context.channel.syncOptions?.getOption(HTTP2StreamChannelOptions.streamID)
+                else {
                     throw HTTP1TestServerError.noChannelOptions
                 }
                 var headers = HTTPHeaders()
                 headers.add(name: "content-length", value: "5")
                 headers.add(name: "x-stream-id", value: String(Int(streamID)))
-                context.channel.write(HTTPServerResponsePart.head(HTTPResponseHead(version: .init(major: 2, minor: 0), status: .ok, headers: headers)), promise: nil)
-                
+                context.channel.write(
+                    HTTPServerResponsePart.head(
+                        HTTPResponseHead(version: .init(major: 2, minor: 0), status: .ok, headers: headers)
+                    ),
+                    promise: nil
+                )
+
                 var buffer = context.channel.allocator.buffer(capacity: 12)
                 buffer.writeStaticString("hello")
                 context.channel.write(HTTPServerResponsePart.body(.byteBuffer(buffer)), promise: nil)
@@ -83,16 +89,16 @@ enum BindTo {
 let htdocs: String
 let bindTarget: BindTo
 switch (arg1, arg1.flatMap { Int($0) }, arg2, arg2.flatMap { Int($0) }, arg3) {
-case (.some(let h), _ , _, .some(let p), let maybeHtdocs):
-    /* second arg an integer --> host port [htdocs] */
+case (.some(let h), _, _, .some(let p), let maybeHtdocs):
+    // second arg an integer --> host port [htdocs]
     bindTarget = .ip(host: h, port: p)
     htdocs = maybeHtdocs ?? defaultHtdocs
 case (_, .some(let p), let maybeHtdocs, _, _):
-    /* first arg an integer --> port [htdocs] */
+    // first arg an integer --> port [htdocs]
     bindTarget = .ip(host: defaultHost, port: p)
     htdocs = maybeHtdocs ?? defaultHtdocs
 case (.some(let portString), .none, let maybeHtdocs, .none, .none):
-    /* couldn't parse as number --> uds-path [htdocs] */
+    // couldn't parse as number --> uds-path [htdocs]
     bindTarget = .unixDomainSocket(path: portString)
     htdocs = maybeHtdocs ?? defaultHtdocs
 default:
@@ -108,19 +114,30 @@ default:
 //     NIOSSLCertificateSource.file("/path/to/my.cert")
 
 // Load the private key
-let sslPrivateKey = try! NIOSSLPrivateKeySource.privateKey(NIOSSLPrivateKey(bytes: Array(samplePKCS8PemPrivateKey.utf8),
-                                                                           format: .pem) { providePassword in
-                                                                            providePassword("thisisagreatpassword".utf8)
-})
+let sslPrivateKey = try! NIOSSLPrivateKeySource.privateKey(
+    NIOSSLPrivateKey(
+        bytes: Array(samplePKCS8PemPrivateKey.utf8),
+        format: .pem
+    ) { providePassword in
+        providePassword("thisisagreatpassword".utf8)
+    }
+)
 
 // Load the certificate
-let sslCertificate = try! NIOSSLCertificateSource.certificate(NIOSSLCertificate(bytes: Array(samplePemCert.utf8),
-                                                                               format: .pem))
+let sslCertificate = try! NIOSSLCertificateSource.certificate(
+    NIOSSLCertificate(
+        bytes: Array(samplePemCert.utf8),
+        format: .pem
+    )
+)
 
 // Set up the TLS configuration, it's important to set the `applicationProtocols` to
 // `NIOHTTP2SupportedALPNProtocols` which (using ALPN (https://en.wikipedia.org/wiki/Application-Layer_Protocol_Negotiation))
 // advertises the support of HTTP/2 to the client.
-var serverConfig = TLSConfiguration.makeServerConfiguration(certificateChain: [sslCertificate], privateKey: sslPrivateKey)
+var serverConfig = TLSConfiguration.makeServerConfiguration(
+    certificateChain: [sslCertificate],
+    privateKey: sslPrivateKey
+)
 serverConfig.applicationProtocols = ["h2"]
 // Configure the SSL context that is used by all SSL handlers.
 let sslContext = try! NIOSSLContext(configuration: serverConfig)
@@ -138,7 +155,7 @@ let bootstrap = ServerBootstrap(group: group)
             try channel.pipeline.syncOperations.addHandler(NIOSSLServerHandler(context: sslContext))
         }.flatMapThrowing {
             // Right after the SSL handler, we can configure the HTTP/2 pipeline.
-           _ = try channel.pipeline.syncOperations.configureHTTP2Pipeline(
+            _ = try channel.pipeline.syncOperations.configureHTTP2Pipeline(
                 mode: .server,
                 connectionConfiguration: .init(),
                 streamConfiguration: .init()
@@ -153,7 +170,7 @@ let bootstrap = ServerBootstrap(group: group)
                 }
             }
         }.flatMap {
-            return channel.pipeline.addHandler(ErrorHandler())
+            channel.pipeline.addHandler(ErrorHandler())
         }
     }
 
@@ -175,7 +192,7 @@ let channel = try { () -> Channel in
     case .unixDomainSocket(let path):
         return try bootstrap.bind(unixDomainSocketPath: path).wait()
     }
-    }()
+}()
 
 print("Server started and listening on \(channel.localAddress!), htdocs path \(htdocs)")
 print("\nTry it out by running")
@@ -195,9 +212,7 @@ case .unixDomainSocket(let path):
     print("    curl --insecure --unix-socket '\(path)' \"https://ignore-the-server.name/hello-world\"")
 }
 
-
 // This will never unblock as we don't close the ServerChannel
 try channel.closeFuture.wait()
 
 print("Server closed")
-
