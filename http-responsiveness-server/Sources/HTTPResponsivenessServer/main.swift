@@ -93,7 +93,7 @@ final class PingHandler: ChannelInboundHandler {
             return
 
         case .end where handlingPing:
-            // ping is done; forward the .end so measurement & mux see it
+            // ping is done
             handlingPing = false
             return
 
@@ -180,8 +180,8 @@ func channelInitializer(
             .flatMapThrowing { _ in
                 if collectBenchmarks {
                     try channel.pipeline.syncOperations.addHandler(PerformanceMeasurementHandler())
+                    try channel.pipeline.syncOperations.addHandler(PingHandler())
                 }
-                try channel.pipeline.syncOperations.addHandler(PingHandler())
                 try channel.pipeline.syncOperations.addHandler(
                     SimpleResponsivenessRequestMux(responsivenessConfigBuffer: config)
                 )

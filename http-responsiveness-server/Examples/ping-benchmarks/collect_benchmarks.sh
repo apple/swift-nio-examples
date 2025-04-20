@@ -6,7 +6,7 @@
 #   Reads “Request handled in XX ms” lines from a SwiftNIO HTTPResponsivenessServer
 #   log file (produced when started with --collect-benchmarks) and computes
 #   p0, p25, p50, p75, p90, p99 and p100 statistics.
-#   
+#
 #   Called from run_benchmarks.sh
 #
 #
@@ -24,7 +24,7 @@ SAMPLES="$3"
 
 # extract exactly the first N timings
 mapfile -t times < <(
-  grep "Request handled in" "$LOGFILE" \
+  grep -a "Request handled in" "$LOGFILE" \
     | head -n "$SAMPLES" \
     | sed -E 's/.*Request handled in ([0-9]+(\.[0-9]+)?) ms/\1/'
 )
