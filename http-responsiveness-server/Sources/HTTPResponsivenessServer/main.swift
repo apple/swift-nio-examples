@@ -171,21 +171,19 @@ func channelInitializer(
     }
 
     // Handle insecure case
-    if let (ports, config) = insecure,
-        let port = port,
-        ports.contains(port)
-    {
-        return channel.pipeline
-            .configureHTTPServerPipeline()
-            .flatMapThrowing { _ in
-                if collectBenchmarks {
-                    try channel.pipeline.syncOperations.addHandler(PerformanceMeasurementHandler())
-                    try channel.pipeline.syncOperations.addHandler(PingHandler())
-                }
-                try channel.pipeline.syncOperations.addHandler(
-                    SimpleResponsivenessRequestMux(responsivenessConfigBuffer: config)
-                )
+    if let (ports, config) = insecure, let port, ports.contains(port) {
+        return channel.pipeline.configureHTTPServerPipeline().flatMapThrowing {
+            // If benchmarking is enabled, install timer and ping handlers first:
+            if collectBenchmarks {
+                try channel.pipeline.syncOperations.addHandler(PerformanceMeasurementHandler())
+                try channel.pipeline.syncOperations.addHandler(PingHandler())
             }
+            let mux = SimpleResponsivenessRequestMux(responsivenessConfigBuffer: config)
+            return try channel.pipeline.syncOperations.addHandlers([
+                HTTP1ToHTTPServerCodec(secure: false),
+                mux,
+            ])
+        }
     }
 
     // We're getting traffic on a port we didn't expect. Fail the connection
