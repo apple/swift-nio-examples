@@ -35,15 +35,6 @@ func responsivenessConfigBuffer(scheme: String, host: String, port: Int) throws 
     return ByteBuffer(bytes: encoded)
 }
 
-final class ErrorHandler: ChannelInboundHandler, Sendable {
-    typealias InboundIn = Never
-
-    func errorCaught(context: ChannelHandlerContext, error: Error) {
-        print("Server received error: \(error)")
-        context.close(promise: nil)
-    }
-}
-
 @main
 private struct HTTPResponsivenessServer: ParsableCommand {
     @Option(help: "Host to bind to.")
@@ -133,7 +124,7 @@ private struct HTTPResponsivenessServer: ParsableCommand {
                         }
                     }
                     try channel.pipeline.syncOperations.addHandlers(shutdownHandler)
-                    try channel.pipeline.syncOperations.addHandlers(ErrorHandler())
+                    try channel.pipeline.syncOperations.addHandlers(NIOCloseOnErrorHandler())
                 }
             }
             // Configure the accepted channels
