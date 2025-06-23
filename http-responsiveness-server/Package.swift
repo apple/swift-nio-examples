@@ -47,9 +47,8 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-nio-ssl.git", from: "2.27.0"),
         .package(
             url: "https://github.com/apple/swift-nio-extras.git",
-            revision: "4804de1953c14ce71cfca47a03fb4581a6b3301c"
+            revision: "c6714eeaa49272442d2b2d21ee1e2e645ae6f607"
         ),
-        .package(url: "https://github.com/apple/swift-http-types.git", from: "1.1.0"),
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.4.0"),
         .package(url: "https://github.com/swift-extras/swift-extras-json.git", from: "0.6.0"),
         .package(url: "https://github.com/apple/swift-nio-transport-services.git", from: "1.23.0"),
@@ -66,6 +65,7 @@ let package = Package(
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .product(name: "NIOHTTPTypesHTTP2", package: "swift-nio-extras"),
                 .product(name: "NIOHTTPTypesHTTP1", package: "swift-nio-extras"),
+                .product(name: "NIOExtras", package: "swift-nio-extras"),
                 .product(name: "NIOHTTPResponsiveness", package: "swift-nio-extras"),
                 .product(name: "ExtrasJSON", package: "swift-extras-json"),
                 .product(name: "NIOTransportServices", package: "swift-nio-transport-services"),
