@@ -39,7 +39,7 @@ public class EventLoopGroupManager: @unchecked Sendable {
     private let provider: Provider
     private var sslContext = try! NIOSSLContext(configuration: .makeClientConfiguration())
 
-    public enum Provider {
+    public enum Provider: Sendable {
         case createNew
         case shared(EventLoopGroup)
     }
