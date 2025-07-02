@@ -16,6 +16,7 @@ import Logging
 import NIOCore
 import NIOHTTP1
 import NIOPosix
+import _NIOFileSystem
 
 public final class SaveEverythingHTTPServer {
     private var state = FileIOCoordinatorState() {
