@@ -68,7 +68,7 @@ public struct HTTPRequest {
 }
 
 @available(*, unavailable)
-extension HTTPRequest: Sendable { }
+extension HTTPRequest: Sendable {}
 
 extension HTTPRequest._Storage {
     func copy() -> HTTPRequest._Storage {

@@ -57,6 +57,6 @@ let package = Package(
                 .product(name: "NIOExtras", package: "swift-nio-extras"),
             ],
             swiftSettings: strictConcurrencySettings
-        ),
+        )
     ]
 )

@@ -39,7 +39,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-nio.git", from: "2.81.0"),
         .package(url: "https://github.com/apple/swift-nio-ssl.git", from: "2.16.1"),
         .package(url: "https://github.com/apple/swift-nio-transport-services.git", from: "1.11.3"),
-        .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.5.0")
+        .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.5.0"),
     ],
     targets: [
         .executableTarget(
@@ -53,6 +53,6 @@ let package = Package(
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ],
             swiftSettings: strictConcurrencySettings
-        ),
+        )
     ]
 )

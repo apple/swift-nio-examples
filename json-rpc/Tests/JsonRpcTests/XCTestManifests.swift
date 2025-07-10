@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #if !canImport(ObjectiveC)
 import XCTest
 
@@ -41,8 +40,8 @@ extension JSONRPCTests {
 }
 
 public func __allTests() -> [XCTestCaseEntry] {
-    return [
-        testCase(JSONRPCTests.__allTests__JSONRPCTests),
+    [
+        testCase(JSONRPCTests.__allTests__JSONRPCTests)
     ]
 }
 #endif

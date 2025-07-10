@@ -45,7 +45,7 @@ public final class SaveEverythingHTTPServer {
 }
 
 @available(*, unavailable)
-extension SaveEverythingHTTPServer: Sendable { }
+extension SaveEverythingHTTPServer: Sendable {}
 
 // MARK: - The handler for the Actions the state machine recommends to do
 extension SaveEverythingHTTPServer {
