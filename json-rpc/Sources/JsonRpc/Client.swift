@@ -127,7 +127,7 @@ public final class TCPClient: @unchecked Sendable {
             )
         }
 
-        public enum Kind {
+        public enum Kind: Sendable {
             case invalidMethod
             case invalidParams
             case invalidRequest
@@ -151,7 +151,7 @@ public final class TCPClient: @unchecked Sendable {
         }
     }
 
-    public struct Config {
+    public struct Config: Sendable {
         public let timeout: TimeAmount
         public let framing: Framing
 

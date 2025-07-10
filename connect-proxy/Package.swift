@@ -36,7 +36,7 @@ let strictConcurrencySettings: [SwiftSetting] = {
 let package = Package(
     name: "nio-connect-proxy",
     products: [
-        .executable(name: "ConnectProxy", targets: ["ConnectProxy"]),
+        .executable(name: "ConnectProxy", targets: ["ConnectProxy"])
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-nio.git", from: "2.81.0"),
@@ -51,7 +51,7 @@ let package = Package(
                 .product(name: "NIOHTTP1", package: "swift-nio"),
                 .product(name: "Logging", package: "swift-log"),
             ],
-        swiftSettings: strictConcurrencySettings
-        ),
+            swiftSettings: strictConcurrencySettings
+        )
     ]
 )

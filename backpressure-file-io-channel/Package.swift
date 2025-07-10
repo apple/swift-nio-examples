@@ -36,7 +36,7 @@ let strictConcurrencySettings: [SwiftSetting] = {
 let package = Package(
     name: "backpressure-file-io-channel",
     platforms: [
-        .macOS(.v10_15), .iOS(.v13), .tvOS(.v13)
+        .macOS(.v10_15), .iOS(.v13), .tvOS(.v13),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-nio.git", from: "2.81.0"),
@@ -50,7 +50,8 @@ let package = Package(
                 .product(name: "NIOPosix", package: "swift-nio"),
                 .product(name: "NIOHTTP1", package: "swift-nio"),
                 .product(name: "Logging", package: "swift-log"),
-            ]),
+            ]
+        ),
         .executableTarget(
             name: "BackpressureChannelToFileIODemo",
             dependencies: [

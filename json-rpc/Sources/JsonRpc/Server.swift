@@ -91,7 +91,7 @@ public final class TCPServer: @unchecked Sendable {
         case stopped
     }
 
-    public struct Config {
+    public struct Config: Sendable {
         public let timeout: TimeAmount
         public let framing: Framing
 

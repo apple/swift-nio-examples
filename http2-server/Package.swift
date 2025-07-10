@@ -53,6 +53,6 @@ let package = Package(
                 .product(name: "NIOHTTP2", package: "swift-nio-http2"),
             ],
             swiftSettings: strictConcurrencySettings
-        ),
+        )
     ]
 )

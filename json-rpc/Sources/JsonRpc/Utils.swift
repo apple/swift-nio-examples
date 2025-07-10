@@ -19,7 +19,7 @@ public enum ResultType<Value, Error>: Sendable where Value: Sendable, Error: Sen
     case failure(Error)
 }
 
-public enum Framing: CaseIterable {
+public enum Framing: CaseIterable, Sendable {
     case `default`
     case jsonpos
     case brute
