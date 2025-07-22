@@ -166,10 +166,11 @@ private struct HTTPResponsivenessServer: ParsableCommand {
                 port: port
             )
 
-            let certificate = try NIOSSLCertificate(file: certificatePath, format: .pem)
+            let certificate = try NIOSSLCertificate.fromPEMFile(certificatePath)
+            precondition(certificate.count == 1)
             let privateKey = try NIOSSLPrivateKey(file: privateKeyPath, format: .pem)
             var sslConfiguration = TLSConfiguration.makeServerConfiguration(
-                certificateChain: [.certificate(certificate)],
+                certificateChain: [.certificate(certificate[0])],
                 privateKey: .privateKey(privateKey)
             )
             sslConfiguration.applicationProtocols = ["h2", "http/1.1"]
