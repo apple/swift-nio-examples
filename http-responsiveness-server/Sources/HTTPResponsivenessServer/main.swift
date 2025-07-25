@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 import ArgumentParser
 import ExtrasJSON
+import Foundation
 import NIOCore
 import NIOHTTP1
 import NIOHTTP2
@@ -26,6 +27,81 @@ import NIOTransportServices
 
 enum ChannelInitializeError: Error {
     case unrecognizedPort(Int?)
+}
+
+// MARK: Performance Measurement Handler
+
+/// Logs the time between request head and request end.
+final class PerformanceMeasurementHandler: ChannelInboundHandler {
+    typealias InboundIn = HTTPServerRequestPart
+    private var startTime: DispatchTime?
+
+    func channelRead(context: ChannelHandlerContext, data: NIOAny) {
+        let part = unwrapInboundIn(data)
+        switch part {
+        case .head:
+            startTime = DispatchTime.now()
+            context.fireChannelRead(data)
+        case .body:
+            context.fireChannelRead(data)
+        case .end:
+            if let start = startTime {
+                let elapsedMs = Double(DispatchTime.now().uptimeNanoseconds - start.uptimeNanoseconds) / 1_000_000
+                print("Request handled in \(String(format: "%.2f", elapsedMs)) ms")
+            }
+            context.fireChannelRead(data)
+        }
+    }
+}
+
+/// Simple `/ping` endpoint that immediately responds “pong” — and swallows both head and end.
+final class PingHandler: ChannelInboundHandler {
+    // HTTP *requests* coming in…
+    typealias InboundIn = HTTPServerRequestPart
+    // HTTP *responses* going out.
+    typealias OutboundOut = HTTPServerResponsePart
+
+    // Track whether we’re currently in the middle of a ping request:
+    private var handlingPing = false
+
+    func channelRead(context: ChannelHandlerContext, data: NIOAny) {
+        let part = unwrapInboundIn(data)
+
+        switch part {
+        case .head(let head) where head.uri == "/ping":
+            // Mark that we’ve started handling ping:
+            handlingPing = true
+
+            // Build and send a 200 OK / "pong"
+            var resHead = HTTPResponseHead(version: head.version, status: .ok)
+            resHead.headers.add(name: "Content-Length", value: "4")
+            resHead.headers.add(name: "Content-Type", value: "text/plain")
+            context.write(wrapOutboundOut(.head(resHead)), promise: nil)
+
+            var buf = context.channel.allocator.buffer(capacity: 4)
+            buf.writeString("pong")
+            context.write(wrapOutboundOut(.body(.byteBuffer(buf))), promise: nil)
+
+            // And flush the end of response:
+            context.writeAndFlush(wrapOutboundOut(.end(nil)), promise: nil)
+
+            // **Do not forward** the request head downstream.
+            return
+
+        case .body where handlingPing:
+            // ignore any body for ping
+            return
+
+        case .end where handlingPing:
+            // ping is done
+            handlingPing = false
+            return
+
+        default:
+            // everything else: pass through normally
+            context.fireChannelRead(data)
+        }
+    }
 }
 
 func configureCommonHTTPTypesServerPipeline(
@@ -64,7 +140,8 @@ func channelInitializer(
     channel: Channel,
     tls: ([Int], NIOSSLContext, ByteBuffer)?,
     insecure: ([Int], ByteBuffer)?,
-    isNIOTS: Bool = false
+    isNIOTS: Bool = false,
+    collectBenchmarks: Bool = false
 ) -> EventLoopFuture<Void> {
     // Handle TLS case
     var port = channel.localAddress?.port
@@ -83,6 +160,9 @@ func channelInitializer(
         }
         return configureCommonHTTPTypesServerPipeline(channel) { channel in
             channel.eventLoop.makeCompletedFuture {
+                if collectBenchmarks {
+                    try channel.pipeline.syncOperations.addHandler(PerformanceMeasurementHandler())
+                }
                 try channel.pipeline.syncOperations.addHandler(
                     SimpleResponsivenessRequestMux(responsivenessConfigBuffer: config)
                 )
@@ -93,6 +173,11 @@ func channelInitializer(
     // Handle insecure case
     if let (ports, config) = insecure, let port, ports.contains(port) {
         return channel.pipeline.configureHTTPServerPipeline().flatMapThrowing {
+            // If benchmarking is enabled, install timer and ping handlers first:
+            if collectBenchmarks {
+                try channel.pipeline.syncOperations.addHandler(PerformanceMeasurementHandler())
+                try channel.pipeline.syncOperations.addHandler(PingHandler())
+            }
             let mux = SimpleResponsivenessRequestMux(responsivenessConfigBuffer: config)
             return try channel.pipeline.syncOperations.addHandlers([
                 HTTP1ToHTTPServerCodec(secure: false),
@@ -145,6 +230,9 @@ private struct HTTPResponsivenessServer: ParsableCommand {
 
     @Option(help: "override how many threads to use")
     var threads: Int? = nil
+
+    @Flag(help: "Enable per-request performance measurements")
+    var collectBenchmarks: Bool = false
 
     func run() throws {
         if port == nil && insecurePort == nil {
@@ -199,7 +287,8 @@ private struct HTTPResponsivenessServer: ParsableCommand {
                     channel: channel,
                     tls: tls,
                     insecure: insecure,
-                    isNIOTS: useNetwork
+                    isNIOTS: useNetwork,
+                    collectBenchmarks: collectBenchmarks
                 )
             })
 
@@ -233,7 +322,8 @@ private struct HTTPResponsivenessServer: ParsableCommand {
                     channelInitializer(
                         channel: channel,
                         tls: tls,
-                        insecure: insecure
+                        insecure: insecure,
+                        collectBenchmarks: collectBenchmarks
                     )
                 })
 
@@ -261,6 +351,7 @@ private struct HTTPResponsivenessServer: ParsableCommand {
             print("Listening on https://\(host):\(port!)")
             return out
         }
+
         let insecureChannel = try insecureChannelBootstrap.map {
             let out = try $0.wait()
             print("Listening on http://\(host):\(insecurePort!)")
