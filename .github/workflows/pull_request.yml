@@ -35,3 +35,7 @@ jobs:
     with:
       name: "Build tests"
       matrix_string: '${{ needs.construct-build-test-matrix.outputs.build-test-matrix }}'
+
+  release-builds:
+    name: Release builds
+    uses: apple/swift-nio/.github/workflows/release_builds.yml@main
