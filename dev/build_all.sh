@@ -25,6 +25,7 @@ default_project_directories="$(while read -r manifest; do dirname "$manifest"; d
 # --
 strict_concurrency="${STRICT_CONCURRENCY:-""}"
 xcode_build_enabled="${XCODE_BUILD_ENABLED:-""}"
+extra_build_flags="${EXTRA_BUILD_FLAGS:-""}"
 
 package_directories="${SWIFT_PACKAGE_DIRECTORIES:-$default_package_directories}"
 project_directories="${XCODE_PROJECT_DIRECTORIES:-$default_project_directories}"
@@ -32,9 +33,9 @@ project_directories="${XCODE_PROJECT_DIRECTORIES:-$default_project_directories}"
 # --
 
 if [ -n "$strict_concurrency" ]; then
-  swift_build_command="swift build -Xswiftc -warnings-as-errors --explicit-target-dependency-import-check error -Xswiftc -require-explicit-sendable"
+  swift_build_command="swift build $extra_build_flags -Xswiftc -warnings-as-errors --explicit-target-dependency-import-check error -Xswiftc -require-explicit-sendable"
 else
-  swift_build_command="swift build"
+  swift_build_command="swift build $extra_build_flags"
 fi
 
 xcode_build_command="xcodebuild -project NIOSMTP.xcodeproj -scheme NIOSMTP -arch x86_64 -sdk iphonesimulator"
