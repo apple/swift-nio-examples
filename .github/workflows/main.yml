@@ -59,4 +59,4 @@ jobs:
     uses: apple/swift-nio/.github/workflows/swift_test_matrix.yml@main
     with:
       name: "Release build tests"
-      matrix_string: '${{ needs.construct-release-build-test-matrix.outputs.build-test-matrix }}'
+      matrix_string: '${{ needs.construct-release-build-test-matrix.outputs.release-build-test-matrix }}'
