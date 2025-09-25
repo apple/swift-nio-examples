@@ -1,4 +1,4 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 6.0
 //===----------------------------------------------------------------------===//
 //
 // This source file is part of the SwiftNIO open source project
@@ -19,10 +19,6 @@ let strictConcurrencyDevelopment = false
 
 let strictConcurrencySettings: [SwiftSetting] = {
     var initialSettings: [SwiftSetting] = []
-    initialSettings.append(contentsOf: [
-        .enableUpcomingFeature("StrictConcurrency"),
-        .enableUpcomingFeature("InferSendableFromCaptures"),
-    ])
 
     if strictConcurrencyDevelopment {
         // -warnings-as-errors here is a workaround so that IDE-based development can
@@ -49,7 +45,6 @@ let package = Package(
             url: "https://github.com/apple/swift-nio-extras.git",
             revision: "4804de1953c14ce71cfca47a03fb4581a6b3301c"
         ),
-        .package(url: "https://github.com/apple/swift-http-types.git", from: "1.1.0"),
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.4.0"),
         .package(url: "https://github.com/swift-extras/swift-extras-json.git", from: "0.6.0"),
         .package(url: "https://github.com/apple/swift-nio-transport-services.git", from: "1.23.0"),

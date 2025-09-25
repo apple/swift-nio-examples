@@ -72,7 +72,7 @@ final class IntegrationTest: XCTestCase {
         // And write a byte.
         self.testToChannel.write(Data("X".utf8))
 
-        final class InjectReadHandler: ChannelInboundHandler {
+        final class InjectReadHandler: ChannelInboundHandler, Sendable {
             typealias InboundIn = ByteBuffer
 
             func handlerAdded(context: ChannelHandlerContext) {
@@ -88,7 +88,9 @@ final class IntegrationTest: XCTestCase {
         // To make sure that EOF is seen, we'll inject a `read()` because otherwise there won't be reads because the
         // HTTP server implements backpressure correctly... The read injection handler has to go at the very beginning
         // of the pipeline so the HTTP server can't hold that `read()`.
-        XCTAssertNoThrow(try self.channel.pipeline.addHandler(InjectReadHandler(), position: .first).wait())
+        XCTAssertNoThrow(
+            try self.channel.pipeline.addHandler(InjectReadHandler(), position: .first).wait()
+        )
         XCTAssertNoThrow(try self.channel.closeFuture.wait())
         self.channel = nil  // So tearDown doesn't close it again.
 
@@ -138,19 +140,21 @@ extension IntegrationTest {
         var maybeChannel: Channel? = nil
         XCTAssertNoThrow(
             try maybeChannel = NIOPipeBootstrap(group: group)
-                .channelInitializer { channel in
+                .channelInitializer { [fileIO, tempDir] channel in
                     channel.pipeline.configureHTTPServerPipeline(withErrorHandling: false).flatMap {
-                        channel.pipeline.addHandler(
-                            SaveEverythingHTTPServer(
-                                fileIO: self.fileIO,
-                                uploadDirectory: self.tempDir
+                        channel.eventLoop.makeCompletedFuture {
+                            try channel.pipeline.syncOperations.addHandler(
+                                SaveEverythingHTTPServer(
+                                    fileIO: fileIO,
+                                    uploadDirectory: tempDir
+                                )
                             )
-                        )
+                        }
                     }
                 }
-                .withPipes(
-                    inputDescriptor: dup(testToChannel.fileHandleForReading.fileDescriptor),
-                    outputDescriptor: dup(channelToTest.fileHandleForWriting.fileDescriptor)
+                .takingOwnershipOfDescriptors(
+                    input: dup(testToChannel.fileHandleForReading.fileDescriptor),
+                    output: dup(channelToTest.fileHandleForWriting.fileDescriptor)
                 )
                 .wait()
         )

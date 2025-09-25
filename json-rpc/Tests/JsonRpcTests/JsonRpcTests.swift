@@ -123,8 +123,8 @@ final class JSONRPCTests: XCTestCase {
         let expectedResponse = RPCObject("ok")
         for expectedParam in expectedParams {
             // start server
-            let server = TCPServer(group: eventLoopGroup) { _, params, callback in
-                XCTAssertEqual(expectedParams, params, "expected params to match")
+            let server = TCPServer(group: eventLoopGroup) { _, param, callback in
+                XCTAssertEqual(expectedParam, param, "expected params to match")
                 callback(.success(expectedResponse))
             }
             _ = try! server.start(host: address.0, port: address.1).wait()
@@ -132,7 +132,7 @@ final class JSONRPCTests: XCTestCase {
             let client = TCPClient(group: eventLoopGroup)
             _ = try! client.connect(host: address.0, port: address.1).wait()
             // perform the method call
-            let result = try! client.call(method: "test", params: expectedParams).wait()
+            let result = try! client.call(method: "test", params: expectedParam).wait()
             switch result {
             case .success(let response):
                 XCTAssertEqual(expectedResponse, response, "expected result ot match")
