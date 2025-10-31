@@ -30,6 +30,7 @@ jobs:
         run: echo "build-test-matrix=$(curl -s https://raw.githubusercontent.com/apple/swift-nio/main/scripts/generate_matrix.sh | bash)" >> "$GITHUB_OUTPUT"
         env:
           MATRIX_LINUX_COMMAND: STRICT_CONCURRENCY=true SWIFT_PACKAGE_DIRECTORIES='TLSify UniversalBootstrapDemo http-responsiveness-server connect-proxy http2-client http2-server json-rpc nio-launchd' dev/build_all.sh && SWIFT_PACKAGE_DIRECTORIES='backpressure-file-io-channel' dev/build_all.sh
+          FIND_SUBDIRECTORY_MANIFESTS_ENABLED: true
 
   build-tests:
     name: Build tests
@@ -53,6 +54,7 @@ jobs:
         run: echo "build-test-matrix=$(curl -s https://raw.githubusercontent.com/apple/swift-nio/main/scripts/generate_matrix.sh | bash)" >> "$GITHUB_OUTPUT"
         env:
           MATRIX_LINUX_COMMAND: EXTRA_BUILD_FLAGS='-c release' SWIFT_PACKAGE_DIRECTORIES='TLSify UniversalBootstrapDemo http-responsiveness-server connect-proxy http2-client http2-server json-rpc nio-launchd' dev/build_all.sh && SWIFT_PACKAGE_DIRECTORIES='backpressure-file-io-channel' dev/build_all.sh
+          FIND_SUBDIRECTORY_MANIFESTS_ENABLED: true
 
   release-build-tests:
     name: Release build tests

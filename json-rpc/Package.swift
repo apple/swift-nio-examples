@@ -1,4 +1,4 @@
-// swift-tools-version:5.9
+// swift-tools-version:6.0
 //===----------------------------------------------------------------------===//
 //
 // This source file is part of the SwiftNIO open source project
@@ -17,17 +17,7 @@ import PackageDescription
 
 let strictConcurrencyDevelopment = false
 
-let strictConcurrencySettings: [SwiftSetting] = {
-    var initialSettings: [SwiftSetting] = []
-
-    if strictConcurrencyDevelopment {
-        // -warnings-as-errors here is a workaround so that IDE-based development can
-        // get tripped up on -require-explicit-sendable.
-        initialSettings.append(.unsafeFlags(["-Xfrontend", "-require-explicit-sendable", "-warnings-as-errors"]))
-    }
-
-    return initialSettings
-}()
+let swiftSettings: [SwiftSetting] = []
 
 let package = Package(
     name: "swift-json-rpc",
@@ -58,21 +48,21 @@ let package = Package(
             dependencies: [
                 "JSONRPC"
             ],
-            swiftSettings: strictConcurrencySettings
+            swiftSettings: swiftSettings
         ),
         .executableTarget(
             name: "ClientExample",
             dependencies: [
                 "JSONRPC"
             ],
-            swiftSettings: strictConcurrencySettings
+            swiftSettings: swiftSettings
         ),
         .executableTarget(
             name: "LightsdDemo",
             dependencies: [
                 "JSONRPC"
             ],
-            swiftSettings: strictConcurrencySettings
+            swiftSettings: swiftSettings
         ),
         .testTarget(
             name: "JSONRPCTests",
@@ -82,7 +72,7 @@ let package = Package(
                 .product(name: "NIOPosix", package: "swift-nio"),
             ],
             path: "Tests/JsonRpcTests",
-            swiftSettings: strictConcurrencySettings
+            swiftSettings: swiftSettings
         ),
     ]
 )
